@@ -1,0 +1,678 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.approximation_schemes.approximation_scheme &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.approximation_schemes.approximation_scheme</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Base class used to define the interface for derivative approximation schemes.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">coo_matrix</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.array_utils</span> <span class="k">import</span> <span class="n">sub2full_indices</span><span class="p">,</span> <span class="n">get_input_idx_split</span>
+<span class="kn">import</span> <span class="nn">openmdao.utils.coloring</span> <span class="k">as</span> <span class="nn">coloring_mod</span>
+<span class="kn">from</span> <span class="nn">openmdao.jacobians.jacobian</span> <span class="k">import</span> <span class="n">Jacobian</span>
+
+<span class="n">_full_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ApproximationScheme"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/approximation_scheme.html#openmdao.approximation_schemes.approximation_scheme.ApproximationScheme">[docs]</a><span class="k">class</span> <span class="nc">ApproximationScheme</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class used to define the interface for derivative approximation schemes.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _approx_groups : list</span>
+<span class="sd">        A list of approximation tuples ordered into groups of &#39;of&#39;s matching the same &#39;wrt&#39;.</span>
+<span class="sd">    _colored_approx_groups : list</span>
+<span class="sd">        A list containing info for all colored approximation groups.</span>
+<span class="sd">    _approx_groups_cached_under_cs : bool</span>
+<span class="sd">        Flag indicates whether approx_groups was generated under complex step from higher in the</span>
+<span class="sd">        model hieararchy.</span>
+<span class="sd">    _exec_dict : defaultdict(list)</span>
+<span class="sd">        A dict that keeps derivatives in execution order. The key is a combination of wrt and</span>
+<span class="sd">        various metadata that differs by approximation scheme.</span>
+<span class="sd">    _j_colored : coo_matrix</span>
+<span class="sd">        If coloring is active, cached COO jacobian.</span>
+<span class="sd">    _j_data_sizes : ndarray of int</span>
+<span class="sd">        Array of sizes of data chunks that make up _j_colored. (Used for MPI Allgatherv)</span>
+<span class="sd">    _j_data_offsets : ndarray of int</span>
+<span class="sd">        Array of offsets of each data chunk that makes up _j_colored. (Used for MPI Allgatherv)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ApproximationScheme.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/approximation_scheme.html#openmdao.approximation_schemes.approximation_scheme.ApproximationScheme.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ApproximationScheme.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_colored_approx_groups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_sizes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_offsets</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups_cached_under_cs</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_approx_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">under_cs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve data structure that contains all the approximations.</span>
+
+<span class="sd">        This data structure is regenerated if we transition to or from being under a complex step</span>
+<span class="sd">        from higher in the model hierarchy.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : &lt;System&gt;</span>
+<span class="sd">            Group or component instance.</span>
+<span class="sd">        under_cs : bool</span>
+<span class="sd">            Flag that indicates if we are under complex step.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple  (approx_groups, colored_approx_groups)</span>
+<span class="sd">            Each approx_groups entry contains specific data for a wrt var.</span>
+<span class="sd">            Each colored_approx_groups entry contains data for a group of columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">under_cs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups_cached_under_cs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_use_partial_sparsity</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_colored_approximations</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_approximations</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_colored_approx_groups</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_use_partial_sparsity</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_colored_approximations</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_approximations</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups_cached_under_cs</span> <span class="o">=</span> <span class="n">under_cs</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_colored_approx_groups</span>
+
+<div class="viewcode-block" id="ApproximationScheme.add_approximation"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/approximation_scheme.html#openmdao.approximation_schemes.approximation_scheme.ApproximationScheme.add_approximation">[docs]</a>    <span class="k">def</span> <span class="nf">add_approximation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use this approximation scheme to approximate the derivative d(of)/d(wrt).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        abs_key : tuple(str,str)</span>
+<span class="sd">            Absolute name pairing of (of, wrt) for the derivative.</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Containing System.</span>
+<span class="sd">        kwargs : dict</span>
+<span class="sd">            Additional keyword arguments, to be interpreted by sub-classes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;add_approximation has not been implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ApproximationScheme.compute_approximations"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/approximation_scheme.html#openmdao.approximation_schemes.approximation_scheme.ApproximationScheme.compute_approximations">[docs]</a>    <span class="k">def</span> <span class="nf">compute_approximations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the system to compute the approximate (sub)-Jacobians.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System on which the execution is run.</span>
+<span class="sd">        jac : None or dict-like</span>
+<span class="sd">            If None, update system with the approximated sub-Jacobians. Otherwise, store the</span>
+<span class="sd">            approximations in the given dict-like object.</span>
+<span class="sd">        total : bool</span>
+<span class="sd">            If True total derivatives are being approximated, else partials.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_init_colored_approximations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">openmdao.core.group</span> <span class="k">import</span> <span class="n">Group</span>
+        <span class="kn">from</span> <span class="nn">openmdao.core.implicitcomponent</span> <span class="k">import</span> <span class="n">ImplicitComponent</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_colored_approx_groups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_sizes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_offsets</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># don&#39;t do anything if the coloring doesn&#39;t exist yet</span>
+        <span class="n">coloring</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coloring</span><span class="p">,</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">Coloring</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_inputs</span>
+        <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span>
+        <span class="n">prom2abs_out</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_prom2abs_list</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="n">prom2abs_in</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_prom2abs_list</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+        <span class="n">approx_wrt_idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_wrt_idx</span>
+
+        <span class="n">out_slices</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_slice_dict</span><span class="p">()</span>
+        <span class="n">in_slices</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get_slice_dict</span><span class="p">()</span>
+
+        <span class="n">is_total</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">Group</span><span class="p">)</span>
+
+        <span class="n">system</span><span class="o">.</span><span class="n">_update_wrt_matches</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">)</span>
+        <span class="n">wrt_matches</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;wrt_matches&#39;</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">apprx</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">wrt_matches</span><span class="p">:</span>
+                <span class="n">options</span> <span class="o">=</span> <span class="n">apprx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s1">&#39;coloring&#39;</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># data is the same for all colored approxs so we only need the first</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_approx_data</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                    <span class="n">keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apprx</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_total</span> <span class="ow">and</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1"># top level approx totals</span>
+            <span class="n">of_names</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of</span>
+            <span class="n">full_wrts</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">+</span> \
+                <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+            <span class="n">wrt_names</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_wrt</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">of_names</span><span class="p">,</span> <span class="n">wrt_names</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_get_partials_varlists</span><span class="p">()</span>
+            <span class="n">wrt_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">prom2abs_in</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">prom2abs_in</span> <span class="k">else</span> <span class="n">prom2abs_out</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">wrt_names</span><span class="p">]</span>
+            <span class="n">full_wrts</span> <span class="o">=</span> <span class="n">wrt_names</span>
+
+        <span class="n">tmpJ</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;@nrows&#39;</span><span class="p">:</span> <span class="n">coloring</span><span class="o">.</span><span class="n">_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;@ncols&#39;</span><span class="p">:</span> <span class="n">coloring</span><span class="o">.</span><span class="n">_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;@out_slices&#39;</span><span class="p">:</span> <span class="n">out_slices</span><span class="p">,</span>
+            <span class="s1">&#39;@approxs&#39;</span><span class="p">:</span> <span class="n">keys</span><span class="p">,</span>
+            <span class="s1">&#39;@jac_slices&#39;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">}</span>
+
+        <span class="c1"># FIXME: need to deal with mix of local/remote indices</span>
+
+        <span class="n">len_full_ofs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+
+        <span class="n">full_idxs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">approx_of_idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of_idx</span>
+        <span class="n">jac_slices</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@jac_slices&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">abs_of</span><span class="p">,</span> <span class="n">roffset</span><span class="p">,</span> <span class="n">rend</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_jacobian_of_iter</span><span class="p">():</span>
+            <span class="n">rslice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">roffset</span><span class="p">,</span> <span class="n">rend</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">abs_wrt</span><span class="p">,</span> <span class="n">coffset</span><span class="p">,</span> <span class="n">cend</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_jacobian_wrt_iter</span><span class="p">(</span><span class="n">wrt_matches</span><span class="p">):</span>
+                <span class="n">jac_slices</span><span class="p">[(</span><span class="n">abs_of</span><span class="p">,</span> <span class="n">abs_wrt</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rslice</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="n">coffset</span><span class="p">,</span> <span class="n">cend</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">is_total</span> <span class="ow">and</span> <span class="p">(</span><span class="n">approx_of_idx</span> <span class="ow">or</span> <span class="n">len_full_ofs</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">of_names</span><span class="p">)):</span>
+                <span class="n">slc</span> <span class="o">=</span> <span class="n">out_slices</span><span class="p">[</span><span class="n">abs_of</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">abs_of</span> <span class="ow">in</span> <span class="n">approx_of_idx</span><span class="p">:</span>
+                    <span class="n">full_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">slc</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">slc</span><span class="o">.</span><span class="n">stop</span><span class="p">)[</span><span class="n">approx_of_idx</span><span class="p">[</span><span class="n">abs_of</span><span class="p">]])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">full_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slc</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">slc</span><span class="o">.</span><span class="n">stop</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">full_idxs</span><span class="p">:</span>
+            <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@row_idx_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">full_idxs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_wrts</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrt_matches</span><span class="p">)</span> <span class="ow">or</span> <span class="n">approx_wrt_idx</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_total</span> <span class="ow">and</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1"># top level approx totals</span>
+                <span class="n">full_wrt_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">abs2meta</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">wrt_names</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">full_wrt_sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_get_partials_var_sizes</span><span class="p">()</span>
+
+            <span class="c1"># need mapping from coloring jac columns (subset) to full jac columns</span>
+            <span class="n">col_map</span> <span class="o">=</span> <span class="n">sub2full_indices</span><span class="p">(</span><span class="n">full_wrts</span><span class="p">,</span> <span class="n">wrt_matches</span><span class="p">,</span> <span class="n">full_wrt_sizes</span><span class="p">,</span> <span class="n">approx_wrt_idx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">col_map</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># get groups of columns from the coloring and compute proper indices into</span>
+        <span class="c1"># the inputs and outputs vectors.</span>
+        <span class="n">is_semi</span> <span class="o">=</span> <span class="n">is_total</span> <span class="ow">and</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span>
+        <span class="n">use_full_cols</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">ImplicitComponent</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_semi</span>
+        <span class="k">for</span> <span class="n">cols</span><span class="p">,</span> <span class="n">nzrows</span> <span class="ow">in</span> <span class="n">coloring</span><span class="o">.</span><span class="n">color_nonzero_iter</span><span class="p">(</span><span class="s1">&#39;fwd&#39;</span><span class="p">):</span>
+            <span class="n">ccols</span> <span class="o">=</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">col_map</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">col_map</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+            <span class="n">idx_info</span> <span class="o">=</span> <span class="n">get_input_idx_split</span><span class="p">(</span><span class="n">ccols</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">use_full_cols</span><span class="p">,</span> <span class="n">is_total</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_colored_approx_groups</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">tmpJ</span><span class="p">,</span> <span class="n">idx_info</span><span class="p">,</span> <span class="n">nzrows</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_init_approximations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare for later approximations.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            The system having its derivs approximated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_inputs</span>
+        <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span>
+
+        <span class="n">out_slices</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_slice_dict</span><span class="p">()</span>
+        <span class="n">in_slices</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get_slice_dict</span><span class="p">()</span>
+
+        <span class="n">approx_wrt_idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_wrt_idx</span>
+        <span class="n">coloring</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_get_static_coloring</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># must sort _exec_dict keys here or have ordering issues when using MPI</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span><span class="p">):</span>
+            <span class="n">approx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">approx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">coloring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;coloring&#39;</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">wrt</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">directional</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_approx_data</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">inputs</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">inputs</span>
+                <span class="n">slices</span> <span class="o">=</span> <span class="n">in_slices</span>
+            <span class="k">elif</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">outputs</span>
+                <span class="n">slices</span> <span class="o">=</span> <span class="n">out_slices</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># wrt is remote</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">approx_wrt_idx</span><span class="p">:</span>
+                <span class="n">in_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">approx_wrt_idx</span><span class="p">[</span><span class="n">wrt</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">in_idx</span> <span class="o">+=</span> <span class="n">slices</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span><span class="o">.</span><span class="n">start</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">in_idx</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">abs2meta</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">in_idx</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">slices</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">slices</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+
+            <span class="c1"># Directional derivatives for quick partial checking.</span>
+            <span class="c1"># We place the indices in a list so that they are all stepped at the same time.</span>
+            <span class="k">if</span> <span class="n">directional</span><span class="p">:</span>
+                <span class="n">in_idx</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">in_idx</span><span class="p">)]</span>
+
+            <span class="n">tmpJ</span> <span class="o">=</span> <span class="n">_get_wrt_subjacs</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">approx</span><span class="p">)</span>
+            <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@out_slices&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_slices</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">wrt</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">in_idx</span><span class="p">,</span> <span class="n">tmpJ</span><span class="p">,</span> <span class="p">[(</span><span class="n">arr</span><span class="p">,</span> <span class="n">in_idx</span><span class="p">)],</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_approximations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">under_cs</span><span class="p">):</span>
+        <span class="c1"># Clean vector for results</span>
+        <span class="n">results_array</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">total</span> <span class="k">else</span> <span class="n">system</span><span class="o">.</span><span class="n">_residuals</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># To support driver src_indices, we need to override some checks in Jacobian, but do it</span>
+        <span class="c1"># selectively.</span>
+        <span class="n">uses_voi_indices</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_wrt_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jac</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+
+        <span class="n">use_parallel_fd</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_num_par_fd</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_full_comm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                                                      <span class="n">system</span><span class="o">.</span><span class="n">_full_comm</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">par_fd_w_serial_model</span> <span class="o">=</span> <span class="n">use_parallel_fd</span> <span class="ow">and</span> <span class="n">system</span><span class="o">.</span><span class="n">_num_par_fd</span> <span class="o">==</span> <span class="n">system</span><span class="o">.</span><span class="n">_full_comm</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">num_par_fd</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_num_par_fd</span> <span class="k">if</span> <span class="n">use_parallel_fd</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">is_parallel</span> <span class="o">=</span> <span class="n">use_parallel_fd</span> <span class="ow">or</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">owns</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owning_rank</span>
+        <span class="n">mycomm</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_full_comm</span> <span class="k">if</span> <span class="n">use_parallel_fd</span> <span class="k">else</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span>
+        <span class="n">jacobian</span> <span class="o">=</span> <span class="n">jac</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jac</span><span class="p">,</span> <span class="n">Jacobian</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">fd_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">colored_shape</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">jrows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">jcols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">jdata</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># This will either generate new approx groups or use cached ones</span>
+        <span class="n">approx_groups</span><span class="p">,</span> <span class="n">colored_approx_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_approx_groups</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">under_cs</span><span class="p">)</span>
+        <span class="n">do_rows_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span> <span class="ow">is</span> <span class="kc">None</span>
+
+        <span class="c1"># do colored solves first</span>
+        <span class="k">for</span> <span class="n">data</span><span class="p">,</span> <span class="n">col_idxs</span><span class="p">,</span> <span class="n">tmpJ</span><span class="p">,</span> <span class="n">idx_info</span><span class="p">,</span> <span class="n">nz_rows</span> <span class="ow">in</span> <span class="n">colored_approx_groups</span><span class="p">:</span>
+            <span class="n">colored_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@nrows&#39;</span><span class="p">],</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@ncols&#39;</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">fd_count</span> <span class="o">%</span> <span class="n">num_par_fd</span> <span class="o">==</span> <span class="n">system</span><span class="o">.</span><span class="n">_par_fd_id</span><span class="p">:</span>
+                <span class="c1"># run the finite difference</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_point</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">idx_info</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">results_array</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">par_fd_w_serial_model</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">is_parallel</span><span class="p">:</span>
+                    <span class="n">rowmap</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@row_idx_map&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;@row_idx_map&#39;</span> <span class="ow">in</span> <span class="n">tmpJ</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="k">if</span> <span class="n">rowmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">rowmap</span><span class="p">]</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">nz_rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># uncolored column</span>
+                        <span class="k">if</span> <span class="n">do_rows_cols</span><span class="p">:</span>
+                            <span class="n">nrows</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@nrows&#39;</span><span class="p">]</span>
+                            <span class="n">jrows</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nrows</span><span class="p">))</span>
+                            <span class="n">jcols</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">col_idxs</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">)</span>
+                        <span class="n">jdata</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">col_idxs</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">do_rows_cols</span><span class="p">:</span>
+                                <span class="n">jrows</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nz_rows</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                                <span class="n">jcols</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">col</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">nz_rows</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+                            <span class="n">jdata</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">nz_rows</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># parallel model (some vars are remote)</span>
+                    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;simul approx coloring with parallel FD/CS is &quot;</span>
+                                              <span class="s2">&quot;only supported currently when using &quot;</span>
+                                              <span class="s2">&quot;a serial model, i.e., when &quot;</span>
+                                              <span class="s2">&quot;num_par_fd == number of MPI procs.&quot;</span><span class="p">)</span>
+            <span class="n">fd_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># now do uncolored solves</span>
+        <span class="k">for</span> <span class="n">wrt</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">col_idxs</span><span class="p">,</span> <span class="n">tmpJ</span><span class="p">,</span> <span class="n">idx_info</span><span class="p">,</span> <span class="n">nz_rows</span> <span class="ow">in</span> <span class="n">approx_groups</span><span class="p">:</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span>
+            <span class="n">full_idxs</span> <span class="o">=</span> <span class="n">J</span><span class="p">[</span><span class="s1">&#39;loc_outvec_idxs&#39;</span><span class="p">]</span>
+            <span class="n">out_slices</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@out_slices&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i_count</span><span class="p">,</span> <span class="n">idxs</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">col_idxs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">fd_count</span> <span class="o">%</span> <span class="n">num_par_fd</span> <span class="o">==</span> <span class="n">system</span><span class="o">.</span><span class="n">_par_fd_id</span><span class="p">:</span>
+                    <span class="c1"># run the finite difference</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_point</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="p">((</span><span class="n">idx_info</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">idxs</span><span class="p">),),</span>
+                                             <span class="n">data</span><span class="p">,</span> <span class="n">results_array</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">is_parallel</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">of</span><span class="p">,</span> <span class="p">(</span><span class="n">oview</span><span class="p">,</span> <span class="n">out_idxs</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">J</span><span class="p">[</span><span class="s1">&#39;ofs&#39;</span><span class="p">]):</span>
+                            <span class="k">if</span> <span class="n">owns</span><span class="p">[</span><span class="n">of</span><span class="p">]</span> <span class="o">==</span> <span class="n">iproc</span><span class="p">:</span>
+                                <span class="n">results</span><span class="p">[(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                    <span class="p">(</span><span class="n">i_count</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">_transform_result</span><span class="p">(</span>
+                                            <span class="n">result</span><span class="p">[</span><span class="n">out_slices</span><span class="p">[</span><span class="n">of</span><span class="p">]][</span><span class="n">out_idxs</span><span class="p">])</span><span class="o">.</span><span class="n">copy</span><span class="p">()))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][:,</span> <span class="n">i_count</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_result</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">full_idxs</span><span class="p">])</span>
+
+                <span class="n">fd_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">mult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_multiplier</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">colored_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># coloring is active</span>
+            <span class="k">if</span> <span class="n">par_fd_w_serial_model</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">jstuff</span> <span class="o">=</span> <span class="n">mycomm</span><span class="o">.</span><span class="n">allgather</span><span class="p">((</span><span class="n">jrows</span><span class="p">,</span> <span class="n">jcols</span><span class="p">,</span> <span class="n">jdata</span><span class="p">))</span>
+                    <span class="n">rowlist</span> <span class="o">=</span> <span class="p">[</span><span class="n">rows</span> <span class="k">for</span> <span class="n">rows</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">jstuff</span> <span class="k">if</span> <span class="n">rows</span><span class="p">]</span>
+                    <span class="n">allrows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">rowlist</span><span class="p">)</span>
+                    <span class="n">allcols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">cols</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">jstuff</span> <span class="k">if</span> <span class="n">cols</span><span class="p">)</span>
+                    <span class="n">alldata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">dat</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dat</span> <span class="ow">in</span> <span class="n">jstuff</span> <span class="k">if</span> <span class="n">dat</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span> <span class="o">=</span> <span class="n">coo_matrix</span><span class="p">((</span><span class="n">alldata</span><span class="p">,</span> <span class="p">(</span><span class="n">allrows</span><span class="p">,</span> <span class="n">allcols</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="n">colored_shape</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_sizes</span> <span class="o">=</span> <span class="n">sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">jstuff</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_offsets</span> <span class="o">=</span> <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">mycomm</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+                    <span class="n">offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">sizes</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">mycomm</span><span class="o">.</span><span class="n">Allgatherv</span><span class="p">(</span><span class="n">jdata</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_sizes</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">_j_data_offsets</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">])</span>
+
+            <span class="k">elif</span> <span class="n">is_parallel</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;colored FD/CS over parallel groups not supported yet&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># serial colored</span>
+                <span class="k">if</span> <span class="n">do_rows_cols</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span> <span class="o">=</span> <span class="n">coo_matrix</span><span class="p">((</span><span class="n">jdata</span><span class="p">,</span> <span class="p">(</span><span class="n">jrows</span><span class="p">,</span> <span class="n">jcols</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="n">colored_shape</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">jdata</span>
+
+            <span class="k">if</span> <span class="n">mult</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="n">mult</span>
+
+            <span class="c1"># convert COO matrix to dense for easier slicing</span>
+            <span class="n">Jcolored</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_j_colored</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="n">is_parallel</span><span class="p">:</span>  <span class="c1"># uncolored with parallel systems</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">_gather_jac_results</span><span class="p">(</span><span class="n">mycomm</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">tmpJ</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">colored_approx_groups</span><span class="p">:</span>
+            <span class="c1"># TODO: coloring when using parallel FD and/or FD with remote comps</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@approxs&#39;</span><span class="p">]:</span>
+                <span class="n">slc</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="s1">&#39;@jac_slices&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">uses_voi_indices</span><span class="p">:</span>
+                    <span class="n">jac</span><span class="o">.</span><span class="n">_override_checks</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">jac</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_from_dense</span><span class="p">(</span><span class="n">jacobian</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Jcolored</span><span class="p">[</span><span class="n">slc</span><span class="p">])</span>
+                    <span class="n">jac</span><span class="o">.</span><span class="n">_override_checks</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">jac</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_from_dense</span><span class="p">(</span><span class="n">jacobian</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Jcolored</span><span class="p">[</span><span class="n">slc</span><span class="p">])</span>
+
+        <span class="n">Jcolored</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># clean up memory</span>
+
+        <span class="k">for</span> <span class="n">wrt</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">tmpJ</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">approx_groups</span><span class="p">:</span>
+            <span class="n">ofs</span> <span class="o">=</span> <span class="n">tmpJ</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;ofs&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">of</span> <span class="ow">in</span> <span class="n">ofs</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+                <span class="n">oview</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">rows_reduced</span><span class="p">,</span> <span class="n">cols_reduced</span> <span class="o">=</span> <span class="n">ofs</span><span class="p">[</span><span class="n">of</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">is_parallel</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                        <span class="n">oview</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+
+                <span class="k">if</span> <span class="n">mult</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+                    <span class="n">oview</span> <span class="o">*=</span> <span class="n">mult</span>
+
+                <span class="k">if</span> <span class="n">uses_voi_indices</span><span class="p">:</span>
+                    <span class="n">jac</span><span class="o">.</span><span class="n">_override_checks</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">jac</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_from_dense</span><span class="p">(</span><span class="n">jacobian</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">oview</span><span class="p">,</span> <span class="n">rows_reduced</span><span class="p">,</span> <span class="n">cols_reduced</span><span class="p">)</span>
+                    <span class="n">jac</span><span class="o">.</span><span class="n">_override_checks</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">jac</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_from_dense</span><span class="p">(</span><span class="n">jacobian</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">oview</span><span class="p">,</span> <span class="n">rows_reduced</span><span class="p">,</span> <span class="n">cols_reduced</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_from_dense</span><span class="p">(</span><span class="n">jac</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">subjac</span><span class="p">,</span> <span class="n">reduced_rows</span><span class="o">=</span><span class="n">_full_slice</span><span class="p">,</span> <span class="n">reduced_cols</span><span class="o">=</span><span class="n">_full_slice</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert given subjac from a dense array to whatever form matches our internal subjac.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    jac : Jacobian or None</span>
+<span class="sd">        Jacobian object.</span>
+<span class="sd">    key : (str, str)</span>
+<span class="sd">        Tuple of absulute names of of and wrt variables.</span>
+<span class="sd">    subjac : ndarray</span>
+<span class="sd">        Dense sub-jacobian to be assigned to the subjac corresponding to key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">jac</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># we&#39;re saving deriv to a dict.  Do no conversion.</span>
+        <span class="k">return</span> <span class="n">subjac</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">jac</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>   <span class="c1"># internal format is our home grown COO</span>
+        <span class="k">if</span> <span class="n">reduced_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_full_slice</span> <span class="ow">or</span> <span class="n">reduced_cols</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_full_slice</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">subjac</span><span class="p">[</span><span class="n">reduced_rows</span><span class="p">,</span> <span class="n">reduced_cols</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">subjac</span><span class="p">[</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;cols&#39;</span><span class="p">]]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">subjac</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">coo_matrix</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">coo_matrix</span><span class="p">(((</span><span class="n">val</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">val</span><span class="o">.</span><span class="n">col</span><span class="p">),</span> <span class="n">subjac</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">val</span><span class="o">.</span><span class="n">col</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">csc_matrix</span><span class="p">):</span>
+        <span class="n">coo</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">coo_matrix</span><span class="p">(((</span><span class="n">coo</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">coo</span><span class="o">.</span><span class="n">col</span><span class="p">),</span> <span class="n">subjac</span><span class="p">[</span><span class="n">coo</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">coo</span><span class="o">.</span><span class="n">col</span><span class="p">]))</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">):</span>
+        <span class="n">coo</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">coo_matrix</span><span class="p">(((</span><span class="n">coo</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">coo</span><span class="o">.</span><span class="n">col</span><span class="p">),</span> <span class="n">subjac</span><span class="p">[</span><span class="n">coo</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">coo</span><span class="o">.</span><span class="n">col</span><span class="p">]))</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Don&#39;t know how to convert dense ndarray to type &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span>
+                        <span class="n">val</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_gather_jac_results</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+    <span class="n">new_results</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="c1"># create full results list</span>
+    <span class="k">for</span> <span class="n">proc_results</span> <span class="ow">in</span> <span class="n">comm</span><span class="o">.</span><span class="n">allgather</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">proc_results</span><span class="p">:</span>
+            <span class="n">new_results</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">proc_results</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">new_results</span>
+
+
+<span class="k">def</span> <span class="nf">_get_wrt_subjacs</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">approxs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dict mapping wrt names to contiguous memory views of all of their nonzero subjacs.</span>
+
+<span class="sd">    All nonzero subjacs for a particular wrt are &#39;compressed&#39; together so they&#39;re contiguous.</span>
+
+<span class="sd">    This allows for setting an entire column of the jacobian at once instead of looping over</span>
+<span class="sd">    each subjac.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">abs2idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2idx</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">]</span>
+    <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span>
+    <span class="n">approx_of_idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of_idx</span>
+    <span class="n">approx_wrt_idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_wrt_idx</span>
+    <span class="n">approx_of</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of</span>
+
+    <span class="n">J</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ofdict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">nondense</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">slicedict</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">get_slice_dict</span><span class="p">()</span>
+    <span class="n">abs_out_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">slicedict</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="n">approxs</span><span class="p">:</span>
+        <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">if</span> <span class="s1">&#39;rows&#39;</span> <span class="ow">in</span> <span class="n">options</span> <span class="ow">and</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">nondense</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span>
+        <span class="k">if</span> <span class="n">wrt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">J</span><span class="p">:</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ofs&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span> <span class="s1">&#39;tot_rows&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;directional&#39;</span><span class="p">:</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;directional&#39;</span><span class="p">]}</span>
+
+        <span class="n">tmpJ</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">of</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ofdict</span> <span class="ow">and</span> <span class="p">(</span><span class="n">approx_of</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">approx_of</span> <span class="ow">and</span> <span class="n">of</span> <span class="ow">in</span> <span class="n">approx_of</span><span class="p">)):</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;ofs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">of</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">of</span> <span class="ow">in</span> <span class="n">approx_of_idx</span><span class="p">:</span>
+                <span class="n">out_idx</span> <span class="o">=</span> <span class="n">approx_of_idx</span><span class="p">[</span><span class="n">of</span><span class="p">]</span>
+                <span class="n">out_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_idx</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out_size</span> <span class="o">=</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">of</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+                <span class="n">out_idx</span> <span class="o">=</span> <span class="n">_full_slice</span>
+            <span class="n">ofdict</span><span class="p">[</span><span class="n">of</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">out_size</span><span class="p">,</span> <span class="n">out_idx</span><span class="p">)</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;tot_rows&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">out_size</span>
+
+    <span class="k">for</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">J</span><span class="p">:</span>
+        <span class="n">unsorted_ofs</span> <span class="o">=</span> <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;ofs&#39;</span><span class="p">]</span>
+        <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;ofs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrt_ofs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">wrt_idx</span> <span class="o">=</span> <span class="n">approx_wrt_idx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">wrt</span><span class="p">,</span> <span class="n">_full_slice</span><span class="p">)</span>
+
+        <span class="c1"># create dense array to contain all nonzero subjacs for this wrt</span>
+        <span class="k">if</span> <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;directional&#39;</span><span class="p">]:</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;tot_rows&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">wrt_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_full_slice</span><span class="p">:</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;tot_rows&#39;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrt_idx</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;tot_rows&#39;</span><span class="p">],</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]))</span>
+
+        <span class="c1"># sort ofs into the proper order to match outputs/resids vecs</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of</span><span class="p">:</span>
+            <span class="n">sorted_ofs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_of</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">unsorted_ofs</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sorted_ofs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unsorted_ofs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">abs2idx</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">of</span> <span class="ow">in</span> <span class="n">sorted_ofs</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+            <span class="n">osize</span><span class="p">,</span> <span class="n">oidx</span> <span class="o">=</span> <span class="n">ofdict</span><span class="p">[</span><span class="n">of</span><span class="p">]</span>
+            <span class="n">end</span> <span class="o">+=</span> <span class="n">osize</span>
+            <span class="c1"># if needed, compute reduced row idxs and col idxs</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">nondense</span> <span class="ow">and</span> <span class="p">(</span><span class="n">oidx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_full_slice</span> <span class="ow">or</span> <span class="n">wrt_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_full_slice</span><span class="p">):</span>
+                <span class="c1"># TODO: also need to handle scipy sparse matrices</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">nondense</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span>
+                <span class="n">cols</span> <span class="o">=</span> <span class="n">nondense</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;cols&#39;</span><span class="p">]</span>
+                <span class="n">Jfull</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nondense</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;shape&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+                <span class="n">Jfull</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">Jreduced</span> <span class="o">=</span> <span class="n">Jfull</span><span class="p">[</span><span class="n">oidx</span><span class="p">,</span> <span class="n">wrt_idx</span><span class="p">]</span>
+                <span class="n">rows_reduced</span><span class="p">,</span> <span class="n">cols_reduced</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">Jreduced</span><span class="p">)</span>
+                <span class="n">Jfull</span> <span class="o">=</span> <span class="n">Jreduced</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rows_reduced</span> <span class="o">=</span> <span class="n">cols_reduced</span> <span class="o">=</span> <span class="n">_full_slice</span>
+
+            <span class="c1"># store subview corresponding to the (of, wrt) subjac and any index info</span>
+            <span class="c1"># print(&#39;wrt, of:&#39;, wrt, of, start, end, oidx)</span>
+            <span class="n">wrt_ofs</span><span class="p">[</span><span class="n">of</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">,</span> <span class="p">:],</span> <span class="n">oidx</span><span class="p">,</span> <span class="n">rows_reduced</span><span class="p">,</span> <span class="n">cols_reduced</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
+
+        <span class="k">if</span> <span class="n">abs_out_names</span> <span class="o">!=</span> <span class="n">sorted_ofs</span><span class="p">:</span>
+            <span class="n">full_idxs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">sof</span> <span class="ow">in</span> <span class="n">sorted_ofs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">sof</span> <span class="ow">in</span> <span class="n">slicedict</span><span class="p">:</span>
+                    <span class="n">slc</span> <span class="o">=</span> <span class="n">slicedict</span><span class="p">[</span><span class="n">sof</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">sof</span> <span class="ow">in</span> <span class="n">approx_of_idx</span><span class="p">:</span>
+                        <span class="n">full_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">slc</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">slc</span><span class="o">.</span><span class="n">stop</span><span class="p">)[</span><span class="n">approx_of_idx</span><span class="p">[</span><span class="n">sof</span><span class="p">]])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">full_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slc</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">slc</span><span class="o">.</span><span class="n">stop</span><span class="p">))</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;loc_outvec_idxs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">full_idxs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">J</span><span class="p">[</span><span class="n">wrt</span><span class="p">][</span><span class="s1">&#39;loc_outvec_idxs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_full_slice</span>
+
+    <span class="k">return</span> <span class="n">J</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

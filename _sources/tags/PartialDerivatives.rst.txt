@@ -1,0 +1,7 @@
+.. _PartialDerivatives: 
+
+=========================
+PartialDerivatives
+=========================
+  .. toctree::
+     ../features/core_features/working_with_derivatives/specifying_partials.rst

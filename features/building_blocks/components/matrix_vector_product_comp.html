@@ -1,0 +1,257 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>MatrixVectorProductComp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="VectorMagnitudeComp" href="vector_magnitude_comp.html" />
+    <link rel="prev" title="DotProductComp" href="dot_product_comp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="vector_magnitude_comp.html" title="VectorMagnitudeComp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dot_product_comp.html" title="DotProductComp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="matrixvectorproductcomp">
+<span id="matrixvectorproductcomp-feature"></span><h1>MatrixVectorProductComp<a class="headerlink" href="#matrixvectorproductcomp" title="Permalink to this headline">¶</a></h1>
+<p><cite>MatrixVectorProductComp</cite> performs a matrix-vector product.  It may be vectorized to provide the result at one or more points simultaneously.</p>
+<div class="math notranslate nohighlight">
+\[\bar{c}_i = \left[ A_i \right] \bar{b}_i\]</div>
+<div class="section" id="matrixvectorproductcomp-options">
+<h2>MatrixVectorProductComp Options<a class="headerlink" href="#matrixvectorproductcomp-options" title="Permalink to this headline">¶</a></h2>
+<p>The default <cite>vec_size</cite> is 1, providing the matrix vector product of <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span> at a single
+point.</p>
+<p>Other options for MatrixVectorProductComp allow the user to rename the input variables <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span>
+and the output <span class="math notranslate nohighlight">\(c\)</span>, as well as specifying their units.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="5%" />
+<col width="13%" />
+<col width="12%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>A_name</td>
+<td>A</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>The variable name for the matrix.</td>
+</tr>
+<tr class="row-odd"><td>A_shape</td>
+<td>(3, 3)</td>
+<td>N/A</td>
+<td>[‘tuple’]</td>
+<td>The shape of the input matrix at a single point.</td>
+</tr>
+<tr class="row-even"><td>A_units</td>
+<td>None</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>The units of the input matrix.</td>
+</tr>
+<tr class="row-odd"><td>b_name</td>
+<td>b</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>The variable name of the output vector.</td>
+</tr>
+<tr class="row-even"><td>b_units</td>
+<td>None</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>The units of the output vector.</td>
+</tr>
+<tr class="row-odd"><td>distributed</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>True if the component has variables that are distributed across multiple processes.</td>
+</tr>
+<tr class="row-even"><td>vec_size</td>
+<td>1</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>The number of points at which the matrix-vector product is to be computed</td>
+</tr>
+<tr class="row-odd"><td>x_name</td>
+<td>x</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>The name of the input vector.</td>
+</tr>
+<tr class="row-even"><td>x_units</td>
+<td>None</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>The units of the input vector.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="matrixvectorproductcomp-example">
+<h2>MatrixVectorProductComp Example<a class="headerlink" href="#matrixvectorproductcomp-example" title="Permalink to this headline">¶</a></h2>
+<p>The following code demonstrates the use of the MatrixVectorProductComp, finding the product
+of a random 3x3 matrix <cite>M</cite> and a 3-vector <cite>x</cite> at 100 points simultaneously.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.assert_utils</span> <span class="kn">import</span> <span class="n">assert_rel_error</span>
+
+<span class="n">nn</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ivc&#39;</span><span class="p">,</span>
+                      <span class="n">subsys</span><span class="o">=</span><span class="n">ivc</span><span class="p">,</span>
+                      <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">])</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mat_vec_product_comp&#39;</span><span class="p">,</span>
+                      <span class="n">subsys</span><span class="o">=</span><span class="n">om</span><span class="o">.</span><span class="n">MatrixVectorProductComp</span><span class="p">(</span><span class="n">A_name</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="n">vec_size</span><span class="o">=</span><span class="n">nn</span><span class="p">,</span>
+                                                        <span class="n">b_name</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">b_units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">))</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;mat_vec_product_comp.M&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;mat_vec_product_comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nn</span><span class="p">):</span>
+    <span class="n">A_i</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="n">x_i</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">expected_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A_i</span><span class="p">,</span> <span class="n">x_i</span><span class="p">)</span> <span class="o">*</span> <span class="mf">3.2808399</span>
+    <span class="k">print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s1">&#39;mat_vec_product_comp.y&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;ft&#39;</span><span class="p">)[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+</pre></div>
+</div>
+<div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/MatrixVectorProductComp.html#matrixvectorproductcomp"><span class="std std-ref">MatrixVectorProductComp</span></a>, <a class="reference internal" href="../../../tags/Component.html#component"><span class="std std-ref">Component</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="vector_magnitude_comp.html" title="VectorMagnitudeComp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dot_product_comp.html" title="DotProductComp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

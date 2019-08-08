@@ -1,0 +1,618 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>File Wrapping &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Source Docs" href="../_srcdocs/index.html" />
+    <link rel="prev" title="Upgrading from OpenMDAO 1" href="api_translation.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../_srcdocs/index.html" title="Source Docs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api_translation.html" title="Upgrading from OpenMDAO 1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="file-wrapping">
+<span id="filewrap-feature"></span><span id="index-0"></span><h1>File Wrapping<a class="headerlink" href="#file-wrapping" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="communicating-with-external-codes-in-openmdao">
+<h2>Communicating with External Codes in OpenMDAO<a class="headerlink" href="#communicating-with-external-codes-in-openmdao" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="../features/building_blocks/components/external_code_comp.html#externalcodecomp-feature"><span class="std std-ref">ExternalCodeComp</span></a> example describes how to
+define a component that calls an external program to perform its computation,
+passing input and output values via files.</p>
+<p>The input and output files were very simple in that basic example, containing only
+the values of interest.  In the general case however, you will probably need to
+generate an input file (with a specific format of rows and fields), and you’ll also need to parse a
+similarly-formatted output file to get the output values. To facilitate working
+with these more complex input and output files, OpenMDAO provides a couple of utility
+classes: <cite>InputFileGenerator</cite> and <cite>FileParser</cite>.</p>
+<div class="section" id="generating-the-input-file">
+<h3>Generating the Input File<a class="headerlink" href="#generating-the-input-file" title="Permalink to this headline">¶</a></h3>
+<p>You can generate an input file for an external application in a few different ways.
+One way is to write the file completely from scratch using the new values that are
+contained in the component’s variables. Not much can be done to aid with this task, as
+it requires knowledge of the file format and can be completed using Python’s standard
+formatted output.</p>
+<p>A second way to generate an input file is by templating. A <em>template</em> file is
+a sample input file which can be processed by a templating engine to insert
+new values in the appropriate locations. Often the template file is a valid
+input file before being processed, although other times it contains directives
+or conditional logic to guide the generation. Obviously this method works well
+for cases where only a small number of the possible variables and settings are
+being manipulated.</p>
+<p>OpenMDAO includes a basic templating capability that allows a template file to
+be read, fields to be replaced with new values, and an input file to be
+generated so that the external application can read it. Suppose you have an
+input file that contains some integer, floating point, and string inputs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INPUT</span>
+<span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+<span class="n">INPUT</span>
+<span class="mf">10.1</span> <span class="mf">20.2</span> <span class="mf">30.3</span>
+<span class="n">A</span> <span class="n">B</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>This is a valid input file for your application, and it can also be used as a
+template file. The templating object is called <cite>InputFileGenerator</cite>, and it
+includes methods that can replace specific fields as measured by their row
+and field numbers.</p>
+<p>To use the InputFileGenerator, first instantiate it and give it the name of
+the template file and the name of the output file that you want to produce. (Note
+that this code must be placed in the <code class="docutils literal notranslate"><span class="pre">compute</span></code> method of your component <em>before</em>
+the external code is run.) The code will generally look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">openmdao.utils.file_wrap</span> <span class="k">import</span> <span class="n">InputFileGenerator</span>
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">InputFileGenerator</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">set_template_file</span><span class="p">(</span><span class="s1">&#39;mytemplate.txt&#39;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">set_generated_file</span><span class="p">(</span><span class="s1">&#39;myinput.txt&#39;</span><span class="p">)</span>
+
+<span class="c1"># (Call functions to poke new values here)</span>
+
+<span class="n">parser</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>When the template file is set, it is read into memory so that all subsequent
+replacements are done without writing the intermediate file to the disk. Once
+all replacements have been made, the <code class="docutils literal notranslate"><span class="pre">generate</span></code> method is called to create the
+input file.  If you have not provided the name of an output file, then the
+generated file data will be returned as a string.  We will use this feature in
+the following examples.</p>
+<p>Let’s say you want to replace the second integer in the input file above
+with a 7. The code would look like this.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;INPUT&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">generate</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>INPUT
+1 7 3
+INPUT
+10.1 20.2 30.3
+A B C</pre></div></div><p id="index-1">The method <code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> is used to define an anchor, which becomes the
+starting point for the <code class="docutils literal notranslate"><span class="pre">transfer_var</span></code> method. Here you find the first line
+down from the anchor, then the second field on that line and replace it with
+the new value.</p>
+<p>Now, if you want to replace the third value of the floating point numbers
+after the second <code class="docutils literal notranslate"><span class="pre">INPUT</span></code> statement. An additional argument can be passed to the
+<code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> method to tell it to start at the second instance of the text
+fragment <code class="docutils literal notranslate"><span class="pre">&quot;INPUT&quot;</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;INPUT&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">my_var</span> <span class="o">=</span> <span class="mf">3.1415926535897932</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="n">my_var</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">generate</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>INPUT
+1 7 3
+INPUT
+10.1 20.2 3.141592653589793
+A B C</pre></div></div><p>Note that you are able to pass a floating point value to <code class="docutils literal notranslate"><span class="pre">transfer_var</span></code> and still
+keep 15 digits of precision. See <a class="reference internal" href="#a-note-on-precision"><span class="std std-ref">A Note on Precision</span></a> for a discussion of
+why this is important.</p>
+<p>Note also that we used the method <code class="docutils literal notranslate"><span class="pre">reset_anchor</span></code> to return the anchor to the
+beginning of the file before marking our new anchor. Subsequent calls to
+<code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> start at the previous anchor and find the next instance of the
+anchor text. It is a good practice to reset your anchor unless you are looking for
+an instance of “B” that follows an instance of “A”.</p>
+<p>You can also count backwards from the bottom of the file by passing a negative
+number. Here, the second instance of <code class="docutils literal notranslate"><span class="pre">&quot;INPUT&quot;</span></code> from the bottom brings you
+back to the first one.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;INPUT&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="s2">&quot;99999&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">generate</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>INPUT
+99999 7 3
+INPUT
+10.1 20.2 3.141592653589793
+A B C</pre></div></div><p>There is also a method for replacing an entire array of values. Try
+replacing the set of three integers as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span>
+
+<span class="n">array_val</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mi">123</span><span class="p">,</span> <span class="mi">456</span><span class="p">,</span> <span class="mi">789</span><span class="p">])</span>
+
+<span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;INPUT&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">transfer_array</span><span class="p">(</span><span class="n">array_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">generate</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>INPUT
+123 456 789
+INPUT
+10.1 20.2 3.141592653589793
+A B C</pre></div></div><p id="index-2">The method <code class="docutils literal notranslate"><span class="pre">transfer_array</span></code> takes four required inputs. The first is an array
+of values that will become the new values in the file. The second is the
+starting row after the anchor. The third is the starting field that will be
+replaced, and the fourth is the ending field. The new array replaces the
+block of fields spanned by the starting field and the ending field.</p>
+<p>You can also use the <code class="docutils literal notranslate"><span class="pre">transfer_array</span></code> method to <cite>stretch</cite> an existing
+array in a template to add more terms.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span>
+
+<span class="n">array_val</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">55</span><span class="p">,</span> <span class="mi">66</span><span class="p">])</span>
+
+<span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;INPUT&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">transfer_array</span><span class="p">(</span><span class="n">array_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">generate</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>INPUT
+11 22 33 44 55 66
+INPUT
+10.1 20.2 3.141592653589793
+A B C</pre></div></div><p>The named argument <code class="docutils literal notranslate"><span class="pre">sep</span></code> defines which separator to include between the
+additional terms of the array.</p>
+<p>The input file templating capability that comes with OpenMDAO is basic, but quite
+functional. If you need a more powerful templating engine, particularly one that
+allows the inclusion of logic in your template files, then you may want to consider
+one of the community-developed <a class="reference external" href="https://wiki.python.org/moin/Templating">templating</a> engines.</p>
+</div>
+<div class="section" id="parsing-the-output-file">
+<h3>Parsing the Output File<a class="headerlink" href="#parsing-the-output-file" title="Permalink to this headline">¶</a></h3>
+<p>When an external code is executed, it typically outputs the results into a
+file. OpenMDAO includes a utility called <cite>FileParser</cite>, which contains functions
+for parsing a file, extracting the fields you specify, and converting them to the
+appropriate data type.</p>
+<div class="section" id="basic-extraction">
+<h4><em>Basic Extraction</em><a class="headerlink" href="#basic-extraction" title="Permalink to this headline">¶</a></h4>
+<p>Consider an application that produces the following as part of its
+text file output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LOAD</span> <span class="n">CASE</span> <span class="mi">1</span>
+<span class="n">STRESS</span> <span class="mf">1.3334e7</span> <span class="mf">3.9342e7</span> <span class="n">NaN</span> <span class="mf">2.654e5</span>
+<span class="n">DISPLACEMENT</span> <span class="mf">2.1</span> <span class="mf">4.6</span> <span class="mf">3.1</span> <span class="mf">2.22234</span>
+<span class="n">LOAD</span> <span class="n">CASE</span> <span class="mi">2</span>
+<span class="n">STRESS</span> <span class="mi">11</span> <span class="mi">22</span> <span class="mi">33</span> <span class="mi">44</span> <span class="mi">55</span> <span class="mi">66</span>
+<span class="n">DISPLACEMENT</span> <span class="mf">1.0</span> <span class="mf">2.0</span> <span class="mf">3.0</span> <span class="mf">4.0</span> <span class="mf">5.0</span>
+</pre></div>
+</div>
+<p>As part of the file wrap, you need to extract the information from this file
+that is needed by downstream components in the model. For this to
+work, the file must have some general format that would allow you to locate the
+piece of data you need relative to some constant feature in the file. In other
+words, the main capability of the FileParser is to locate and extract a set of
+characters that is some number of lines and some number of fields away from an
+<cite>anchor</cite> point.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">openmdao.utils.file_wrap</span> <span class="k">import</span> <span class="n">FileParser</span>
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">FileParser</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">set_file</span><span class="p">(</span><span class="s1">&#39;output.txt&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To use the FileParser object, first instantiate it and give it the name of the
+output file. (Note that this code must be placed in your component’s
+<code class="docutils literal notranslate"><span class="pre">compute</span></code> function <em>after</em> the external code has been run.</p>
+<p>Say you want to extract the first <code class="docutils literal notranslate"><span class="pre">STRESS</span></code> value from each load case in the file
+snippet shown above. The code would look like this.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(13334000.0, &lt;class &#x27;float&#x27;&gt;)</pre></div></div><p>The method <code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> is used to define an anchor, which becomes the
+starting point for the <code class="docutils literal notranslate"><span class="pre">transfer_var</span></code> method. Here, you extract the value from the
+second field in the first line down from the anchor. The parser is smart enough to
+recognize the number as floating point and to create a Python float variable.</p>
+<p>The third value of <code class="docutils literal notranslate"><span class="pre">STRESS</span></code> is <cite>NaN</cite>. Python has built-in values for <cite>nan</cite>
+and <cite>inf</cite> that are valid for float variables. The parser recognizes them when it
+encounters them in a file. This allows you to catch numerical overflows,
+underflows, etc., and take action. NumPy includes the functions <code class="docutils literal notranslate"><span class="pre">isnan</span></code> and
+<code class="docutils literal notranslate"><span class="pre">isinf</span></code> to test for <cite>nan</cite> and <cite>inf</cite> respectively.  In the following example,
+we extract that <cite>nan</cite> value:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">isnan</span><span class="p">,</span> <span class="n">isinf</span>
+<span class="k">print</span><span class="p">(</span><span class="n">isnan</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>True</pre></div></div><p>When the data is not a number, it is recognized as a string. For example, we can
+extract the word <code class="docutils literal notranslate"><span class="pre">DISPLACEMENT</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(&#x27;DISPLACEMENT&#x27;, &lt;class &#x27;str&#x27;&gt;)</pre></div></div><p>Now, what if you want to extract the value of stress from the second load case? An
+additional argument can be passed to the <code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> method telling it to
+start at the second instance of the text fragment <code class="docutils literal notranslate"><span class="pre">&quot;LOAD</span> <span class="pre">CASE&quot;</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(11, &lt;class &#x27;int&#x27;&gt;)</pre></div></div><p>Note also that we used the method <code class="docutils literal notranslate"><span class="pre">reset_anchor</span></code> to return the anchor to the
+beginning of the file before marking our new anchor. Subsequent calls to
+<code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> start at the previous anchor and find the next instance of the
+anchor text. It is a good practice to reset your anchor unless you are looking for
+an instance of “B” that follows an instance of “A”.</p>
+<p>You can also count backwards from the bottom of the file by passing a negative
+number. Here, the second instance of <code class="docutils literal notranslate"><span class="pre">&quot;LOAD</span> <span class="pre">CASE&quot;</span></code> from the bottom brings us
+back to the first one.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>13334000.0</pre></div></div><p>There is a shortcut for extracting data that is stored as <code class="docutils literal notranslate"><span class="pre">Key</span> <span class="pre">Value</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&quot;Key</span> <span class="pre">Value</span> <span class="pre">Value</span> <span class="pre">...&quot;</span></code>. The method <code class="docutils literal notranslate"><span class="pre">transfer_keyvar</span></code> finds the first occurrence
+of the <em>key</em> string after the anchor (in this case, the word <code class="docutils literal notranslate"><span class="pre">DISPLACEMENT</span></code>), and
+extracts the specified field value. This can be useful in cases where variables are
+found on lines that are uniquely named, particularly where you don’t always know how
+many lines the key will occur past the anchor location. There are two optional
+arguments to <code class="docutils literal notranslate"><span class="pre">transfer_keyvar</span></code>. The first lets you specify the <cite>nth</cite> occurrence
+of the key, and the second lets you specify a number of lines to offset from
+the line where the key is found (negative numbers are allowed).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE 1&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_keyvar</span><span class="p">(</span><span class="s2">&quot;DISPLACEMENT&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>2.1</pre></div></div></div>
+<div class="section" id="array-extraction">
+<h4><em>Array Extraction</em><a class="headerlink" href="#array-extraction" title="Permalink to this headline">¶</a></h4>
+<p>Now consider the same application that produces the following as part of its
+text file output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LOAD</span> <span class="n">CASE</span> <span class="mi">1</span>
+<span class="n">STRESS</span> <span class="mf">1.3334e7</span> <span class="mf">3.9342e7</span> <span class="n">NaN</span> <span class="mf">2.654e5</span>
+<span class="n">DISPLACEMENT</span> <span class="mf">2.1</span> <span class="mf">4.6</span> <span class="mf">3.1</span> <span class="mf">2.22234</span>
+<span class="n">LOAD</span> <span class="n">CASE</span> <span class="mi">2</span>
+<span class="n">STRESS</span> <span class="mi">11</span> <span class="mi">22</span> <span class="mi">33</span> <span class="mi">44</span> <span class="mi">55</span> <span class="mi">66</span>
+<span class="n">DISPLACEMENT</span> <span class="mf">1.0</span> <span class="mf">2.0</span> <span class="mf">3.0</span> <span class="mf">4.0</span> <span class="mf">5.0</span>
+</pre></div>
+</div>
+<p>This time, extract all of the displacements in one read and store
+them as an array. You can do this with the <code class="docutils literal notranslate"><span class="pre">transfer_array</span></code> method.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_array</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[2.1     4.6     3.1     2.22234]</pre></div></div><p>The <code class="docutils literal notranslate"><span class="pre">transfer_array</span></code> method takes four arguments: <em>starting row</em>, <em>starting field</em>,
+<em>ending row</em>, and <em>ending field</em>. The parser extracts all values from the starting
+row and field and continues until it hits the ending field in the ending row.
+These values are all placed in a 1D array. When extracting multiple lines, if
+a line break is hit, the parser continues reading from the next line until the
+last line is hit. The following extraction illustrates this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;LOAD CASE&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_array</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;39342000.0&#x27; &#x27;nan&#x27; &#x27;265400.0&#x27; &#x27;DISPLACEMENT&#x27; &#x27;2.1&#x27; &#x27;4.6&#x27; &#x27;3.1&#x27;]</pre></div></div><p>With the inclusion of <code class="docutils literal notranslate"><span class="pre">'DISPLACEMENT'</span></code>, this is returned as an array of strings,
+so you must be careful.</p>
+<p>There is also a method to extract a 2-dimensional array from tabulated data.
+Consider an output table that looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FREQ</span>  <span class="n">DELTA</span>   <span class="n">A</span>     <span class="n">B</span>     <span class="n">C</span>     <span class="n">D</span>     <span class="n">E</span>     <span class="n">F</span>     <span class="n">G</span>     <span class="n">H</span>     <span class="n">I</span>     <span class="n">J</span>
+ <span class="n">Hz</span>
+ <span class="mf">50.</span>   <span class="mf">1.0</span>   <span class="mf">30.0</span>  <span class="mf">34.8</span>  <span class="mf">36.3</span>  <span class="mf">36.1</span>  <span class="mf">34.6</span>  <span class="mf">32.0</span>  <span class="mf">28.4</span>  <span class="mf">23.9</span>  <span class="mf">18.5</span>  <span class="mf">12.2</span>
+ <span class="mf">63.</span>   <span class="mf">1.0</span>   <span class="mf">36.5</span>  <span class="mf">41.3</span>  <span class="mf">42.8</span>  <span class="mf">42.6</span>  <span class="mf">41.1</span>  <span class="mf">38.5</span>  <span class="mf">34.9</span>  <span class="mf">30.4</span>  <span class="mf">25.0</span>  <span class="mf">18.7</span>
+ <span class="mf">80.</span>   <span class="mf">1.0</span>   <span class="mf">42.8</span>  <span class="mf">47.6</span>  <span class="mf">49.1</span>  <span class="mf">48.9</span>  <span class="mf">47.4</span>  <span class="mf">44.8</span>  <span class="mf">41.2</span>  <span class="mf">36.7</span>  <span class="mf">31.3</span>  <span class="mf">25.0</span>
+<span class="mf">100.</span>   <span class="mf">1.0</span>   <span class="mf">48.4</span>  <span class="mf">53.1</span>  <span class="mf">54.7</span>  <span class="mf">54.5</span>  <span class="mf">53.0</span>  <span class="mf">50.4</span>  <span class="mf">46.8</span>  <span class="mf">42.3</span>  <span class="mf">36.9</span>  <span class="mf">30.6</span>
+</pre></div>
+</div>
+<p>We would like to extract the relevant numerical data from this table, which
+amounts to all values contained in columns labeled “A” through “J” and rows
+labeled “50 Hz” through “100 Hz.” We would like to save these values in a
+two-dimensional numpy array. This can be accomplished using the
+<code class="docutils literal notranslate"><span class="pre">transfer_2Darray</span></code> method.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_2Darray</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[[30.  34.8 36.3 36.1 34.6 32.  28.4 23.9 18.5 12.2]
+ [36.5 41.3 42.8 42.6 41.1 38.5 34.9 30.4 25.  18.7]
+ [42.8 47.6 49.1 48.9 47.4 44.8 41.2 36.7 31.3 25. ]
+ [48.4 53.1 54.7 54.5 53.  50.4 46.8 42.3 36.9 30.6]]</pre></div></div><p>The arguments to <code class="docutils literal notranslate"><span class="pre">transfer_2Darray</span></code> are the <em>starting row</em>, <em>starting field</em>,
+<em>ending row</em>, and <em>ending field</em>. If the ending field is omitted, then all values
+to the end of the line are extracted. In that case, care must be taken to make
+sure that all lines have the same number of values.</p>
+<p>Note that if the delimiter is set to <code class="docutils literal notranslate"><span class="pre">'columns'</span></code>, then the column number should be
+entered instead of the field number. Delimiters are discussed in the next section.</p>
+</div>
+<div class="section" id="delimiters">
+<span id="index-4"></span><h4><em>Delimiters</em><a class="headerlink" href="#delimiters" title="Permalink to this headline">¶</a></h4>
+<p>When the parser counts fields in a line of output, it determines the field
+boundaries by comparing against a set of delimiters. These delimiters can be
+changed using the <code class="docutils literal notranslate"><span class="pre">set_delimiters</span></code> method. By default, the delimiters are the
+general white space characters space (<code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">&quot;</span></code>) and tab (<code class="docutils literal notranslate"><span class="pre">&quot;\t&quot;</span></code>). The newline characters
+(<code class="docutils literal notranslate"><span class="pre">&quot;\n&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;\r&quot;</span></code>) are always removed regardless of the delimiter status.</p>
+<p>One common case that will require a change in the default delimiter is comma
+separated values (i.e. <cite>csv</cite>). Here’s an example of such an output file:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;CASE&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(&#x27;,7,2,4,5,6&#x27;, &lt;class &#x27;str&#x27;&gt;)</pre></div></div><p>What happened here is slightly confusing, but the main point is that the parser
+did not handle this as expected because commas were not in the set of
+delimiters. Now specify commas as your delimiter.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;CASE&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">set_delimiters</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(7, &lt;class &#x27;int&#x27;&gt;)</pre></div></div><p>With the correct delimiter set, you extract the second integer as expected.</p>
+<p>While the ability to set the delimiters adds flexibility for parsing many
+different types of input files, you may find cases that are too complex to
+parse (e.g., a field with separator characters inside of quotes.) In such cases
+you may need to read and extract the data manually.</p>
+</div>
+<div class="section" id="special-case-delimiter-columns">
+<h4><em>Special Case Delimiter - Columns</em><a class="headerlink" href="#special-case-delimiter-columns" title="Permalink to this headline">¶</a></h4>
+<p>One special-case value of the delimiter, <code class="docutils literal notranslate"><span class="pre">'columns'</span></code>, is useful when the
+data fields have defined column location, as is the case in certain formatted
+output from Fortran or C. When the delimiter is set to <code class="docutils literal notranslate"><span class="pre">'columns'</span></code>, the
+behavior of some of the methods is slightly different. Consider the following
+output file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CASE</span> <span class="mi">1</span>
+<span class="mi">12345678901234567890</span>
+<span class="n">TTF</span>    <span class="mf">3.7</span><span class="o">-</span><span class="mf">9.4434967</span>
+</pre></div>
+</div>
+<p>The second line is a comment that helps the reader identify the column
+number (particularly on a printout) and does not need to be parsed.</p>
+<p>In the third line, the first three columns contain flags that are either <code class="docutils literal notranslate"><span class="pre">'T'</span></code>
+or <code class="docutils literal notranslate"><span class="pre">'F'</span></code>. Columns 4-10 contain a floating point number, and columns 11
+through 20 contain another floating point number. Note that there isn’t
+always a space between the two numbers in this format, particularly when the
+second number has a negative sign. We can’t parse this with a regular
+separator, but we can use the special separator <code class="docutils literal notranslate"><span class="pre">'columns'</span></code>.</p>
+<p>Let’s parse this file to extract the third boolean flag and the two numbers.</p>
+<p>When the delimiters are in column mode, <code class="docutils literal notranslate"><span class="pre">transfer_var</span></code> takes the starting
+field and the ending field as its second and third arguments. Since we just
+want one column for the boolean flag, the starting field and ending field are
+the same. For the floating point values, we provide the appropriate column ranges:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;CASE&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">set_delimiters</span><span class="p">(</span><span class="s2">&quot;columns&quot;</span><span class="p">)</span>
+
+<span class="n">var1</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">var2</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">var3</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_var</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">((</span><span class="n">var1</span><span class="p">,</span> <span class="n">var2</span><span class="p">,</span> <span class="n">var3</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(&#x27;F&#x27;, 3.7, -9.4434967)</pre></div></div><p>The <code class="docutils literal notranslate"><span class="pre">transfer_array</span></code> method can also be used with columns, but it is used
+differently than <code class="docutils literal notranslate"><span class="pre">transfer_var</span></code>. Consider this output file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CASE</span> <span class="mi">2</span>
+<span class="mi">123456789012345678901234567890</span>
+<span class="n">NODE</span> <span class="mi">11</span> <span class="mi">22</span> <span class="mi">33</span> <span class="n">COMMENT</span>
+<span class="n">NODE</span> <span class="mi">44</span> <span class="mi">55</span> <span class="mi">66</span> <span class="n">STUFF</span>
+</pre></div>
+</div>
+<p>In this example, we want to extract the six numerical values and place them in
+an array. When the delimiter is set to columns, we can define a rectangular
+box from which all elements are parsed into an array. Note that the numbers
+inside of the box are parsed assuming standard separator characters (<code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">\t&quot;</span></code>).</p>
+<p>So here we call <code class="docutils literal notranslate"><span class="pre">transfer_array</span></code> with four arguments: <em>starting row</em>,
+<em>starting column</em>, <em>ending row</em>, and <em>ending column</em>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parser</span><span class="o">.</span><span class="n">reset_anchor</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">mark_anchor</span><span class="p">(</span><span class="s2">&quot;CASE 2&quot;</span><span class="p">)</span>
+
+<span class="n">parser</span><span class="o">.</span><span class="n">set_delimiters</span><span class="p">(</span><span class="s2">&quot;columns&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">transfer_array</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">13</span><span class="p">)</span>
+
+<span class="n">parser</span><span class="o">.</span><span class="n">set_delimiters</span><span class="p">(</span><span class="s2">&quot; </span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[11. 22. 33. 44. 55. 66.]</pre></div></div><p>Note that, in this case, we exit column mode and return to normal delimiter
+parsing by setting the delimiters back to the default after extracting the
+desired values.</p>
+</div>
+</div>
+<div class="section" id="a-special-case-fortran-namelists">
+<span id="index-5"></span><h3>A Special Case - Fortran Namelists<a class="headerlink" href="#a-special-case-fortran-namelists" title="Permalink to this headline">¶</a></h3>
+<p>Since legacy Fortran codes are expected to be frequent candidates for
+file wrapping, you may also consider using the <a class="reference external" href="https://f90nml.readthedocs.io/en/latest/">f90nml</a> package for reading
+and writing files to wrap those codes. This package enables the creation and
+manipulation of namelist files using the common Python dictionary interface.</p>
+</div>
+<div class="section" id="a-note-on-precision">
+<span id="id1"></span><h3>A Note on Precision<a class="headerlink" href="#a-note-on-precision" title="Permalink to this headline">¶</a></h3>
+<p>In a file-wrapped component, all key inputs for the external code come from an intermediate file
+that must be written. When generating the input file, it is important to prevent the loss of
+precision. Consider a variable with 15 digits of precision.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Python 3 compatibility</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">val</span> <span class="o">=</span> <span class="mf">3.1415926535897932</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">val</span>
+<span class="go">3.141592653589793...</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+<span class="go">3.14159265359</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+<span class="go">3.14159265359</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
+<span class="go">3.141593</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.16f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
+<span class="go">3.141592653589793...</span>
+</pre></div>
+</div>
+<p>If the variable’s value in the input file is created using the <code class="docutils literal notranslate"><span class="pre">print</span></code>
+statement, only 11 digits of precision are in the generated output. The same
+is true if you convert the value to a string and use string output formatting.
+Printing the variable as a floating point number with no format string gives
+even less precision. To output the full precision of a variable, you must specify
+decimal precision using formatted output (i.e., <code class="docutils literal notranslate"><span class="pre">&quot;%.16f&quot;</span></code>).</p>
+<p>Quibbling over the 11th–15th decimal place may sound unnecessary,
+but some applications are sensitive to changes of this magnitude. Moreover, it
+is important to consider how your component may be used during optimization. A
+gradient optimizer will often use a finite difference scheme to calculate the
+gradients for a model, and this means that some component params might be
+subjected to small increments and decrements. A loss of precision here can
+completely change the calculated gradient and prevent the optimizer from
+reaching a correct minimum value.</p>
+<p>The file-wrapping utilities in OpenMDAO use <code class="docutils literal notranslate"><span class="pre">&quot;%.16g&quot;</span></code>. If you write your own
+custom input-file generator for a new component, you should use this format
+for the floating point variables.</p>
+<p>Precision is also important when parsing the output, although the file-parsing
+utilities always extract the entire number. However, some codes limit the number of
+digits of precision in their output files for human readability. In such a case,
+you should check your external application’s manual to see if there is a flag for
+telling the code to output the full precision.</p>
+<div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../tags/ExternalCodeComp.html#externalcodecomp"><span class="std std-ref">ExternalCodeComp</span></a>, <a class="reference internal" href="../tags/FileWrapping.html#filewrapping"><span class="std std-ref">FileWrapping</span></a></p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../_srcdocs/index.html" title="Source Docs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="api_translation.html" title="Upgrading from OpenMDAO 1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

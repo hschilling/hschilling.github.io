@@ -1,0 +1,701 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.drivers.doe_generators &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.drivers.doe_generators</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Case generators for Design-of-Experiments Driver.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">import</span> <span class="nn">pyDOE2</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.utils.name_maps</span> <span class="k">import</span> <span class="n">prom_name2abs_name</span>
+
+
+<div class="viewcode-block" id="DOEGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.DOEGenerator">[docs]</a><span class="k">class</span> <span class="nc">DOEGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for a callable object that generates cases for a DOEDriver.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables (used by some subclasses).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="ListGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.ListGenerator">[docs]</a><span class="k">class</span> <span class="nc">ListGenerator</span><span class="p">(</span><span class="n">DOEGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator that reads cases from a provided list of DOE cases.</span>
+
+<span class="sd">    This DOE case generator will accept an existing data set in the form of</span>
+<span class="sd">    a list of DOE cases, each of which consists of a collection of name/value</span>
+<span class="sd">    pairs specifying values for design variables.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _data : list</span>
+<span class="sd">        List of collections of name, value pairs for the design variables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ListGenerator.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.ListGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ListGenerator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : list</span>
+<span class="sd">            list of collections of name, value pairs for the design variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ListGenerator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid DOE case data, expected a list but got a </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span>
+                               <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables.</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid DOE case found, expecting a list of name/value pairs:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">))</span>
+
+            <span class="n">name_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="n">case</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid DOE case found, expecting a list of name/value pairs:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">))</span>
+
+                <span class="n">name</span> <span class="o">=</span> <span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">design_vars</span><span class="p">:</span>
+                    <span class="n">name_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="k">elif</span> <span class="n">model</span><span class="p">:</span>
+                    <span class="n">abs_name</span> <span class="o">=</span> <span class="n">prom_name2abs_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;output&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">abs_name</span> <span class="ow">in</span> <span class="n">design_vars</span><span class="p">:</span>
+                        <span class="n">name_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">abs_name</span>
+
+            <span class="c1"># any names not found in name_map are invalid design vars</span>
+            <span class="n">invalid_desvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">case</span> <span class="k">if</span> <span class="n">name_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">invalid_desvars</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">invalid_desvars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid DOE case found, </span><span class="si">%s</span><span class="s2"> are not valid design variables:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">invalid_desvars</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid DOE case found, &#39;</span><span class="si">%s</span><span class="s2">&#39; is not a valid design variable:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">invalid_desvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)))</span>
+
+            <span class="k">yield</span> <span class="p">[(</span><span class="n">name_map</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">case</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CSVGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.CSVGenerator">[docs]</a><span class="k">class</span> <span class="nc">CSVGenerator</span><span class="p">(</span><span class="n">DOEGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator that reads cases from a CSV file.</span>
+
+<span class="sd">    This DOE case generator will accept an existing data set in the form of</span>
+<span class="sd">    a CSV file containing DOE cases. The CSV file should have one column per</span>
+<span class="sd">    design variable and the header row should have the names of the design</span>
+<span class="sd">    variables.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _filename : str</span>
+<span class="sd">           the name of the file from which to read cases</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CSVGenerator.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.CSVGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the CSVGenerator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">               the name of the file from which to read cases</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CSVGenerator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; is not a valid file name.&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;File not found: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables.</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c1"># map header names to absolute names if necessary</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">design_vars</span><span class="p">:</span>
+                    <span class="n">name_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="k">elif</span> <span class="n">model</span><span class="p">:</span>
+                    <span class="n">abs_name</span> <span class="o">=</span> <span class="n">prom_name2abs_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;output&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">abs_name</span> <span class="ow">in</span> <span class="n">design_vars</span><span class="p">:</span>
+                        <span class="n">name_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">abs_name</span>
+
+            <span class="c1"># any names not found in name_map are invalid design vars</span>
+            <span class="n">invalid_desvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">invalid_desvars</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">invalid_desvars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid DOE case file, </span><span class="si">%s</span><span class="s2"> are not valid design variables.&quot;</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">invalid_desvars</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid DOE case file, &#39;</span><span class="si">%s</span><span class="s2">&#39; is not a valid design variable.&quot;</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">invalid_desvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># read cases from file, parse values into numpy arrays</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                <span class="n">case</span> <span class="o">=</span> <span class="p">[(</span><span class="n">name_map</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()],</span>
+                         <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[\[\]]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="n">name</span><span class="p">]),</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">))</span>
+                        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span><span class="p">]</span>
+                <span class="k">yield</span> <span class="n">case</span></div>
+
+
+<div class="viewcode-block" id="UniformGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.UniformGenerator">[docs]</a><span class="k">class</span> <span class="nc">UniformGenerator</span><span class="p">(</span><span class="n">DOEGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator implementing the Uniform method.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _num_samples : int</span>
+<span class="sd">        The number of samples in the DOE.</span>
+<span class="sd">    _seed : int or None</span>
+<span class="sd">        Random seed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="UniformGenerator.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.UniformGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the UniformGenerator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        num_samples : int, optional</span>
+<span class="sd">            The number of samples to run. Defaults to 1.</span>
+
+<span class="sd">        seed : int or None, optional</span>
+<span class="sd">            Seed for randon number generator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UniformGenerator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span> <span class="o">=</span> <span class="n">num_samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="o">=</span> <span class="n">seed</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables (not used).</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">):</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">design_vars</span><span class="p">):</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]):</span>
+                    <span class="n">lower</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="n">lower</span> <span class="o">=</span> <span class="n">lower</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+                    <span class="n">upper</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="n">upper</span> <span class="o">=</span> <span class="n">upper</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+                    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">))</span>
+
+                <span class="n">sample</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)))</span>
+
+            <span class="k">yield</span> <span class="n">sample</span></div>
+
+
+<span class="k">class</span> <span class="nc">_pyDOE_Generator</span><span class="p">(</span><span class="n">DOEGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for DOE case generators implementing methods from pyDOE2.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _levels : int</span>
+<span class="sd">        The number of evenly spaced levels between each design variable</span>
+<span class="sd">        lower and upper bound.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the FullFactorialGenerator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        levels : int, optional</span>
+<span class="sd">            The number of evenly spaced levels between each design variable</span>
+<span class="sd">            lower and upper bound. Defaults to 2.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_pyDOE_Generator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_levels</span> <span class="o">=</span> <span class="n">levels</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables (not used).</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">design_vars</span><span class="p">)])</span>
+
+        <span class="n">doe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_design</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="c1"># generate values for each level for each design variable</span>
+        <span class="c1"># over the range of that varable&#39;s lower to upper bound</span>
+
+        <span class="c1"># rows = vars (# rows/var = var size), cols = levels</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_levels</span><span class="p">))</span>
+
+        <span class="n">row</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">design_vars</span><span class="p">):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+                <span class="n">lower</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="n">lower</span> <span class="o">=</span> <span class="n">lower</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+                <span class="n">upper</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="n">upper</span> <span class="o">=</span> <span class="n">upper</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+                <span class="n">values</span><span class="p">[</span><span class="n">row</span><span class="p">][:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_levels</span><span class="p">)</span>
+                <span class="n">row</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># yield values for doe generated indices</span>
+        <span class="k">for</span> <span class="n">idxs</span> <span class="ow">in</span> <span class="n">doe</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">):</span>
+            <span class="n">retval</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="n">row</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">design_vars</span><span class="p">):</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">idxs</span><span class="p">[</span><span class="n">var</span> <span class="o">+</span> <span class="n">k</span><span class="p">]</span>
+                    <span class="n">val</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">row</span> <span class="o">+</span> <span class="n">k</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                <span class="n">var</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">row</span> <span class="o">+=</span> <span class="n">size</span>
+
+            <span class="k">yield</span> <span class="n">retval</span>
+
+    <span class="k">def</span> <span class="nf">_generate_design</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate DOE design.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int</span>
+<span class="sd">            The number of factors for the design.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            The design matrix as a size x levels array of indices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="FullFactorialGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.FullFactorialGenerator">[docs]</a><span class="k">class</span> <span class="nc">FullFactorialGenerator</span><span class="p">(</span><span class="n">_pyDOE_Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator implementing the Full Factorial method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_generate_design</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a full factorial DOE design.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int</span>
+<span class="sd">            The number of factors for the design.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            The design matrix as a size x levels array of indices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pyDOE2</span><span class="o">.</span><span class="n">fullfact</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_levels</span><span class="p">]</span> <span class="o">*</span> <span class="n">size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PlackettBurmanGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.PlackettBurmanGenerator">[docs]</a><span class="k">class</span> <span class="nc">PlackettBurmanGenerator</span><span class="p">(</span><span class="n">_pyDOE_Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator implementing the Plackett-Burman method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PlackettBurmanGenerator.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.PlackettBurmanGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the PlackettBurmanGenerator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PlackettBurmanGenerator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">levels</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_generate_design</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a Plackett-Burman DOE design.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int</span>
+<span class="sd">            The number of factors for the design.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            The design matrix as a size x levels array of indices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">doe</span> <span class="o">=</span> <span class="n">pyDOE2</span><span class="o">.</span><span class="n">pbdesign</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="n">doe</span><span class="p">[</span><span class="n">doe</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># replace -1 with zero</span>
+
+        <span class="k">return</span> <span class="n">doe</span></div>
+
+
+<div class="viewcode-block" id="BoxBehnkenGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.BoxBehnkenGenerator">[docs]</a><span class="k">class</span> <span class="nc">BoxBehnkenGenerator</span><span class="p">(</span><span class="n">_pyDOE_Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator implementing the Box-Behnken method.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _center : int</span>
+<span class="sd">        The number of center points to include.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BoxBehnkenGenerator.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.BoxBehnkenGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the BoxBehnkenGenerator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        center : int, optional</span>
+<span class="sd">            The number of center points to include (default = None).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BoxBehnkenGenerator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">levels</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_center</span> <span class="o">=</span> <span class="n">center</span></div>
+
+    <span class="k">def</span> <span class="nf">_generate_design</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a Box-Behnken DOE design.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int</span>
+<span class="sd">            The number of factors for the design.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            The design matrix as a size x levels array of indices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Total size of design variables is </span><span class="si">%d</span><span class="s2">,&quot;</span>
+                               <span class="s2">&quot;but must be at least 3 when using </span><span class="si">%s</span><span class="s2">. &quot;</span> <span class="o">%</span>
+                               <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+
+        <span class="n">doe</span> <span class="o">=</span> <span class="n">pyDOE2</span><span class="o">.</span><span class="n">bbdesign</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_center</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">doe</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># replace [-1, 0, 1] with [0, 1, 2]</span></div>
+
+
+<div class="viewcode-block" id="LatinHypercubeGenerator"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.LatinHypercubeGenerator">[docs]</a><span class="k">class</span> <span class="nc">LatinHypercubeGenerator</span><span class="p">(</span><span class="n">DOEGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DOE case generator implementing Latin hypercube method via pyDOE2.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _samples : int</span>
+<span class="sd">        The number of evenly spaced levels between each design variable</span>
+<span class="sd">        lower and upper bound.</span>
+<span class="sd">    _criterion : string</span>
+<span class="sd">        the pyDOE criterion to use.</span>
+<span class="sd">    _iterations : int</span>
+<span class="sd">        The number of iterations to use for maximin and correlations algorithms.</span>
+<span class="sd">    _seed : int or None</span>
+<span class="sd">        Random seed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># supported pyDOE criterion names.</span>
+    <span class="n">_supported_criterion</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;maximin&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;centermaximin&quot;</span><span class="p">,</span> <span class="s2">&quot;cm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;correlation&quot;</span><span class="p">,</span> <span class="s2">&quot;corr&quot;</span><span class="p">,</span>
+        <span class="kc">None</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="LatinHypercubeGenerator.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_generators.html#openmdao.drivers.doe_generators.LatinHypercubeGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the LatinHypercubeGenerator.</span>
+
+<span class="sd">        See: https://pythonhosted.org/pyDOE/randomized.html</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        samples : int, optional</span>
+<span class="sd">            The number of samples to generate for each factor (Defaults to n)</span>
+<span class="sd">        criterion : str, optional</span>
+<span class="sd">            Allowable values are &quot;center&quot; or &quot;c&quot;, &quot;maximin&quot; or &quot;m&quot;,</span>
+<span class="sd">            &quot;centermaximin&quot; or &quot;cm&quot;, and &quot;correlation&quot; or &quot;corr&quot;. If no value</span>
+<span class="sd">            given, the design is simply randomized.</span>
+<span class="sd">        iterations : int, optional</span>
+<span class="sd">            The number of iterations in the maximin and correlations algorithms</span>
+<span class="sd">            (Defaults to 5).</span>
+<span class="sd">        seed : int, optional</span>
+<span class="sd">            Random seed to use if design is randomized. Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LatinHypercubeGenerator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_supported_criterion</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid criterion &#39;</span><span class="si">%s</span><span class="s2">&#39; specified for </span><span class="si">%s</span><span class="s2">. &quot;</span>
+                             <span class="s2">&quot;Must be one of </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">criterion</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">_supported_criterion</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">=</span> <span class="n">samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_criterion</span> <span class="o">=</span> <span class="n">criterion</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iterations</span> <span class="o">=</span> <span class="n">iterations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="o">=</span> <span class="n">seed</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables (not used).</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">)</span>
+
+        <span class="n">size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">design_vars</span><span class="p">)])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">=</span> <span class="n">size</span>
+
+        <span class="c1"># generate design</span>
+        <span class="n">doe</span> <span class="o">=</span> <span class="n">pyDOE2</span><span class="o">.</span><span class="n">lhs</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">,</span>
+                         <span class="n">criterion</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_criterion</span><span class="p">,</span>
+                         <span class="n">iterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_iterations</span><span class="p">,</span>
+                         <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">)</span>
+
+        <span class="c1"># yield desvar values for doe samples</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">doe</span><span class="p">:</span>
+            <span class="n">retval</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">design_vars</span><span class="p">):</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+                    <span class="n">sample</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">k</span><span class="p">]</span>
+
+                    <span class="n">lower</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="n">lower</span> <span class="o">=</span> <span class="n">lower</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+                    <span class="n">upper</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="n">upper</span> <span class="o">=</span> <span class="n">upper</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+                    <span class="n">val</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">lower</span> <span class="o">+</span> <span class="n">sample</span> <span class="o">*</span> <span class="p">(</span><span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span>
+
+                <span class="n">retval</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                <span class="n">var</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">col</span> <span class="o">+=</span> <span class="n">size</span>
+
+            <span class="k">yield</span> <span class="n">retval</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

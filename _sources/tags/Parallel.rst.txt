@@ -1,0 +1,7 @@
+.. _Parallel: 
+
+=========================
+Parallel
+=========================
+  .. toctree::
+     ../features/core_features/working_with_derivatives/parallel_derivs.rst

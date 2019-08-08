@@ -1,0 +1,225 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Kepler’s Equation Example - Solving an Implicit Equaiton &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Converging an Implicit Model: Nonlinear circuit analysis" href="../circuit_analysis.html" />
+    <link rel="prev" title="Hohmann Transfer Example - Optimizing a Spacecraft Manuever" href="../hohmann_transfer/hohmann_transfer.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../circuit_analysis.html" title="Converging an Implicit Model: Nonlinear circuit analysis"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../hohmann_transfer/hohmann_transfer.html" title="Hohmann Transfer Example - Optimizing a Spacecraft Manuever"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Examples</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kepler-s-equation-example-solving-an-implicit-equaiton">
+<span id="keplers-eqn-tutorial"></span><h1>Kepler’s Equation Example - Solving an Implicit Equaiton<a class="headerlink" href="#kepler-s-equation-example-solving-an-implicit-equaiton" title="Permalink to this headline">¶</a></h1>
+<p>This example will demonstrate the use of OpenMDAO for solving
+an implicit equation commonly found in astrodynamics, Kepler’s
+Equation:</p>
+<div class="math notranslate nohighlight">
+\[E - e \sin{E} = M\]</div>
+<p>Here <span class="math notranslate nohighlight">\(M\)</span> is the mean anomaly, <span class="math notranslate nohighlight">\(E\)</span> is the eccentric anomaly,
+and <span class="math notranslate nohighlight">\(e\)</span> is the eccentricity of the orbit.</p>
+<p>If we know the eccentric anomaly, computing the mean anomaly is
+trivial.  However, solving for the eccentric anomaly when given
+the mean anomaly must be done numerically.  We’ll do so using
+a nonlinear solver.  In OpenMDAO, <em>solvers</em> converge all implicit
+state variables in a <em>Group</em> by driving their residuals to zero.</p>
+<p>In an effort to simplify things for users, OpenMDAO features a
+<em>Balance</em> component.  For each implicit state variable we assign
+to the balance, it solves the following equation:</p>
+<div class="math notranslate nohighlight">
+\[lhs(var) \cdot mult(var) = rhs(var)\]</div>
+<p>The <span class="math notranslate nohighlight">\(mult\)</span> term is an optional multiplier than can be applied to the
+left-hand side (LHS) of the equation.  For our example, we will assign the
+right-hand side (RHS) to the mean anomaly (<span class="math notranslate nohighlight">\(M\)</span>), and the left-hand
+side to <span class="math notranslate nohighlight">\(E - e \sin{E}\)</span></p>
+<p>In this implementation, we rely on an ExecComp to compute the value of the LHS.</p>
+<p>BalanceComp also provides a way to supply the starting value for the implicit
+state variable (<span class="math notranslate nohighlight">\(E\)</span> in this case), via the <cite>guess_func</cite> argument.  The
+supplied function should have a similar signature to the <em>guess_nonlinear</em>
+function of <a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a>. When solving
+Kepler’s equation, using <span class="math notranslate nohighlight">\(M\)</span> as the initial guess for <span class="math notranslate nohighlight">\(E\)</span> is a
+good starting point.</p>
+<p>In summary, the recipe for solving Kepler’s equation is as follows:</p>
+<ul class="simple">
+<li>Define a problem with a <cite>Group</cite> as its model.</li>
+<li>To that Group, add components which provide, <span class="math notranslate nohighlight">\(M\)</span>, <span class="math notranslate nohighlight">\(e\)</span>, and the left-hand side of Kepler’s equation.</li>
+<li>Add a linear and nonlinear solver to the Group, since the default solvers do not iterate.</li>
+<li>Setup the problem, set values for the inputs, and run the model.</li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_almost_equal</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">,</span>
+               <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+               <span class="n">units</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">,</span>
+               <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Mean anomaly&#39;</span><span class="p">)</span>
+
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ecc&#39;</span><span class="p">,</span>
+               <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+               <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+               <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;orbit eccentricity&#39;</span><span class="p">)</span>
+
+<span class="n">bal</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BalanceComp</span><span class="p">()</span>
+
+<span class="n">bal</span><span class="o">.</span><span class="n">add_balance</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">eq_units</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">rhs_name</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">)</span>
+
+<span class="c1"># Use M (mean anomaly) as the initial guess for E (eccentric anomaly)</span>
+<span class="k">def</span> <span class="nf">guess_function</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+    <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">]</span>
+
+<span class="n">bal</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;guess_func&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">guess_function</span>
+
+<span class="c1"># ExecComp used to compute the LHS of Kepler&#39;s equation.</span>
+<span class="n">lhs_comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;lhs=E - ecc * sin(E)&#39;</span><span class="p">,</span>
+                       <span class="n">lhs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;rad&#39;</span><span class="p">},</span>
+                       <span class="n">E</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;rad&#39;</span><span class="p">},</span>
+                       <span class="n">ecc</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ivc&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">ivc</span><span class="p">,</span>
+                         <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;ecc&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;balance&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">bal</span><span class="p">,</span>
+                         <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">],</span>
+                         <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;lhs_comp&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">lhs_comp</span><span class="p">,</span>
+                         <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;ecc&#39;</span><span class="p">])</span>
+
+<span class="c1"># Explicit connections</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;lhs_comp.lhs&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.lhs:E&#39;</span><span class="p">)</span>
+
+<span class="c1"># Set up solvers</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">iprint</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">85.0</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;ecc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[115.91942563]</pre></div></div><div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
+<p>We built a model consisting of a Group in which the nonlinear solver solves
+Kepler’s equation through the use of a <em>BalanceComp</em>.  We also demonstrated
+the use of the <em>guess_nonlinear</em> method in implicit components.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../circuit_analysis.html" title="Converging an Implicit Model: Nonlinear circuit analysis"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../hohmann_transfer/hohmann_transfer.html" title="Hohmann Transfer Example - Optimizing a Spacecraft Manuever"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Examples</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,484 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ArmijoGoldsteinLS &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="BoundsEnforceLS" href="bounds_enforce.html" />
+    <link rel="prev" title="Linesearch/Backtracking" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bounds_enforce.html" title="BoundsEnforceLS"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Linesearch/Backtracking"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../index.html" >Solvers</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="index.html" accesskey="U">Linesearch/Backtracking</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="armijogoldsteinls">
+<span id="feature-armijo-goldstein"></span><h1>ArmijoGoldsteinLS<a class="headerlink" href="#armijogoldsteinls" title="Permalink to this headline">¶</a></h1>
+<p>ArmijoGoldsteinLS checks bounds and backtracks to a point that satisfies them. From there,
+further backtracking is performed, until the termination criteria are satisfied.
+The main termination criteria is the Armijo-Goldstein condition, which checks for a sufficient
+decrease from the initial point by measuring the slope. There is also an iteration maximum.</p>
+<p>Here is a simple example where ArmijoGoldsteinLS is used to backtrack during the Newton solver’s iteration on
+a system that contains an implicit component with 3 states that are confined to a small range of values.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.implicit_newton_linesearch</span> <span class="kn">import</span> <span class="n">ImplCompTwoStatesArrays</span>
+
+<span class="n">top</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ImplCompTwoStatesArrays</span><span class="p">())</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ArmijoGoldsteinLS</span><span class="p">()</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Test lower bounds: should go to the lower bound and stall</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;px.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.6</span>
+<span class="n">top</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;&#x27; failed to converge in 10 iterations.</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">][</span><span class="n">ind</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.5]</pre></div></div><div class="section" id="armijogoldsteinls-options">
+<h2>ArmijoGoldsteinLS Options<a class="headerlink" href="#armijogoldsteinls-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="6%" />
+<col width="3%" />
+<col width="85%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>alpha</td>
+<td>1.0</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Initial line search step.</td>
+</tr>
+<tr class="row-odd"><td>atol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>absolute error tolerance</td>
+</tr>
+<tr class="row-even"><td>bound_enforcement</td>
+<td>vector</td>
+<td>[‘vector’, ‘scalar’, ‘wall’]</td>
+<td>N/A</td>
+<td>If this is set to ‘vector’, the entire vector is backtracked together when a bound is violated. If this is set to ‘scalar’, only the violating entries are set to the bound and then the backtracking occurs on the vector as a whole. If this is set to ‘wall’, only the violating entries are set to the bound, and then the backtracking follows the wall - i.e., the violating entries do not change during the line search.</td>
+</tr>
+<tr class="row-odd"><td>c</td>
+<td>0.1</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Slope parameter for line of sufficient decrease. The larger the step, the more decrease is required to terminate the line search.</td>
+</tr>
+<tr class="row-even"><td>debug_print</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>If true, the values of input and output variables at the start of iteration are printed and written to a file after a failure to converge.</td>
+</tr>
+<tr class="row-odd"><td>err_on_maxiter</td>
+<td>None</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Deprecated. Use ‘err_on_non_converge’.</td>
+</tr>
+<tr class="row-even"><td>err_on_non_converge</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, AnalysisError will be raised if we don’t converge.</td>
+</tr>
+<tr class="row-odd"><td>iprint</td>
+<td>1</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>whether to print output</td>
+</tr>
+<tr class="row-even"><td>maxiter</td>
+<td>5</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>maximum number of iterations</td>
+</tr>
+<tr class="row-odd"><td>method</td>
+<td>Armijo</td>
+<td>[‘Armijo’, ‘Goldstein’]</td>
+<td>N/A</td>
+<td>Method to calculate stopping condition.</td>
+</tr>
+<tr class="row-even"><td>print_bound_enforce</td>
+<td>False</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Set to True to print out names and values of variables that are pulled back to their bounds.</td>
+</tr>
+<tr class="row-odd"><td>retry_on_analysis_error</td>
+<td>True</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Backtrack and retry if an AnalysisError is raised.</td>
+</tr>
+<tr class="row-even"><td>rho</td>
+<td>0.5</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Contraction factor.</td>
+</tr>
+<tr class="row-odd"><td>rtol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>relative error tolerance</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="armijogoldsteinls-option-examples">
+<h2>ArmijoGoldsteinLS Option Examples<a class="headerlink" href="#armijogoldsteinls-option-examples" title="Permalink to this headline">¶</a></h2>
+<p><strong>bound_enforcement</strong></p>
+<p>ArmijoGoldsteinLS includes the <cite>bound_enforcement</cite> option in its options dictionary. This option has a dual role:</p>
+<ol class="arabic simple">
+<li>Behavior of the non-bounded variables when the bounded ones are capped.</li>
+<li>Direction of the further backtracking.</li>
+</ol>
+<p>There are three different acceptable values for bounds-enforcement schemes available in this option.</p>
+<p>With “vector” bounds enforcement, the solution in the output vector is pulled back to a point where none of the
+variables violate any upper or lower bounds. Further backtracking continues along the Newton gradient direction vector back towards the
+initial point.</p>
+<img alt="../../../../_images/BT1.jpg" src="../../../../_images/BT1.jpg" />
+<p>With “scalar” bounds enforcement, only the variables that violate their bounds are pulled back to feasible values; the
+remaining values are kept at the Newton-stepped point. This changes the direction of the backtracking vector so that
+it still moves in the direction of the initial point.</p>
+<img alt="../../../../_images/BT2.jpg" src="../../../../_images/BT2.jpg" />
+<p>With “wall” bounds enforcement, only the variables that violate their bounds are pulled back to feasible values; the
+remaining values are kept at the Newton-stepped point. Further backtracking only occurs in the direction of the non-violating
+variables, so that it will move along the wall.</p>
+<img alt="../../../../_images/BT3.jpg" src="../../../../_images/BT3.jpg" />
+<p>Here are examples of each acceptable value for the <strong>bound_enforcement</strong> option:</p>
+<ul>
+<li><p class="first">bound_enforcement: vector</p>
+<p>The <cite>bound_enforcement</cite> option in the options dictionary is used to specify how the output bounds
+are enforced. When this is set to “vector”, the output vector is rolled back along the computed gradient until
+it reaches a point where the earliest bound violation occurred. The backtracking continues along the original
+computed gradient.</p>
+</li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.implicit_newton_linesearch</span> <span class="kn">import</span> <span class="n">ImplCompTwoStatesArrays</span>
+
+<span class="n">top</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ImplCompTwoStatesArrays</span><span class="p">())</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ArmijoGoldsteinLS</span><span class="p">(</span><span class="n">bound_enforcement</span><span class="o">=</span><span class="s1">&#39;vector&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Test lower bounds: should go to the lower bound and stall</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;px.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.6</span>
+<span class="n">top</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;&#x27; failed to converge in 10 iterations.</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">][</span><span class="n">ind</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.5]</pre></div></div><ul>
+<li><p class="first">bound_enforcement: scalar</p>
+<p>The <cite>bound_enforcement</cite> option in the options dictionary is used to specify how the output bounds
+are enforced. When this is set to “scaler”, then the only indices in the output vector that are rolled back
+are the ones that violate their upper or lower bounds. The backtracking continues along the modified gradient.</p>
+</li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.implicit_newton_linesearch</span> <span class="kn">import</span> <span class="n">ImplCompTwoStatesArrays</span>
+
+<span class="n">top</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ImplCompTwoStatesArrays</span><span class="p">())</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">ls</span> <span class="o">=</span> <span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ArmijoGoldsteinLS</span><span class="p">(</span><span class="n">bound_enforcement</span><span class="o">=</span><span class="s1">&#39;scalar&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton Converged in 1 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Test lower bounds: should stop just short of the lower bound</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;px.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.6</span>
+<span class="n">top</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;&#x27; failed to converge in 10 iterations.</pre></div></div><ul>
+<li><p class="first">bound_enforcement: wall</p>
+<p>The <cite>bound_enforcement</cite> option in the options dictionary is used to specify how the output bounds
+are enforced. When this is set to “wall”, then the only indices in the output vector that are rolled back
+are the ones that violate their upper or lower bounds. The backtracking continues along a modified gradient
+direction that follows the boundary of the violated output bounds.</p>
+</li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.implicit_newton_linesearch</span> <span class="kn">import</span> <span class="n">ImplCompTwoStatesArrays</span>
+
+<span class="n">top</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ImplCompTwoStatesArrays</span><span class="p">())</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ArmijoGoldsteinLS</span><span class="p">(</span><span class="n">bound_enforcement</span><span class="o">=</span><span class="s1">&#39;wall&#39;</span><span class="p">)</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Test upper bounds: should go to the upper bound and stall</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;px.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.4</span>
+<span class="n">top</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;&#x27; failed to converge in 10 iterations.</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[2.6]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[2.5]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[2.65]</pre></div></div><p><strong>maxiter</strong></p>
+<blockquote>
+<div>The “maxiter” option is a termination criteria that specifies the maximum number of backtracking steps to allow.</div></blockquote>
+<p><strong>alpha</strong></p>
+<blockquote>
+<div>The “alpha” option is used to specify the initial length of the Newton step. Since NewtonSolver assumes a
+stepsize of 1.0, this value usually shouldn’t be changed.</div></blockquote>
+<p><strong>rho</strong></p>
+<blockquote>
+<div>The “rho” option controls how far to backtrack in each successive backtracking step. It is applied as a multiplier to
+the step, so a higher value (approaching 1.0) is a very small step, while a low value takes you close to the initial
+point. The default value is 0.5.</div></blockquote>
+<p><strong>c</strong></p>
+<blockquote>
+<div>In the <cite>ArmijoGoldsteinLS</cite>, the “c” option is a multiplier on the slope check. Setting it to a smaller value means a more
+gentle slope will satisfy the condition and terminate.</div></blockquote>
+<p><strong>print_bound_enforce</strong></p>
+<blockquote>
+<div>When the “print_bound_enforce” option is set to True, the line-search will print the name and values of any variables
+that exceeded their lower or upper bounds and were drawn back during bounds enforcement.</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.implicit_newton_linesearch</span> <span class="kn">import</span> <span class="n">ImplCompTwoStatesArrays</span>
+
+<span class="n">top</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ImplCompTwoStatesArrays</span><span class="p">())</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">newt</span> <span class="o">=</span> <span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">top</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">ls</span> <span class="o">=</span> <span class="n">newt</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BoundsEnforceLS</span><span class="p">(</span><span class="n">bound_enforcement</span><span class="o">=</span><span class="s1">&#39;vector&#39;</span><span class="p">)</span>
+<span class="n">ls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;print_bound_enforce&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">top</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">top</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Test lower bounds: should go to the lower bound and stall</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;px.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.6</span>
+<span class="n">top</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton 0 ; 9.1126286 1
+|  LN: SCIPY 0 ; 0.18556153 1
+|  LN: SCIPY 1 ; 4.20321892e-16 2.26513487e-15
+&#x27;comp.z&#x27; exceeds lower bounds
+  Val: [1.33333333 1.33333333 1.33333333]
+  Lower: [1.5 1.5 1.5] 
+
+|  LS: BCHK 0 ; 5.69539287 0.625
+NL: Newton 1 ; 5.69539287 0.625
+|  LN: SCIPY 0 ; 0.0742246119 1
+|  LN: SCIPY 1 ; 1.0149028e-16 1.36733998e-15
+&#x27;comp.z&#x27; exceeds lower bounds
+  Val: [1.33333333 1.33333333 1.33333333]
+  Lower: [1.5 1.5 1.5] 
+
+|  LS: BCHK 0 ; 5.69539287 1
+NL: Newton 2 ; 5.69539287 0.625
+NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;&#x27; failed to converge in 2 iterations.</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">][</span><span class="n">ind</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.5]</pre></div></div><ul>
+<li><p class="first">retry_on_analysis_error</p>
+<p>By default, the ArmijoGoldsteinLS linesearch will backtrack if the model raises an AnalysisError, which can happen if
+the component explicitly raises it, or a subsolver hits its iteration limit with the ‘err_on_non_converge’ option set to True.
+If you would rather terminate on an AnalysisError, you can set this option to False.</p>
+</li>
+</ul>
+<div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../../tags/Solver.html#solver"><span class="std std-ref">Solver</span></a>, <a class="reference internal" href="../../../../tags/linesearch.html#linesearch"><span class="std std-ref">linesearch</span></a>, <a class="reference internal" href="../../../../tags/backtracking.html#backtracking"><span class="std std-ref">backtracking</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bounds_enforce.html" title="BoundsEnforceLS"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Linesearch/Backtracking"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../index.html" >Solvers</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="index.html" >Linesearch/Backtracking</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

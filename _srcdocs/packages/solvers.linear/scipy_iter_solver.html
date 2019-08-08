@@ -1,0 +1,418 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>scipy_iter_solver.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="user_defined.py" href="user_defined.html" />
+    <link rel="prev" title="petsc_ksp.py" href="petsc_ksp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="user_defined.html" title="user_defined.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="petsc_ksp.html" title="petsc_ksp.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.solvers.linear.html" accesskey="U">openmdao.solvers.linear</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.solvers.linear.scipy_iter_solver">
+<span id="scipy-iter-solver-py"></span><span id="openmdao-solvers-linear-scipy-iter-solver-py"></span><span id="index-0"></span><h1>scipy_iter_solver.py<a class="headerlink" href="#module-openmdao.solvers.linear.scipy_iter_solver" title="Permalink to this headline">¶</a></h1>
+<p>Define the scipy iterative solver class.</p>
+<dl class="class">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.linear.scipy_iter_solver.</code><code class="descname">ScipyIterativeSolver</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/scipy_iter_solver.html#ScipyIterativeSolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov" title="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov</span></code></a></p>
+<p>Deprecated.  See ScipyKrylov.</p>
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'LN: SCIPY'</em><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/scipy_iter_solver.html#ScipyIterativeSolver.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deprecated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*args</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of object</span></dt>
+<dd><p class="first last">Positional args.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Named args.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.preconditioner">
+<code class="descname">preconditioner</code><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.preconditioner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide ‘preconditioner’ property for backwards compatibility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>LinearSolver</strong></dt>
+<dd><p class="first last">reference to the ‘precon’ property.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>rel_systems=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyIterativeSolver.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>rel_systems</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Names of systems relevant to the current solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.linear.scipy_iter_solver.</code><code class="descname">ScipyKrylov</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/scipy_iter_solver.html#ScipyKrylov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../solvers/solver.html#openmdao.solvers.solver.LinearSolver" title="openmdao.solvers.solver.LinearSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.solver.LinearSolver</span></code></a></p>
+<p>The Krylov iterative solvers in scipy.sparse.linalg.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="89%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>precon</strong></td>
+<td>(Solver) Preconditioner for linear solve. Default is None for no preconditioner.</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'LN: SCIPY'</em><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/scipy_iter_solver.html#ScipyKrylov.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare the solver option.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{}</span></dt>
+<dd><p class="first last">dictionary of options set by the instantiating class/script.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.preconditioner">
+<code class="descname">preconditioner</code><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.preconditioner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide ‘preconditioner’ property for backwards compatibility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>LinearSolver</strong></dt>
+<dd><p class="first last">reference to the ‘precon’ property.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>rel_systems=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/scipy_iter_solver.html#ScipyKrylov.solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.scipy_iter_solver.ScipyKrylov.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>rel_systems</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Names of systems relevant to the current solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="user_defined.html" title="user_defined.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="petsc_ksp.html" title="petsc_ksp.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.solvers.linear.html" >openmdao.solvers.linear</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

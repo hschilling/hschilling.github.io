@@ -1,0 +1,534 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>BroydenSolver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Linear Solvers" href="../linear/index.html" />
+    <link rel="prev" title="NewtonSolver" href="newton.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../linear/index.html" title="Linear Solvers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="newton.html" title="NewtonSolver"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../index.html" >Solvers</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="index.html" accesskey="U">Nonlinear Solvers</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="broydensolver">
+<span id="nlbroyden"></span><h1>BroydenSolver<a class="headerlink" href="#broydensolver" title="Permalink to this headline">¶</a></h1>
+<p>BroydenSolver is a quasi-Newton solver that implements Broyden’s second method to solve for values of the model’s states that
+drive their residuals to zero. It does so by maintaning an approximation to the inverse of the Jacobian of the model or a subset
+of the model. In some cases this can be more efficient than NewtonSolver because updating the approximated inverse Jacobian is
+cheaper than solving the linear system. It may take more iterations because the search direction depends on an approximation,
+but the iterations take fewer operations.</p>
+<p>The BroydenSolver has two different modes of operation. It can operate on the entire model and solve for every state in the containing
+system and all subsystems. Alternatively, it can operate on a subset of the model and only solve for a list of states that you provide.
+The advanatage of full-model mode is that you don’t have to worry about forgetting a state, particularly in large models where you might
+not be familiar with every component or variable. The disadvantage is that you are computing the inverse of a larger matrix every time
+you recalculate the inverse jacobian, though ideally you are not recomputing this very often. Operating on a subset of states is more
+efficient in both the linear solve and the Broyden update, but you do run the risk of missing a state. The BroydenSolver will print a
+warning if it finds any states in the model that aren’t covered by a solver.</p>
+<div class="section" id="broydensolver-options">
+<h2>BroydenSolver Options<a class="headerlink" href="#broydensolver-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="2%" />
+<col width="6%" />
+<col width="5%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>alpha</td>
+<td>0.4</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Value to scale the starting Jacobian, which is Identity. This option does nothing if you compute the initial Jacobian instead.</td>
+</tr>
+<tr class="row-odd"><td>atol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>absolute error tolerance</td>
+</tr>
+<tr class="row-even"><td>compute_jacobian</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, compute an initial Jacobian, otherwise start with Identity scaled by alpha. Further Jacobians may also be computed depending on the other options.</td>
+</tr>
+<tr class="row-odd"><td>converge_limit</td>
+<td>1.0</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Ratio of current residual to previous residual above which the convergence is considered a failure. The Jacobian will be regenerated once this condition has been reached a number of consecutive times as specified in max_converge_failures.</td>
+</tr>
+<tr class="row-even"><td>cs_reconverge</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, when this driver solves under a complex step, nudge the Solution vector by a small amount so that it reconverges.</td>
+</tr>
+<tr class="row-odd"><td>debug_print</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>If true, the values of input and output variables at the start of iteration are printed and written to a file after a failure to converge.</td>
+</tr>
+<tr class="row-even"><td>diverge_limit</td>
+<td>2.0</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Ratio of current residual to previous residual above which the Jacobian will be immediately regenerated.</td>
+</tr>
+<tr class="row-odd"><td>err_on_maxiter</td>
+<td>None</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Deprecated. Use ‘err_on_non_converge’.</td>
+</tr>
+<tr class="row-even"><td>err_on_non_converge</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, AnalysisError will be raised if we don’t converge.</td>
+</tr>
+<tr class="row-odd"><td>iprint</td>
+<td>1</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>whether to print output</td>
+</tr>
+<tr class="row-even"><td>max_converge_failures</td>
+<td>3</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>The number of convergence failures before regenerating the Jacobian.</td>
+</tr>
+<tr class="row-odd"><td>max_jacobians</td>
+<td>10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Maximum number of jacobians to compute.</td>
+</tr>
+<tr class="row-even"><td>maxiter</td>
+<td>10</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>maximum number of iterations</td>
+</tr>
+<tr class="row-odd"><td>rtol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>relative error tolerance</td>
+</tr>
+<tr class="row-even"><td>state_vars</td>
+<td>[]</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>List of the state-variable/residuals that are to be solved here.</td>
+</tr>
+<tr class="row-odd"><td>update_broyden</td>
+<td>True</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Flag controls whether to perform Broyden update to the Jacobian. There are some applications where it may be useful to turn this off.</td>
+</tr>
+</tbody>
+</table>
+<p>The BroydenSolver also contains a slot for a linear solver and a slot for a linesearch. See the
+<a class="reference internal" href="../backtracking/index.html#feature-line-search"><span class="std std-ref">feature doc about linesearches</span></a> for more about these.</p>
+</div>
+<div class="section" id="broydensolver-on-a-full-model">
+<h2>BroydenSolver on a Full Model<a class="headerlink" href="#broydensolver-on-a-full-model" title="Permalink to this headline">¶</a></h2>
+<p>Here we show an example that uses the <a class="reference internal" href="../../../../advanced_guide/implicit_comps/implicit_with_balancecomp.html#using-balancecomp-tutorial"><span class="std std-ref">electrical circuit model</span></a> from the
+advanced guide. We have replaced the <cite>NewtonSolver</cite> with a <cite>BroydenSolver</cite>, and set the maximum number of iterations
+to 20. We also assign a <cite>DirectSolver</cite> into the “linear_solver” slot on the <cite>BroydenSolver</cite>.  This is the linear solver
+that will be used to assemble the Jacobian and compute its inverse. Since we don’t specify any states in the <cite>state_vars</cite>
+option, the BroydenSolver operates on the entire model. If you don’t specify a linear_solver here, then the BroydenSolver
+will use the one from the system.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this mode, only the <cite>DirectSolver</cite> can be used as the linear_solver.</p>
+</div>
+<p>Depending on the values of some of the other options such as “converge_limit”, “diverge_limit”, and “max_converge_failures”,
+the Jacobian might be recalculated if convergence stalls, though this doesn’t happen in the electrical circuit example.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Circuit</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Replace existing solver with BroydenSolver</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BroydenSolver</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="c1"># set some initial guesses</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">])</span>
+
+<span class="c1"># sanity check: should sum to .1 Amps</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>
+=======
+circuit
+=======
+BROYDEN 0 ; 60.8585191 1
+BROYDEN 1 ; 22.3887968 0.367882708
+BROYDEN 2 ; 12.510447 0.205566076
+BROYDEN 3 ; 5.98619238 0.098362439
+BROYDEN 4 ; 3.04366868 0.050012204
+BROYDEN 5 ; 1.51175582 0.0248404963
+BROYDEN 6 ; 0.75759176 0.0124484094
+BROYDEN 7 ; 0.378237612 0.00621503147
+BROYDEN 8 ; 0.188999522 0.00310555572
+BROYDEN 9 ; 0.0942955644 0.00154942259
+BROYDEN 10 ; 0.0469601147 0.000771627627
+BROYDEN 11 ; 0.0232898966 0.000382689177
+BROYDEN 12 ; 0.0114571067 0.000188258059
+BROYDEN 13 ; 0.00554434897 9.11022655e-05
+BROYDEN 14 ; 0.00259570587 4.26514792e-05
+BROYDEN 15 ; 0.0011364197 1.86731408e-05
+BROYDEN 16 ; 0.000434046425 7.13205696e-06
+BROYDEN 17 ; 0.000125657613 2.06474977e-06
+BROYDEN 18 ; 2.10704958e-05 3.46220975e-07
+BROYDEN 19 ; 1.29557101e-06 2.12882441e-08
+BROYDEN 20 ; 1.45277217e-08 2.38713033e-10
+BROYDENSolver &#x27;BROYDEN&#x27; on system &#x27;circuit&#x27; failed to converge in 20 iterations.
+[9.90804735]
+[0.71278226]
+[0.10000001]
+</pre></div></div></div></blockquote>
+</div>
+<div class="section" id="broydensolver-on-a-subset-of-states">
+<h2>BroydenSolver on a Subset of States<a class="headerlink" href="#broydensolver-on-a-subset-of-states" title="Permalink to this headline">¶</a></h2>
+<p>The <cite>BroydenSolver</cite> can also be used to solve for specific states. Here we consider the same circuit example, but instead
+we specify the two voltages n1.V’ and ‘n2.V’ as our “state_vars”.  In this mode, we aren’t limited to just using the
+<cite>DirectSolver</cite>, and in this example we choose <cite>LinearBlockGS</cite> instead.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Circuit</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Replace existing solver with om.BroydenSolver</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BroydenSolver</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="c1"># Specify states for Broyden to solve</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;state_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;n1.V&#39;</span><span class="p">,</span> <span class="s1">&#39;n2.V&#39;</span><span class="p">]</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">LinearBlockGS</span><span class="p">()</span>
+
+<span class="c1"># set some initial guesses</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">])</span>
+
+<span class="c1"># sanity check: should sum to .1 Amps</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>
+=======
+circuit
+=======
+BROYDEN 0 ; 60.8585191 1
+BROYDEN 1 ; 22.3887968 0.367882708
+BROYDEN 2 ; 12.510447 0.205566076
+BROYDEN 3 ; 5.98619238 0.098362439
+BROYDEN 4 ; 3.04366868 0.050012204
+BROYDEN 5 ; 1.51175582 0.0248404963
+BROYDEN 6 ; 0.75759176 0.0124484094
+BROYDEN 7 ; 0.378237612 0.00621503147
+BROYDEN 8 ; 0.188999522 0.00310555572
+BROYDEN 9 ; 0.0942955644 0.00154942259
+BROYDEN 10 ; 0.0469601147 0.000771627627
+BROYDEN 11 ; 0.0232898966 0.000382689177
+BROYDEN 12 ; 0.0114571067 0.000188258059
+BROYDEN 13 ; 0.00554434897 9.11022655e-05
+BROYDEN 14 ; 0.00259570587 4.26514792e-05
+BROYDEN 15 ; 0.0011364197 1.86731408e-05
+BROYDEN 16 ; 0.000434046425 7.13205696e-06
+BROYDEN 17 ; 0.000125657613 2.06474977e-06
+BROYDEN 18 ; 2.10704958e-05 3.46220975e-07
+BROYDEN 19 ; 1.29557101e-06 2.12882441e-08
+BROYDEN 20 ; 1.45277217e-08 2.38713033e-10
+BROYDENSolver &#x27;BROYDEN&#x27; on system &#x27;circuit&#x27; failed to converge in 20 iterations.
+[9.90804735]
+[0.71278226]
+[0.10000001]
+</pre></div></div></div></blockquote>
+</div>
+<div class="section" id="broydensolver-for-models-without-derivatives">
+<h2>BroydenSolver for Models Without Derivatives<a class="headerlink" href="#broydensolver-for-models-without-derivatives" title="Permalink to this headline">¶</a></h2>
+<p>The <cite>BroydenSolver</cite> can be used for models where you don’t have any partial derivatives defined, and don’t wish to use
+finite difference to calculate them. This behavior is activated by setting the “compute_jacobian” option to False. Instead of calculating
+an initial Jacobian, we start with an estimate that is just the identity matrix scaled by a tunable parameter
+in the options called “alpha”. As the <cite>BroydenSolver</cite> iterates, this estimate of the Jacobian is improved, and
+for some problems, a solution can be reached that satisfies the residual equations.</p>
+<p>In this example, we solve for the coupling variable in a version of the Sellar model that severs the cycle
+and expresses the difference across the broken cycle as an implicit state, which the <cite>BroydenSolver</cite> will
+solve.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarStateConnection</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarStateConnection</span><span class="p">(</span><span class="n">nonlinear_solver</span><span class="o">=</span><span class="n">om</span><span class="o">.</span><span class="n">BroydenSolver</span><span class="p">(),</span>
+                                           <span class="n">linear_solver</span><span class="o">=</span><span class="n">om</span><span class="o">.</span><span class="n">LinearRunOnce</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;state_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;state_eq.y2_command&#39;</span><span class="p">]</span>
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;compute_jacobian&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;state_eq.y2_command&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>BROYDEN 0 ; 11.2725705 1
+BROYDEN 1 ; 6.67731871 0.592351025
+BROYDEN 2 ; 0.00261878643 0.00023231493
+BROYDEN 3 ; 6.33742047e-07 5.62198343e-08
+BROYDEN 4 ; 6.21724894e-14 5.51537817e-15
+BROYDEN Converged
+[25.58830237]
+[12.05848815]
+</pre></div></div></div></blockquote>
+</div>
+<div class="section" id="broydensolver-option-examples">
+<h2>BroydenSolver Option Examples<a class="headerlink" href="#broydensolver-option-examples" title="Permalink to this headline">¶</a></h2>
+<p>There are a few additional options that give you more control over when and how often the Jacobian is recomputed.
+The “diverge_limit” option allows you to define a limit to the ratio of current residual and the previous iteration’s
+residual above which the solution is considered to be diverging. If this limit is exceeded, then the Jacobian is
+always recomputed on the next iteration. There is also a “converge_limit” that allows you similarly define a limit
+above which the solution is considered to be non-converging. When this limit is exceeded, the Jacobian is not immediately
+recomputed until the limit has been exceeded a number of consecutive times as defined by the “max_converge_failures”
+option. The default value for “max_converge_failures” is 3, and the default “converge_limit” is 1.0. Exploring
+these options can help you solve more quickly (or in some cases solve at all) some tougher problems.</p>
+<p>Here, we take the same circuit example from above and specify a much lower “converge_limit” and “max_converge_failures”
+to force recomputation of the Jacobian much more frequently. This results in a quicker convergence in terms of the
+number of iterations, though keep in mind that solving for the derivatives adds computational cost.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Circuit</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Replace existing solver with BroydenSolver</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BroydenSolver</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;converge_limit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_converge_failures&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1"># Specify states for Broyden to solve</span>
+<span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;state_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;n1.V&#39;</span><span class="p">,</span> <span class="s1">&#39;n2.V&#39;</span><span class="p">]</span>
+
+<span class="c1"># set some initial guesses</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">])</span>
+
+<span class="c1"># sanity check: should sum to .1 Amps</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>
+=======
+circuit
+=======
+BROYDEN 0 ; 60.8585191 1
+BROYDEN 1 ; 22.3887968 0.367882708
+BROYDEN 2 ; 8.23629948 0.135335194
+BROYDEN 3 ; 3.02978539 0.04978408
+BROYDEN 4 ; 1.11437824 0.0183109654
+BROYDEN 5 ; 0.409725119 0.00673242012
+BROYDEN 6 ; 0.150492273 0.0024728218
+BROYDEN 7 ; 0.0551239641 0.000905772353
+BROYDEN 8 ; 0.0200403261 0.000329293686
+BROYDEN 9 ; 0.00713760492 0.000117281936
+BROYDEN 10 ; 0.00240281896 3.94820478e-05
+BROYDEN 11 ; 0.000692025597 1.13710555e-05
+BROYDEN 12 ; 0.000282811849 4.64703796e-06
+BROYDEN 13 ; 6.22844815e-05 1.02343078e-06
+BROYDEN 14 ; 7.64241042e-06 1.25576674e-07
+BROYDEN 15 ; 2.45096367e-07 4.02731402e-09
+BROYDEN 16 ; 1.00716012e-09 1.65492052e-11
+BROYDEN Converged
+[9.90804735]
+[0.71278188]
+[0.1]
+</pre></div></div></div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../linear/index.html" title="Linear Solvers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="newton.html" title="NewtonSolver"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../index.html" >Solvers</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="index.html" >Nonlinear Solvers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

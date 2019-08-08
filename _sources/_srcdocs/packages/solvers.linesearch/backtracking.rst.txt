@@ -1,0 +1,16 @@
+.. index:: backtracking.py
+
+.. _openmdao.solvers.linesearch.backtracking.py:
+
+backtracking.py
+---------------
+
+.. automodule:: openmdao.solvers.linesearch.backtracking
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

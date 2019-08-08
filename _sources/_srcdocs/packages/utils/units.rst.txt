@@ -1,0 +1,16 @@
+.. index:: units.py
+
+.. _openmdao.utils.units.py:
+
+units.py
+--------
+
+.. automodule:: openmdao.utils.units
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

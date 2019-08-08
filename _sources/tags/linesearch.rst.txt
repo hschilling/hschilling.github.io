@@ -1,0 +1,7 @@
+.. _linesearch: 
+
+=========================
+linesearch
+=========================
+  .. toctree::
+     ../features/building_blocks/solvers/backtracking/armijo_goldstein.rst

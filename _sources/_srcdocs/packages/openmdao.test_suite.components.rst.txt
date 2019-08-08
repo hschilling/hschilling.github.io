@@ -1,0 +1,32 @@
+openmdao.test_suite.components
+------------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    test_suite.components/ae_tests
+    test_suite.components/array_comp
+    test_suite.components/branin
+    test_suite.components/cycle_comps
+    test_suite.components/double_sellar
+    test_suite.components/exec_comp_for_test
+    test_suite.components/expl_comp_array
+    test_suite.components/expl_comp_simple
+    test_suite.components/impl_comp_array
+    test_suite.components/impl_comp_simple
+    test_suite.components/implicit_newton_linesearch
+    test_suite.components/matmultcomp
+    test_suite.components/misc_components
+    test_suite.components/options_feature_array
+    test_suite.components/options_feature_function
+    test_suite.components/options_feature_lincomb
+    test_suite.components/options_feature_vector
+    test_suite.components/paraboloid
+    test_suite.components/paraboloid_feature
+    test_suite.components/paraboloid_mat_vec
+    test_suite.components/quad_implicit
+    test_suite.components/sellar
+    test_suite.components/sellar_feature
+    test_suite.components/simple_comps
+    test_suite.components/three_bar_truss
+    test_suite.components/unit_conv

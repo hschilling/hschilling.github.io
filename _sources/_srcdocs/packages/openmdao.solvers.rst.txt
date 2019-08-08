@@ -1,0 +1,7 @@
+openmdao.solvers
+----------------
+
+.. toctree::
+    :maxdepth: 1
+
+    solvers/solver

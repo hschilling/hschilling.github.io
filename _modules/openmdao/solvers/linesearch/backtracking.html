@@ -1,0 +1,510 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.solvers.linesearch.backtracking &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.solvers.linesearch.backtracking</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A few different backtracking line search subsolvers.</span>
+
+<span class="sd">BoundsEnforceLS - Only checks bounds and enforces them by one of three methods.</span>
+<span class="sd">ArmijoGoldsteinLS -- Like above, but terminates with the ArmijoGoldsteinLS condition.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">reraise</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.analysis_error</span> <span class="k">import</span> <span class="n">AnalysisError</span>
+<span class="kn">from</span> <span class="nn">openmdao.solvers.solver</span> <span class="k">import</span> <span class="n">NonlinearSolver</span>
+<span class="kn">from</span> <span class="nn">openmdao.recorders.recording_iteration_stack</span> <span class="k">import</span> <span class="n">Recording</span>
+
+
+<span class="k">def</span> <span class="nf">_print_violations</span><span class="p">(</span><span class="n">unknowns</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print out which variables exceed their bounds.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    unknowns : &lt;Vector&gt;</span>
+<span class="sd">        Vector containing the unknowns.</span>
+<span class="sd">    lower : &lt;Vector&gt;</span>
+<span class="sd">        Vector containing the lower bounds.</span>
+<span class="sd">    upper : &lt;Vector&gt;</span>
+<span class="sd">        Vector containing the upper bounds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">unknowns</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">val</span> <span class="o">&gt;</span> <span class="n">upper</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">[</span><span class="n">name</span><span class="p">]):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; exceeds upper bounds&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Val:&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Upper:&quot;</span><span class="p">,</span> <span class="n">upper</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">val</span> <span class="o">&lt;</span> <span class="n">lower</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">[</span><span class="n">name</span><span class="p">]):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; exceeds lower bounds&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Val:&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Lower:&quot;</span><span class="p">,</span> <span class="n">lower</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LinesearchSolver"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linesearch/backtracking.html#openmdao.solvers.linesearch.backtracking.LinesearchSolver">[docs]</a><span class="k">class</span> <span class="nc">LinesearchSolver</span><span class="p">(</span><span class="n">NonlinearSolver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for line search solvers.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _do_subsolve : bool</span>
+<span class="sd">        Flag used by parent solver to tell the line search whether to solve subsystems while</span>
+<span class="sd">        backtracking.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LinesearchSolver.__init__"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linesearch/backtracking.html#openmdao.solvers.linesearch.backtracking.LinesearchSolver.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Options dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinesearchSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># Parent solver sets this to control whether to solve subsystems.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_do_subsolve</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinesearchSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_declare_options</span><span class="p">()</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span>
+            <span class="s1">&#39;bound_enforcement&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;vector&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;vector&#39;</span><span class="p">,</span> <span class="s1">&#39;scalar&#39;</span><span class="p">,</span> <span class="s1">&#39;wall&#39;</span><span class="p">],</span>
+            <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;If this is set to &#39;vector&#39;, the entire vector is backtracked together &quot;</span> <span class="o">+</span>
+                 <span class="s2">&quot;when a bound is violated. If this is set to &#39;scalar&#39;, only the violating &quot;</span> <span class="o">+</span>
+                 <span class="s2">&quot;entries are set to the bound and then the backtracking occurs on the vector &quot;</span> <span class="o">+</span>
+                 <span class="s2">&quot;as a whole. If this is set to &#39;wall&#39;, only the violating entries are set &quot;</span> <span class="o">+</span>
+                 <span class="s2">&quot;to the bound, and then the backtracking follows the wall - i.e., the &quot;</span> <span class="o">+</span>
+                 <span class="s2">&quot;violating entries do not change during the line search.&quot;</span><span class="p">)</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;print_bound_enforce&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Set to True to print out names and values of variables that are pulled &quot;</span>
+                    <span class="s2">&quot;back to their bounds.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_enforce_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enforce lower/upper bounds.</span>
+
+<span class="sd">        Modifies the vector of unknowns and the step.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        step : &lt;Vector&gt;</span>
+<span class="sd">            Newton step; the backtracking is applied to this vector in-place.</span>
+<span class="sd">        alpha : float</span>
+<span class="sd">            Step size parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;bound_enforcement&#39;</span><span class="p">]</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_lower_bounds</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_upper_bounds</span>
+
+        <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;print_bound_enforce&#39;</span><span class="p">]:</span>
+            <span class="n">_print_violations</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;vector&#39;</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">_enforce_bounds_vector</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;scalar&#39;</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">_enforce_bounds_scalar</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;wall&#39;</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">_enforce_bounds_wall</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BoundsEnforceLS"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linesearch/backtracking.html#openmdao.solvers.linesearch.backtracking.BoundsEnforceLS">[docs]</a><span class="k">class</span> <span class="nc">BoundsEnforceLS</span><span class="p">(</span><span class="n">LinesearchSolver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Bounds enforcement only.</span>
+
+<span class="sd">    Not so much a linesearch; just check the bounds and if they are violated, then pull back to a</span>
+<span class="sd">    non-violating point and evaluate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SOLVER</span> <span class="o">=</span> <span class="s1">&#39;LS: BCHK&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BoundsEnforceLS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_declare_options</span><span class="p">()</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+
+        <span class="c1"># Remove unused options from base options here, so that users</span>
+        <span class="c1"># attempting to set them will get KeyErrors.</span>
+        <span class="c1"># &quot;err_on_maxiter&quot; is a deprecated option</span>
+        <span class="k">for</span> <span class="n">unused_option</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;atol&quot;</span><span class="p">,</span> <span class="s2">&quot;rtol&quot;</span><span class="p">,</span> <span class="s2">&quot;maxiter&quot;</span><span class="p">,</span> <span class="s2">&quot;err_on_maxiter&quot;</span><span class="p">,</span> <span class="s2">&quot;err_on_non_converge&quot;</span><span class="p">):</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">undeclare</span><span class="p">(</span><span class="n">unused_option</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the iterative solver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="n">du</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+
+        <span class="n">norm0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_get_norm</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">norm0</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">norm0</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_norm0</span> <span class="o">=</span> <span class="n">norm0</span>
+        <span class="n">u</span> <span class="o">+=</span> <span class="n">du</span>
+
+        <span class="k">with</span> <span class="n">Recording</span><span class="p">(</span><span class="s1">&#39;BoundsEnforceLS&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enforce_bounds</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">du</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_get_norm</span><span class="p">()</span>
+            <span class="c1"># With solvers, we want to record the norm AFTER</span>
+            <span class="c1"># the call, but the call needs to</span>
+            <span class="c1"># be wrapped in the with for stack purposes,</span>
+            <span class="c1"># so we locally assign  norm &amp; norm0 into the class.</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="n">norm</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="n">norm</span> <span class="o">/</span> <span class="n">norm0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mpi_print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">norm</span> <span class="o">/</span> <span class="n">norm0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArmijoGoldsteinLS"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linesearch/backtracking.html#openmdao.solvers.linesearch.backtracking.ArmijoGoldsteinLS">[docs]</a><span class="k">class</span> <span class="nc">ArmijoGoldsteinLS</span><span class="p">(</span><span class="n">LinesearchSolver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Backtracking line search that terminates using the Armijo-Goldstein condition.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _analysis_error_raised : bool</span>
+<span class="sd">        Flag is set to True if a subsystem raises an AnalysisError.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SOLVER</span> <span class="o">=</span> <span class="s1">&#39;LS: AG&#39;</span>
+
+<div class="viewcode-block" id="ArmijoGoldsteinLS.__init__"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linesearch/backtracking.html#openmdao.solvers.linesearch.backtracking.ArmijoGoldsteinLS.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Options dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ArmijoGoldsteinLS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_error_raised</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_line_search_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the objective function of the line search.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Line search objective (residual norm).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_get_norm</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_iter_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any necessary pre-processing operations.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            initial error.</span>
+<span class="sd">        float</span>
+<span class="sd">            error at the first iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">]</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="n">du</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+        <span class="n">phi0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_line_search_objective</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">phi0</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">phi0</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phi0</span> <span class="o">=</span> <span class="n">phi0</span>
+        <span class="c1"># From definition of Newton&#39;s method one full step should drive the linearized residuals</span>
+        <span class="c1"># to 0, hence the directional derivative is equal to the initial function value.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dir_derivative</span> <span class="o">=</span> <span class="o">-</span><span class="n">phi0</span>
+
+        <span class="c1"># Initial step length based on the input step length parameter</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">add_scal_vec</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">du</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enforce_bounds</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">du</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">save_cache</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+            <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_line_search_objective</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="n">AnalysisError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">restore_cache</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;retry_on_analysis_error&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_error_raised</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">exc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                <span class="n">reraise</span><span class="p">(</span><span class="o">*</span><span class="n">exc</span><span class="p">)</span>
+
+            <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">return</span> <span class="n">phi</span>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ArmijoGoldsteinLS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_declare_options</span><span class="p">()</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Slope parameter for line of sufficient &quot;</span>
+                    <span class="s2">&quot;decrease. The larger the step, the more decrease is required to terminate the &quot;</span>
+                    <span class="s2">&quot;line search.&quot;</span><span class="p">)</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;rho&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Contraction factor.&quot;</span><span class="p">)</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Initial line search step.&quot;</span><span class="p">)</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;retry_on_analysis_error&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Backtrack and retry if an AnalysisError is raised.&quot;</span><span class="p">)</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;Armijo&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Armijo&#39;</span><span class="p">,</span> <span class="s1">&#39;Goldstein&#39;</span><span class="p">],</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Method to calculate stopping condition.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_single_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the operations in the iteration loop.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_error_raised</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+
+        <span class="c1"># Hybrid newton support.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_subsolve</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">append_solver</span><span class="p">()</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">save_cache</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gs_iter</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+
+            <span class="k">except</span> <span class="n">AnalysisError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">restore_cache</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;retry_on_analysis_error&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_error_raised</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">exc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                    <span class="n">reraise</span><span class="p">(</span><span class="o">*</span><span class="n">exc</span><span class="p">)</span>
+
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_stopping_criteria</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fval</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sufficient decrease criteria for the line search.</span>
+
+<span class="sd">        The initial line search objective and the step length parameter are stored in the class</span>
+<span class="sd">        instance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fval : float</span>
+<span class="sd">            Current line search objective value.</span>
+<span class="sd">        method : str, optional</span>
+<span class="sd">            Method to calculate stopping condition. Can be &quot;Armijo&quot; or &quot;Goldstein&quot;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            Stopping condition is satisfied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">fval0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phi0</span>
+        <span class="n">df_dalpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dir_derivative</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;armijo&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fval</span> <span class="o">&lt;=</span> <span class="n">fval0</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">df_dalpha</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;goldstein&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fval0</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">c1</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">df_dalpha</span> <span class="o">&lt;=</span> <span class="n">fval</span> <span class="o">&lt;=</span> <span class="n">fval0</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">df_dalpha</span>
+
+    <span class="k">def</span> <span class="nf">_update_step_length_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rho</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the step length parameter by multiplying with the contraction factor.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rho : float</span>
+<span class="sd">            Contraction factor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*=</span> <span class="n">rho</span>  <span class="c1"># update alpha</span>
+
+    <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the iterative solver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">maxiter</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;rho&#39;</span><span class="p">]</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]</span>
+
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="n">du</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span>  <span class="c1"># Newton step</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_initialize</span><span class="p">()</span>
+        <span class="n">phi0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phi0</span>
+
+        <span class="c1"># Further backtracking if needed.</span>
+        <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">&lt;</span> <span class="n">maxiter</span> <span class="ow">and</span>
+               <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stopping_criteria</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_error_raised</span><span class="p">)):</span>
+
+            <span class="k">with</span> <span class="n">Recording</span><span class="p">(</span><span class="s1">&#39;ArmijoGoldsteinLS&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">alpha_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_update_step_length_parameter</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+                    <span class="c1"># Moving on the line search with the difference of the old and new step length.</span>
+                    <span class="n">u</span><span class="o">.</span><span class="n">add_scal_vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="n">alpha_old</span><span class="p">,</span> <span class="n">du</span><span class="p">)</span>
+                <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">save_cache</span><span class="p">()</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_single_iteration</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_line_search_objective</span><span class="p">()</span>
+
+                    <span class="c1"># With solvers, we want to report the norm AFTER</span>
+                    <span class="c1"># the iter_execute call, but the i_e call needs to</span>
+                    <span class="c1"># be wrapped in the with for stack purposes.</span>
+                    <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="n">phi</span>
+                    <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="n">phi</span> <span class="o">/</span> <span class="n">phi0</span>
+
+                <span class="k">except</span> <span class="n">AnalysisError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">restore_cache</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;retry_on_analysis_error&#39;</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_error_raised</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                        <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">exc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                        <span class="n">reraise</span><span class="p">(</span><span class="o">*</span><span class="n">exc</span><span class="p">)</span>
+
+            <span class="c1"># self._mpi_print(self._iter_count, norm, norm / norm0)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mpi_print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

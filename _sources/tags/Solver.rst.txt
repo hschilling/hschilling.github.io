@@ -1,0 +1,21 @@
+.. _Solver: 
+
+=========================
+Solver
+=========================
+  .. toctree::
+     ../features/building_blocks/solvers/linear/linear_user_defined.rst
+     ../features/building_blocks/solvers/linear/direct_solver.rst
+     ../features/building_blocks/solvers/linear/scipy_iter_solver.rst
+     ../features/building_blocks/solvers/linear/petsc_krylov.rst
+     ../features/building_blocks/solvers/linear/linear_block_gs.rst
+     ../features/building_blocks/solvers/linear/linear_runonce.rst
+     ../features/building_blocks/solvers/linear/linear_block_jac.rst
+     ../features/building_blocks/solvers/backtracking/bounds_enforce.rst
+     ../features/building_blocks/solvers/backtracking/armijo_goldstein.rst
+     ../features/building_blocks/solvers/nonlinear/nonlinear_runonce.rst
+     ../features/building_blocks/solvers/nonlinear/nonlinear_block_jac.rst
+     ../features/building_blocks/solvers/nonlinear/nonlinear_block_gs.rst
+     ../features/building_blocks/solvers/nonlinear/newton.rst
+     ../features/core_features/controlling_solvers/set_solvers.rst
+     ../features/core_features/controlling_solvers/solver_options.rst

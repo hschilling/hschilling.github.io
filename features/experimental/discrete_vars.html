@@ -1,0 +1,445 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Discrete Variables &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="XDSM generation" href="xdsm_visualization.html" />
+    <link rel="prev" title="Experimental Features" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="xdsm_visualization.html" title="XDSM generation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Experimental Features"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Experimental Features</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="discrete-variables">
+<span id="id1"></span><h1>Discrete Variables<a class="headerlink" href="#discrete-variables" title="Permalink to this headline">¶</a></h1>
+<p>There may be times when it’s necessary to pass variables that are not floats or float arrays
+between components.  These variables can be declared as discrete variables.  A discrete variable
+can be any picklable python object.</p>
+<p>In explicit and implicit components, the user must call <code class="code docutils literal notranslate"><span class="pre">add_discrete_input</span></code> and
+<code class="code docutils literal notranslate"><span class="pre">add_discrete_output</span></code> to declare discrete variables in the <code class="code docutils literal notranslate"><span class="pre">setup</span></code> method.
+An example is given below that shows a component that has a discrete input along with
+continuous inputs and outputs.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="k">class</span> <span class="nc">BladeSolidity</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Continuous Inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;r_m&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;ft&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Mean radius&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;chord&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;ft&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Chord length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Discrete Inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_discrete_input</span><span class="p">(</span><span class="s1">&#39;num_blades&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Number of blades&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Continuous Outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;blade_solidity&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Blade solidity&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">discrete_inputs</span><span class="p">,</span> <span class="n">discrete_outputs</span><span class="p">):</span>
+
+        <span class="n">num_blades</span> <span class="o">=</span> <span class="n">discrete_inputs</span><span class="p">[</span><span class="s1">&#39;num_blades&#39;</span><span class="p">]</span>
+        <span class="n">chord</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;chord&#39;</span><span class="p">]</span>
+        <span class="n">r_m</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;r_m&#39;</span><span class="p">]</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;blade_solidity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chord</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r_m</span> <span class="o">/</span> <span class="n">num_blades</span><span class="p">)</span>
+
+<span class="c1"># build the model</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">indeps</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;indeps&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">indeps</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;r_m&#39;</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;ft&quot;</span><span class="p">)</span>
+<span class="n">indeps</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;chord&#39;</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;ft&#39;</span><span class="p">)</span>
+<span class="n">indeps</span><span class="o">.</span><span class="n">add_discrete_output</span><span class="p">(</span><span class="s1">&#39;num_blades&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;SolidityComp&#39;</span><span class="p">,</span> <span class="n">BladeSolidity</span><span class="p">(),</span>
+                         <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r_m&#39;</span><span class="p">,</span> <span class="s1">&#39;chord&#39;</span><span class="p">,</span> <span class="s1">&#39;num_blades&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="c1"># minimum value</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;SolidityComp.blade_solidity&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.02984155]</pre></div></div><div class="section" id="method-signatures">
+<h2>Method Signatures<a class="headerlink" href="#method-signatures" title="Permalink to this headline">¶</a></h2>
+<dl class="method">
+<dt>
+<code class="descclassname">Component.</code><code class="descname">add_discrete_input</code><span class="sig-paren">(</span><em>name</em>, <em>val</em>, <em>desc=''</em>, <em>tags=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/component.html#Component.add_discrete_input"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add a discrete input variable to the component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">name of the variable in this component’s namespace.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a picklable object</span></dt>
+<dd><p class="first last">The initial value of the variable being added.</p>
+</dd>
+<dt><strong>desc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of the variable</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed when calling
+list_inputs and list_outputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">metadata for added variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">Component.</code><code class="descname">add_discrete_output</code><span class="sig-paren">(</span><em>name</em>, <em>val</em>, <em>desc=''</em>, <em>tags=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/component.html#Component.add_discrete_output"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add an output variable to the component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">name of the variable in this component’s namespace.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a picklable object</span></dt>
+<dd><p class="first last">The initial value of the variable being added.</p>
+</dd>
+<dt><strong>desc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of the variable.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs or set of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed when calling
+list_inputs and list_outputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">metadata for added variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>Discrete variables, like continuous ones, can be connected to each other using the <code class="code docutils literal notranslate"><span class="pre">connect</span></code>
+function or by promoting an input and an output to the same name.  The type of the output
+must be a valid subclass of the type of the input or the connection will raise an exception.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If a model computes derivatives and any of those derivatives depend on the value of a discrete
+output variable, an exception will be raised.</p>
+</div>
+<p>If a component or group contains discrete variables, then the discrete inputs and/or outputs will
+be passed to the relevant API functions.  In general, if nonlinear inputs are passed to a function,
+then a discrete inputs arg will be added.  If nonlinear outputs are passed, then a discrete outputs
+arg will be added.  The signatures of the affected functions are shown below:</p>
+<dl class="method">
+<dt>
+<code class="descclassname">ExplicitComponent.</code><code class="descname">compute</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em>, <em>discrete_inputs=None</em>, <em>discrete_outputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/explicitcomponent.html#ExplicitComponent.compute"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Compute outputs given inputs. The model is assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional output variables read via outputs[key]</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+<dt><strong>discrete_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete output values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">ExplicitComponent.</code><code class="descname">compute_jacvec_product</code><span class="sig-paren">(</span><em>inputs</em>, <em>d_inputs</em>, <em>d_outputs</em>, <em>mode</em>, <em>discrete_inputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/explicitcomponent.html#ExplicitComponent.compute_jacvec_product"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Compute jac-vector product. The model is assumed to be in an unscaled state.</p>
+<dl class="docutils">
+<dt>If mode is:</dt>
+<dd><p class="first">‘fwd’: d_inputs |-&gt; d_outputs</p>
+<p class="last">‘rev’: d_outputs |-&gt; d_inputs</p>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>d_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">see inputs; product must be computed only if var_name in d_inputs</p>
+</dd>
+<dt><strong>d_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">see outputs; product must be computed only if var_name in d_outputs</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">either ‘fwd’ or ‘rev’</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">ExplicitComponent.</code><code class="descname">compute_partials</code><span class="sig-paren">(</span><em>inputs</em>, <em>partials</em>, <em>discrete_inputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/explicitcomponent.html#ExplicitComponent.compute_partials"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Compute sub-jacobian parts. The model is assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>partials</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Jacobian</span></dt>
+<dd><p class="first last">sub-jac components written to partials[output_name, input_name]</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">ImplicitComponent.</code><code class="descname">guess_nonlinear</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em>, <em>residuals</em>, <em>discrete_inputs=None</em>, <em>discrete_outputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/implicitcomponent.html#ImplicitComponent.guess_nonlinear"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Provide initial guess for states.</p>
+<p>Override this method to set the initial guess for states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional output variables read via outputs[key]</p>
+</dd>
+<dt><strong>residuals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional residuals written to via residuals[key]</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+<dt><strong>discrete_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete output values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">ImplicitComponent.</code><code class="descname">linearize</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em>, <em>jacobian</em>, <em>discrete_inputs=None</em>, <em>discrete_outputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/implicitcomponent.html#ImplicitComponent.linearize"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Compute sub-jacobian parts and any applicable matrix factorizations.</p>
+<p>The model is assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional output variables read via outputs[key]</p>
+</dd>
+<dt><strong>jacobian</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Jacobian</span></dt>
+<dd><p class="first last">sub-jac components written to jacobian[output_name, input_name]</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+<dt><strong>discrete_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete output values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">Group.</code><code class="descname">guess_nonlinear</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em>, <em>residuals</em>, <em>discrete_inputs=None</em>, <em>discrete_outputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/openmdao/core/group.html#Group.guess_nonlinear"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Provide initial guess for states.</p>
+<p>Override this method to set the initial guess for states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional output variables read via outputs[key]</p>
+</dd>
+<dt><strong>residuals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional residuals written to via residuals[key]</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+<dt><strong>discrete_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete output values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="xdsm_visualization.html" title="XDSM generation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Experimental Features"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Experimental Features</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

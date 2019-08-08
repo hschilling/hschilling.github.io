@@ -1,0 +1,13 @@
+.. _LinearSolver: 
+
+=========================
+LinearSolver
+=========================
+  .. toctree::
+     ../features/building_blocks/solvers/linear/linear_user_defined.rst
+     ../features/building_blocks/solvers/linear/direct_solver.rst
+     ../features/building_blocks/solvers/linear/scipy_iter_solver.rst
+     ../features/building_blocks/solvers/linear/petsc_krylov.rst
+     ../features/building_blocks/solvers/linear/linear_block_gs.rst
+     ../features/building_blocks/solvers/linear/linear_runonce.rst
+     ../features/building_blocks/solvers/linear/linear_block_jac.rst

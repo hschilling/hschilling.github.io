@@ -1,0 +1,305 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.components.linear_system_comp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.components.linear_system_comp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the LinearSystemComp class.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">linalg</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.implicitcomponent</span> <span class="k">import</span> <span class="n">ImplicitComponent</span>
+
+
+<div class="viewcode-block" id="LinearSystemComp"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp">[docs]</a><span class="k">class</span> <span class="nc">LinearSystemComp</span><span class="p">(</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Component that solves a linear system, Ax=b.</span>
+
+<span class="sd">    Designed to handle small, dense linear systems (Ax=B) that can be efficiently solved with</span>
+<span class="sd">    lu-decomposition. It can be vectorized to either solve for multiple right hand sides,</span>
+<span class="sd">    or to solve multiple linear systems.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _lup : None or list(object)</span>
+<span class="sd">        matrix factorizations returned from scipy.linag.lu_factor for each A matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LinearSystemComp.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Intialize the LinearSystemComp component.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Component options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinearSystemComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lup</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="LinearSystemComp.initialize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;The size of the linear system.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;vec_size&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of linear systems to solve.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;vectorize_A&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to vectorize the A matrix.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LinearSystemComp.setup"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Matrix and RHS are inputs, solution vector is the output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+        <span class="n">vec_size_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec_size_A</span> <span class="o">=</span> <span class="n">vec_size</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;vectorize_A&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+        <span class="n">mat_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">size</span>
+        <span class="n">full_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">vec_size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lup</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">vec_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="p">)</span>
+        <span class="n">shape_A</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_size_A</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+        <span class="n">init_A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">init_A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">init_A</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">vec_size_A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">init_A</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">val</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Set up the derivatives.</span>
+        <span class="n">row_col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">full_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">full_size</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">rows</span><span class="o">=</span><span class="n">row_col</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">row_col</span><span class="p">)</span>
+
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">full_size</span><span class="p">),</span> <span class="n">size</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mat_size</span> <span class="o">*</span> <span class="n">vec_size</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mat_size</span><span class="p">),</span> <span class="n">vec_size</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">size</span><span class="p">),</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span> <span class="n">mat_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LinearSystemComp.apply_nonlinear"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.apply_nonlinear">[docs]</a>    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        R = Ax - b.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        outputs : Vector</span>
+<span class="sd">            unscaled, dimensional output variables read via outputs[key]</span>
+<span class="sd">        residuals : Vector</span>
+<span class="sd">            unscaled, dimensional residuals written to via residuals[key]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijk,ik-&gt;ij&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">],</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;jk,ik-&gt;ij&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">],</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="LinearSystemComp.solve_nonlinear"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.solve_nonlinear">[docs]</a>    <span class="k">def</span> <span class="nf">solve_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use numpy to solve Ax=b for x.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        outputs : Vector</span>
+<span class="sd">            unscaled, dimensional output variables read via outputs[key]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+        <span class="n">vec_size_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec_size_A</span>
+
+        <span class="c1"># lu factorization for use with solve_linear</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lup</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">vec_size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vec_size_A</span><span class="p">):</span>
+                <span class="n">lhs</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">lu_factor</span><span class="p">(</span><span class="n">lhs</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vec_size</span><span class="p">):</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">j</span> <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+                <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lup</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_factor</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">])</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="p">,</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="LinearSystemComp.linearize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.linearize">[docs]</a>    <span class="k">def</span> <span class="nf">linearize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">J</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the non-constant partial derivatives.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        outputs : Vector</span>
+<span class="sd">            unscaled, dimensional output variables read via outputs[key]</span>
+<span class="sd">        J : Jacobian</span>
+<span class="sd">            sub-jac components written to jacobian[output_name, input_name]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">flat</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">J</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">J</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LinearSystemComp.solve_linear"><a class="viewcode-back" href="../../../_srcdocs/packages/components/linear_system_comp.html#openmdao.components.linear_system_comp.LinearSystemComp.solve_linear">[docs]</a>    <span class="k">def</span> <span class="nf">solve_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">,</span> <span class="n">d_residuals</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Back-substitution to solve the derivatives of the linear system.</span>
+
+<span class="sd">        If mode is:</span>
+<span class="sd">            &#39;fwd&#39;: d_residuals \|-&gt; d_outputs</span>
+
+<span class="sd">            &#39;rev&#39;: d_outputs \|-&gt; d_residuals</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        d_outputs : Vector</span>
+<span class="sd">            unscaled, dimensional quantities read via d_outputs[key]</span>
+<span class="sd">        d_residuals : Vector</span>
+<span class="sd">            unscaled, dimensional quantities read via d_residuals[key]</span>
+<span class="sd">        mode : str</span>
+<span class="sd">            either &#39;fwd&#39; or &#39;rev&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+        <span class="n">vec_size_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec_size_A</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">vec_size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vec_size</span><span class="p">):</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">j</span> <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">d_residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">],</span>
+                                                        <span class="n">trans</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="p">,</span> <span class="n">d_residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">trans</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+            <span class="k">if</span> <span class="n">vec_size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vec_size</span><span class="p">):</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">j</span> <span class="k">if</span> <span class="n">vec_size_A</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">d_residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">],</span>
+                                                          <span class="n">trans</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d_residuals</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">lu_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lup</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">trans</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

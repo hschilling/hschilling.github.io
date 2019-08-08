@@ -1,0 +1,7 @@
+.. _Options: 
+
+=========================
+Options
+=========================
+  .. toctree::
+     ../features/core_features/defining_components/options.rst

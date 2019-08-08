@@ -1,0 +1,209 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Vectorizing Derivative Solves for Array Variables At a Larger Memory Cost &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Command Line Tools" href="../../other/om_command.html" />
+    <link rel="prev" title="Parallelizing Derivative Solves of Multipoint Models At a Small Memory Cost" href="fan_out.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../other/om_command.html" title="Command Line Tools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="fan_out.html" title="Parallelizing Derivative Solves of Multipoint Models At a Small Memory Cost"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Theory Manual</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="advanced_algorithms.html" accesskey="U">Advanced Linear Solver Algorithms for Special Cases</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="vectorizing-derivative-solves-for-array-variables-at-a-larger-memory-cost">
+<span id="theory-vectorized-derivatives"></span><h1>Vectorizing Derivative Solves for Array Variables At a Larger Memory Cost<a class="headerlink" href="#vectorizing-derivative-solves-for-array-variables-at-a-larger-memory-cost" title="Permalink to this headline">¶</a></h1>
+<p>When a model has a <a class="reference internal" href="setup_linear_solvers.html#theory-selecting-linear-solver"><span class="std std-ref">feed-forward</span></a> (i.e. uncoupled) data path from design variables
+to constraints, then you can use the default <a class="reference internal" href="../../features/building_blocks/solvers/linear/linear_runonce.html#lnrunonce"><span class="std std-ref">LinearRunOnce</span></a> solver to compute total derivatives.
+This solver will recurse down through your model, computing matrix-vector products as it goes, and will compute derivatives
+one design variable at a time, or one constraint at a time in forward or reverse modes, respectively.
+Consider what this means if you have a design variable or constraint composed of a large array.
+In this case, the recursive algorithm is called once per entry in the variable.</p>
+<p>While this recursive algorithm will compute the correct derivatives, if you have a deeply-nested model (i.e. many layers
+of nested groups with lots of components) the overhead of that recursion can become significant. If you have a very large
+array variable combined with a deeply-nested model, you are then calling the somewhat-expensive, recursive function many times.</p>
+<p>In order to speed this up somewhat, OpenMDAO will allow you to vectorize the linear solves used to compute total derivatives.
+Normally we perform a solve on a single right-hand-side vector, but when vectorized, OpenMDAO will allocate space for
+multiple right-hand sides and multiple solution vectors, and then will recurse through the model only a single time to
+compute all the derivatives for every entry in a given array variable. The advantage of this approach is that the number
+of recursive traversals of the model is dramatically reduced, giving reduced overhead for large models.</p>
+<p>While reduced computational overhead is advantageous, this approach also has the trade-off of an increased memory footprint.
+As we noted, in order to use this algorithm, multiple right-hand-side vectors and solutions vectors must be allocated at the same time.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">If you are considering using vectorized total derivatives solves because you have a set of vectorized components in your model, you might also consider checking if your problem has a separable structure that can be taken advantage of with <a class="reference internal" href="separable.html#theory-separable-variables"><span class="std std-ref">simultaneous derivatives</span></a>.
+If you can use simultaneous derivatives, you get all of the computational speed-up, with none of the memory cost.
+If your problem isn’t separable, then consider vectorized derivatives instead.</p>
+</div>
+<div class="section" id="how-much-memory-does-it-use">
+<h2>How Much Memory Does it Use?<a class="headerlink" href="#how-much-memory-does-it-use" title="Permalink to this headline">¶</a></h2>
+<p>OpenMDAO allocates vectors for the linear solves according to how many output variables there are and how large each one is.
+How much additional memory is needed will depend on the details of your model.
+OpenMDAO only needs to allocate enough memory for the vectorized solve of one variable at a time, so the memory cost can
+be considered on a per-variable basis and will be governed by whichever variable has the largest size.</p>
+<p>Consider a notional model (or a part of a model) with five design variables and five constraints, each one of size 1000.
+This notional model is very simple, comprised of just two components: one <a class="reference internal" href="../../features/core_features/defining_components/indepvarcomp.html#comp-type-1-indepvarcomp"><span class="std std-ref">IndepVarComp</span></a> and one <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a>.
+So there are ten total outputs in the model, yielding a vector of size 10000 using 0.08 MB of memory.
+OpenMDAO needs two vectors for each linear solve (one for the solution, and one for the right-hand side), using 0.16 MB for the pair.</p>
+<p>A non-vectorized solve would require just the single pair of vectors,
+but a vectorized derivative solve needs 1000 right-hand-side vectors and 1000 solution vectors all at once, using 160 MB of memory.</p>
+<p>On modern computers, 160 MB of memory is not a significant amount, especially if it comes with the benefit of a large computational savings.
+However, the above example only involved 2 components, and hence, the cost of the recursive solves won’t be significant either.</p>
+<p>Instead, consider what would happen if you had the same five design variables and five constraints of size 1000, but now
+the model is comprised of fifteen different components connected in a feed-forward manner, arranged in some complex hierarchy.
+Each component will have its own five output variables, giving a total of 75 variables of size 1000 each.
+In this larger model, each vector is now of size 75000, using 0.6 MB of memory.
+So a non-vectorized solve will use 1.2 MB of memory but the vectorized solve will now use 1200 MB (1.2 GB) of memory.</p>
+<p>This illustrates how the memory cost of vectorization grows with two key factors:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>The number of output variables in a model</li>
+<li>The size of the output variable for which you want to vectorize the total derivative solve</li>
+</ol>
+</div></blockquote>
+<p>Ultimately, you have to weigh the memory cost and compute savings to determine if this feature is good for your specific use case.</p>
+</div>
+<div class="section" id="usage-with-components-that-use-assembled-jacobians">
+<h2>Usage With Components That Use Assembled Jacobians<a class="headerlink" href="#usage-with-components-that-use-assembled-jacobians" title="Permalink to this headline">¶</a></h2>
+<p>If all components in your model are using the <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">compute_partials</span></a> or <a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">linearize</span></a>
+methods to provide OpenMDAO with their partial derivatives, then you do not need to do anything else in order to support vectorized derivatives solves.</p>
+<p>Internally, OpenMDAO will switch from doing matrix-vector products to vectorized matrix-matrix products.
+Essentially in either case, if you stored the partial-derivative Jacobian in a variable <code class="code docutils literal notranslate"><span class="pre">A</span></code> and your vector as variable <code class="code docutils literal notranslate"><span class="pre">b</span></code>, OpenMDAO will always do</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This NumPy syntax works whether b is a vector or a collection of vectors that have been stacked together (vectorized),
+which is why you don’t need to do anything differently when using assembled Jacobians.</p>
+</div>
+<div class="section" id="usage-with-components-that-use-matrix-free-partial-derivatives">
+<h2>Usage With Components That Use Matrix-Free Partial Derivatives<a class="headerlink" href="#usage-with-components-that-use-matrix-free-partial-derivatives" title="Permalink to this headline">¶</a></h2>
+<p>If you have any components that use the matrix-free APIs,</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">compute_jacvec_product</span></a></li>
+<li><a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">apply_linear</span></a></li>
+</ol>
+</div></blockquote>
+<p>Then you need to implement additional methods in order to use vectorized derivative solves.
+The new methods are necessary because the linear operators themselves need to be vectorized and it’s not possible for
+OpenMDAO to efficiently do that for you.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">compute_multi_jacvec_product</span></a></li>
+<li><a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">apply_multi_linear</span></a></li>
+</ol>
+</div></blockquote>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">You only need to implement these additional API methods <strong>IF</strong> you plan to use these components with vectorized derivative solves!</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../other/om_command.html" title="Command Line Tools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="fan_out.html" title="Parallelizing Derivative Solves of Multipoint Models At a Small Memory Cost"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Theory Manual</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="advanced_algorithms.html" >Advanced Linear Solver Algorithms for Special Cases</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

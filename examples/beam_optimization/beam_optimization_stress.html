@@ -1,0 +1,356 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Revisiting the Beam Problem - Minimizing Stress with KS Constraints and BSplines &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Simple Optimization using Simultaneous Derivatives" href="../simul_deriv_example/simul_deriv_example.html" />
+    <link rel="prev" title="Optimizing the Thickness Distribution of a Cantilever Beam Using the Adjoint Method" href="beam_optimization.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../simul_deriv_example/simul_deriv_example.html" title="Simple Optimization using Simultaneous Derivatives"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="beam_optimization.html" title="Optimizing the Thickness Distribution of a Cantilever Beam Using the Adjoint Method"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Examples</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="revisiting-the-beam-problem-minimizing-stress-with-ks-constraints-and-bsplines">
+<span id="beam-optimization-example-part-2"></span><h1>Revisiting the Beam Problem - Minimizing Stress with KS Constraints and BSplines<a class="headerlink" href="#revisiting-the-beam-problem-minimizing-stress-with-ks-constraints-and-bsplines" title="Permalink to this headline">¶</a></h1>
+<p>The following example shows the optimization of a simple beam with rectangular cross section. The beam has been subdivided into
+elements along the length of the beam, and one end is fixed. The goal is to minimize the volume (and hence the mass of the
+homogeneous beam) by varying the thickness in each element without exceeding a maximum stress constraint while the beam is
+subject to multiple load cases, each one being a distributed force load that varies sinusoidally along the span.</p>
+<p>Constraining the bending stress on each element leads to a more computationally expensive derivative calculation, so we
+will use the <cite>KSFunction</cite> to reduce the stress vector for each load case to a single scalar value. To do so, we also need
+to insert an <cite>ExecComp</cite> component that converts the stress into a form where a negative value means it is satisfied, and
+a positive value means it is violated.</p>
+<p>The problem presented here is also an example of a multi-point implementation, where we create a separate instance of the
+parts of the calculation that are impacted by different loadcases. This enables our model to take advantage of multiple
+processors when run in parallel.</p>
+<p>If we allow the optimizer to vary the thickness of each element, then we have a design variable vector that is as wide as the
+number of elements in the model. This may perform poorly if we have a large number of elements in the beam. If we assume that
+the optimal beam thickness is going to have a smooth continuous variation over the length of the beam, then it is a good
+candidate for using an interpolation component like <cite>BsplinesComp</cite> to reduce the number of design variables we need.</p>
+<p>For this example, we have 25 elements, but can reduce that to 5 control points for the optimizer’s design variables by
+including the BsplinesComp.</p>
+<p>The code for the top system is this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is a multipoint implementation of the beam optimization problem.</span>
+
+<span class="sd">This version minimizes volume while satisfying a max bending stress constraint in each element</span>
+<span class="sd">for each loadcase.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.components.displacements_comp</span> <span class="kn">import</span> <span class="n">MultiDisplacementsComp</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.components.local_stiffness_matrix_comp</span> <span class="kn">import</span> <span class="n">LocalStiffnessMatrixComp</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.components.moment_comp</span> <span class="kn">import</span> <span class="n">MomentOfInertiaComp</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.components.states_comp</span> <span class="kn">import</span> <span class="n">MultiStatesComp</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.components.stress_comp</span> <span class="kn">import</span> <span class="n">MultiStressComp</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.components.volume_comp</span> <span class="kn">import</span> <span class="n">VolumeComp</span>
+
+
+<span class="k">def</span> <span class="nf">divide_cases</span><span class="p">(</span><span class="n">ncases</span><span class="p">,</span> <span class="n">nprocs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Divide up load cases among available procs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ncases : int</span>
+<span class="sd">        Number of load cases.</span>
+<span class="sd">    nprocs : int</span>
+<span class="sd">        Number of processors.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list of list of int</span>
+<span class="sd">        Integer case numbers for each proc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nprocs</span><span class="p">):</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+
+    <span class="n">wrap</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncases</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">j</span> <span class="o">-</span> <span class="n">wrap</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="n">nprocs</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">wrap</span> <span class="o">=</span> <span class="n">j</span>
+
+        <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">class</span> <span class="nc">MultipointBeamGroup</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    System setup for minimization of volume (i.e., mass) subject to KS aggregated bending stress constraints.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;volume&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;max_bending&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_elements&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_cp&#39;</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_load_cases&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;parallel_derivs&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">volume</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;volume&#39;</span><span class="p">]</span>
+        <span class="n">max_bending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_bending&#39;</span><span class="p">]</span>
+        <span class="n">num_elements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;num_elements&#39;</span><span class="p">]</span>
+        <span class="n">num_nodes</span> <span class="o">=</span> <span class="n">num_elements</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">num_cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;num_cp&#39;</span><span class="p">]</span>
+        <span class="n">num_load_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;num_load_cases&#39;</span><span class="p">]</span>
+        <span class="n">parallel_derivs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;parallel_derivs&#39;</span><span class="p">]</span>
+
+        <span class="n">inputs_comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+        <span class="n">inputs_comp</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;h_cp&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">num_cp</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;inputs_comp&#39;</span><span class="p">,</span> <span class="n">inputs_comp</span><span class="p">)</span>
+
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BsplinesComp</span><span class="p">(</span><span class="n">num_control_points</span><span class="o">=</span><span class="n">num_cp</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">in_name</span><span class="o">=</span><span class="s1">&#39;h_cp&#39;</span><span class="p">,</span>
+                               <span class="n">out_name</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;interp&#39;</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+        <span class="n">I_comp</span> <span class="o">=</span> <span class="n">MomentOfInertiaComp</span><span class="p">(</span><span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;I_comp&#39;</span><span class="p">,</span> <span class="n">I_comp</span><span class="p">)</span>
+
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">LocalStiffnessMatrixComp</span><span class="p">(</span><span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;local_stiffness_matrix_comp&#39;</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+        <span class="c1"># Parallel Subsystem for load cases.</span>
+        <span class="n">par</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ParallelGroup</span><span class="p">())</span>
+
+        <span class="c1"># Determine how to split cases up over the available procs.</span>
+        <span class="n">nprocs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">divide</span> <span class="o">=</span> <span class="n">divide_cases</span><span class="p">(</span><span class="n">num_load_cases</span><span class="p">,</span> <span class="n">nprocs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">this_proc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">divide</span><span class="p">):</span>
+            <span class="n">num_rhs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">this_proc</span><span class="p">)</span>
+
+            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;sub_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">j</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">())</span>
+
+            <span class="c1"># Load is a sinusoidal distributed force of varying spatial frequency.</span>
+            <span class="n">force_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_rhs</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">this_proc</span><span class="p">):</span>
+
+                <span class="n">end</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+                <span class="k">if</span> <span class="n">num_load_cases</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">end</span> <span class="o">+=</span> <span class="n">k</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="n">num_load_cases</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">force_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+
+            <span class="n">comp</span> <span class="o">=</span> <span class="n">MultiStatesComp</span><span class="p">(</span><span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">force_vector</span><span class="o">=</span><span class="n">force_vector</span><span class="p">,</span>
+                                   <span class="n">num_rhs</span><span class="o">=</span><span class="n">num_rhs</span><span class="p">)</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;states_comp&#39;</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+            <span class="n">comp</span> <span class="o">=</span> <span class="n">MultiDisplacementsComp</span><span class="p">(</span><span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">num_rhs</span><span class="o">=</span><span class="n">num_rhs</span><span class="p">)</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;displacements_comp&#39;</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+            <span class="n">comp</span> <span class="o">=</span> <span class="n">MultiStressComp</span><span class="p">(</span><span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E</span><span class="p">,</span> <span class="n">num_rhs</span><span class="o">=</span><span class="n">num_rhs</span><span class="p">)</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;stress_comp&#39;</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                <span class="s1">&#39;local_stiffness_matrix_comp.K_local&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;parallel.</span><span class="si">%s</span><span class="s1">.states_comp.K_local&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rhs</span><span class="p">):</span>
+                <span class="n">sub</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                    <span class="s1">&#39;states_comp.d_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">,</span>
+                    <span class="s1">&#39;displacements_comp.d_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">)</span>
+                <span class="n">sub</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                    <span class="s1">&#39;displacements_comp.displacements_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">,</span>
+                    <span class="s1">&#39;stress_comp.displacements_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">)</span>
+
+                <span class="n">comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">KSComp</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">num_elements</span><span class="p">)</span>
+                <span class="n">comp</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_bending</span>
+                <span class="n">sub</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;KS_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+                <span class="n">sub</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                    <span class="s1">&#39;stress_comp.stress_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">,</span>
+                    <span class="s1">&#39;KS_</span><span class="si">%d</span><span class="s1">.g&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">parallel_derivs</span><span class="p">:</span>
+                    <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">k</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">color</span> <span class="o">=</span> <span class="bp">None</span>
+
+                <span class="n">sub</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;KS_</span><span class="si">%d</span><span class="s1">.KS&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                                   <span class="n">parallel_deriv_color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">VolumeComp</span><span class="p">(</span><span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;volume_comp&#39;</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputs_comp.h_cp&#39;</span><span class="p">,</span> <span class="s1">&#39;interp.h_cp&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;interp.h&#39;</span><span class="p">,</span> <span class="s1">&#39;I_comp.h&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;I_comp.I&#39;</span><span class="p">,</span> <span class="s1">&#39;local_stiffness_matrix_comp.I&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;interp.h&#39;</span><span class="p">,</span> <span class="s1">&#39;volume_comp.h&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;inputs_comp.h_cp&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">10.</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;volume_comp.volume&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next we run the model, and choose <cite>ScipyOptimizeDriver</cite> SLSQP to be our optimizer. At the conclusion of optimization,
+we print out the design variable, which is the thickness for each element.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.beam_optimization.multipoint_beam_stress</span> <span class="kn">import</span> <span class="n">MultipointBeamGroup</span>
+
+<span class="n">E</span> <span class="o">=</span> <span class="mf">1.</span>
+<span class="n">L</span> <span class="o">=</span> <span class="mf">1.</span>
+<span class="n">b</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">volume</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">max_bending</span> <span class="o">=</span> <span class="mf">100.0</span>
+
+<span class="n">num_cp</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">num_elements</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="n">num_load_cases</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MultipointBeamGroup</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="n">E</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">max_bending</span> <span class="o">=</span> <span class="n">max_bending</span><span class="p">,</span>
+                            <span class="n">num_elements</span><span class="o">=</span><span class="n">num_elements</span><span class="p">,</span> <span class="n">num_cp</span><span class="o">=</span><span class="n">num_cp</span><span class="p">,</span>
+                            <span class="n">num_load_cases</span><span class="o">=</span><span class="n">num_load_cases</span><span class="p">)</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;SLSQP&#39;</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;tol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-9</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;disp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;rev&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Optimization terminated successfully.    (Exit mode 0)
+            Current function value: 0.03494890159976523
+            Iterations: 31
+            Function evaluations: 51
+            Gradient evaluations: 31
+Optimization Complete
+-----------------------------------</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;interp.h&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.45632322 0.45612552 0.45543324 0.45397058 0.45134629 0.44714397
+ 0.4410258  0.43283139 0.42265378 0.41087801 0.39817311 0.38543581
+ 0.37369202 0.36342186 0.35289066 0.34008776 0.32362887 0.30300358
+ 0.27867837 0.25204063 0.22519409 0.20063906 0.18088818 0.16807857
+ 0.16364105]</pre></div></div></div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../simul_deriv_example/simul_deriv_example.html" title="Simple Optimization using Simultaneous Derivatives"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="beam_optimization.html" title="Optimizing the Thickness Distribution of a Cantilever Beam Using the Adjoint Method"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Examples</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

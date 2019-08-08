@@ -1,0 +1,217 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Component &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="component">
+<span id="id1"></span><h1>Component<a class="headerlink" href="#component" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/dot_product_comp.html">DotProductComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/dot_product_comp.html#dotproductcomp-options">DotProductComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/dot_product_comp.html#dotproductcomp-example">DotProductComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/metamodelstructured_comp.html">MetaModelStructuredComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelstructured_comp.html#metamodelstructuredcomp-options">MetaModelStructuredComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelstructured_comp.html#metamodelstructuredcomp-examples">MetaModelStructuredComp Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html">ExecComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-options">ExecComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-constructor">ExecComp Constructor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-variable-metadata">ExecComp Variable Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-simple">ExecComp Example: Simple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-multiple-outputs">ExecComp Example: Multiple Outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-arrays">ExecComp Example: Arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-math-functions">ExecComp Example: Math Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-variable-properties">ExecComp Example: Variable Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-diagonal-partials">ExecComp Example: Diagonal Partials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#execcomp-example-options">ExecComp Example: Options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/bsplines_comp.html">BsplinesComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/bsplines_comp.html#bsplinescomp-options">BsplinesComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/bsplines_comp.html#bsplinescomp-example">BsplinesComp Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/bsplines_comp.html#bsplinescomp-option-examples">BsplinesComp Option Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/add_subtract_comp.html">AddSubtractComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/add_subtract_comp.html#using-the-addsubtractcomp">Using the AddSubtractComp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/add_subtract_comp.html#addsubtractcomp-example">AddSubtractComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/linearsystem_comp.html">LinearSystemComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/linearsystem_comp.html#linearsystemcomp-options">LinearSystemComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/linearsystem_comp.html#linearsystemcomp-example">LinearSystemComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/balance_comp.html">BalanceComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/balance_comp.html#balancecomp-options">BalanceComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/balance_comp.html#example-scalar-root-finding">Example:  Scalar Root Finding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/balance_comp.html#example-vectorized-root-finding">Example:  Vectorized Root Finding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/balance_comp.html#example-providing-an-initial-guess-for-a-state-variable">Example:  Providing an Initial Guess for a State Variable</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/external_code_comp.html">ExternalCodeComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/external_code_comp.html#externalcodecomp-options">ExternalCodeComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/external_code_comp.html#externalcodecomp-example">ExternalCodeComp Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/external_code_comp.html#using-externalcodecomp-in-an-optimization">Using ExternalCodeComp in an Optimization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/matrix_vector_product_comp.html">MatrixVectorProductComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/matrix_vector_product_comp.html#matrixvectorproductcomp-options">MatrixVectorProductComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/matrix_vector_product_comp.html#matrixvectorproductcomp-example">MatrixVectorProductComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/cross_product_comp.html">CrossProductComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/cross_product_comp.html#crossproductcomp-options">CrossProductComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/cross_product_comp.html#crossproductcomp-example">CrossProductComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/ks_comp.html">KSComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/ks_comp.html#kscomp-options">KSComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/ks_comp.html#kscomp-example">KSComp Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/ks_comp.html#kscomp-option-examples">KSComp Option Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/mux_demux_comps.html">MuxComp and DemuxComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/mux_demux_comps.html#muxcomp-and-demuxcomp-options">MuxComp and DemuxComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/mux_demux_comps.html#adding-variables">Adding Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/mux_demux_comps.html#example-demuxing-a-3-column-matrix-into-constituent-vectors">Example: Demuxing a 3-column matrix into constituent vectors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/mux_demux_comps.html#example-muxing-3-n-x-1-columns-into-a-single-n-x-3-matrix">Example: Muxing 3 (n x 1) columns into a single (n x 3) matrix</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/vector_magnitude_comp.html">VectorMagnitudeComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/vector_magnitude_comp.html#vectormagnitudecomp-options">VectorMagnitudeComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/vector_magnitude_comp.html#vectormagnitudecomp-example">VectorMagnitudeComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/metamodelunstructured_comp.html">MetaModelUnStructuredComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelunstructured_comp.html#metamodelunstructuredcomp-options">MetaModelUnStructuredComp Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelunstructured_comp.html#simple-example">Simple Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelunstructured_comp.html#available-surrogates">Available Surrogates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelunstructured_comp.html#advanced-usage">Advanced usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/metamodelunstructured_comp.html#using-surrogates-that-do-not-define-linearize-method">Using Surrogates That Do Not Define Linearize Method</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/external_code_implicit_comp.html">ExternalCodeImplicitComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/external_code_implicit_comp.html#externalcodeimplicitcomp-example">ExternalCodeImplicitComp Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/building_blocks/components/eq_constraint_comp.html">EQConstraintComp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/building_blocks/components/eq_constraint_comp.html#example-sellar-idf">Example: Sellar IDF</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features/core_features/defining_components/implicitcomp.html">ImplicitComponent</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../features/core_features/defining_components/implicitcomp.html#implicitcomponent-methods">ImplicitComponent Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/component_types.html">How OpenMDAO Represents Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../basic_guide/component_types.html#a-simple-numerical-model">A Simple Numerical Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basic_guide/component_types.html#the-three-types-of-components">The Three Types of Components</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

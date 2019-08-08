@@ -1,0 +1,8 @@
+.. _SetGet: 
+
+=========================
+SetGet
+=========================
+  .. toctree::
+     ../features/core_features/running/setup.rst
+     ../features/core_features/running/set_get.rst

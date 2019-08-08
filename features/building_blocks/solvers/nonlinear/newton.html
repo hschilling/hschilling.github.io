@@ -1,0 +1,722 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>NewtonSolver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="BroydenSolver" href="broyden.html" />
+    <link rel="prev" title="NonlinearRunOnce" href="nonlinear_runonce.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="broyden.html" title="BroydenSolver"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="nonlinear_runonce.html" title="NonlinearRunOnce"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../index.html" >Solvers</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="index.html" accesskey="U">Nonlinear Solvers</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="newtonsolver">
+<span id="nlnewton"></span><h1>NewtonSolver<a class="headerlink" href="#newtonsolver" title="Permalink to this headline">¶</a></h1>
+<p>NewtonSolver implements Newton’s method to solve the system that contains it. This
+is the most general solver in OpenMDAO, in that it can solve any topology including cyclic
+connections and implicit states in the system or subsystems. Newton’s method requires derivatives,
+so a linear solver can also be specified. By default, NewtonSolver uses the linear solver
+that is slotted in the containing system.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDis1withDerivatives</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                           <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton Converged in 3 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[25.58830237]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[12.05848815]</pre></div></div><p>Most of the solvers in OpenMDAO operate hierarchically, in that you can use solvers on subgroups
+to subdivide the calculation effort. However, NewtonSolver is an exception. It does not
+call <cite>solve_nonlinear</cite> on its subsystems, nor does it pass data along the connections. Instead,
+the Newton solver sets all inputs in all systems and subsystems that it contains, as it follows
+the gradient, driving the residuals to convergence.  After each iteration, the iteration count and the residual norm are
+checked to see if termination has been satisfied.</p>
+<div class="section" id="newtonsolver-options">
+<h2>NewtonSolver Options<a class="headerlink" href="#newtonsolver-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="4%" />
+<col width="9%" />
+<col width="8%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>atol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>absolute error tolerance</td>
+</tr>
+<tr class="row-odd"><td>cs_reconverge</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, when this driver solves under a complex step, nudge the Solution vector by a small amount so that it reconverges.</td>
+</tr>
+<tr class="row-even"><td>debug_print</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>If true, the values of input and output variables at the start of iteration are printed and written to a file after a failure to converge.</td>
+</tr>
+<tr class="row-odd"><td>err_on_maxiter</td>
+<td>None</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Deprecated. Use ‘err_on_non_converge’.</td>
+</tr>
+<tr class="row-even"><td>err_on_non_converge</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, AnalysisError will be raised if we don’t converge.</td>
+</tr>
+<tr class="row-odd"><td>iprint</td>
+<td>1</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>whether to print output</td>
+</tr>
+<tr class="row-even"><td>max_sub_solves</td>
+<td>10</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>Maximum number of subsystem solves.</td>
+</tr>
+<tr class="row-odd"><td>maxiter</td>
+<td>10</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>maximum number of iterations</td>
+</tr>
+<tr class="row-even"><td>rtol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>relative error tolerance</td>
+</tr>
+<tr class="row-odd"><td>solve_subsystems</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to turn on sub-solvers (Hybrid Newton).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="newtonsolver-option-examples">
+<h2>NewtonSolver Option Examples<a class="headerlink" href="#newtonsolver-option-examples" title="Permalink to this headline">¶</a></h2>
+<p><strong>maxiter</strong></p>
+<blockquote>
+<div><p><code class="code docutils literal notranslate"><span class="pre">maxiter</span></code> lets you specify the maximum number of Newton iterations to apply. In this example, we
+cut it back from the default, ten, down to two, so that it terminates a few iterations earlier and doesn’t
+reach the specified absolute or relative tolerance.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDis1withDerivatives</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">nlgbs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">nlgbs</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;&#x27; failed to converge in 2 iterations.</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[25.58785168]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[12.06074161]</pre></div></div></div></blockquote>
+<p><strong>atol</strong></p>
+<blockquote>
+<div><p>Here, we set the absolute tolerance to a looser value that will trigger an earlier termination. After
+each iteration, the norm of the residuals is calculated by calling <cite>apply_nonlinear</cite> on all of the components.
+If this norm value is lower than the absolute
+tolerance <cite>atol</cite>, the iteration will terminate.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDis1withDerivatives</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">nlgbs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">nlgbs</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;atol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton Converged in 3 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[25.58830237]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[12.05848815]</pre></div></div></div></blockquote>
+<p><strong>rtol</strong></p>
+<blockquote>
+<div><p>Here, we set the relative tolerance to a looser value that will trigger an earlier termination. After
+each iteration, the norm of the residuals is calculated by calling <cite>apply_nonlinear</cite> on all of the components.
+If the ratio of the currently calculated norm to the
+initial residual norm is lower than the relative tolerance <cite>rtol</cite>, the iteration will terminate.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDis1withDerivatives</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">nlgbs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">nlgbs</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton Converged in 2 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[25.58785168]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[12.06074161]</pre></div></div></div></blockquote>
+<p><strong>solve_subsystems</strong></p>
+<blockquote>
+<div><p>If you set this option to True, NewtonSolver will call <cite>solve_nonlinear</cite> on all of its subsystems. You can
+use this to solve difficult multi-level problems by attaching solvers to subsystems. This assures that those
+subsystems will already be in an internally solved state when the Newton solver goes to solve it.</p>
+<p>This example shows two instances of the Sellar model, which we have connected together to form a larger cycle.
+We specify a Newton solver in each Sellar subgroup as well as a top-level Newton solver, which we tell to solve
+its subsystems.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.double_sellar</span> <span class="kn">import</span> <span class="n">DoubleSellar</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">DoubleSellar</span><span class="p">())</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">g1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">g1</span>
+<span class="n">g1</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">g1</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0e-5</span>
+<span class="n">g1</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">g2</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">g2</span>
+<span class="n">g2</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">g2</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0e-5</span>
+<span class="n">g2</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>+  
++  ==
++  g1
++  ==
++  NL: Newton Converged in 2 iterations
++  
++  ==
++  g2
++  ==
++  NL: Newton Converged in 2 iterations
++  
++  ==
++  g1
++  ==
++  NL: Newton Converged in 2 iterations
++  
++  ==
++  g2
++  ==
++  NL: Newton Converged in 2 iterations
++  
++  ==
++  g1
++  ==
++  NL: Newton Converged in 1 iterations
++  
++  ==
++  g2
++  ==
++  NL: Newton Converged in 1 iterations
++  
++  ==
++  g1
++  ==
++  NL: Newton Converged in 0 iterations
++  
++  ==
++  g2
++  ==
++  NL: Newton Converged in 0 iterations
+NL: Newton Converged in 3 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;g1.y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.64]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;g1.y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.8]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;g2.y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.64]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;g2.y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.8]</pre></div></div></div></blockquote>
+<p><strong>max_sub_solves</strong></p>
+<blockquote>
+<div><p>This option is used in conjunction with the “solve_subsystems” option. It controls the number of iterations for which
+NewtonSolver will allow subsystems to solve themselves. When the iteration count exceeds <cite>max_sub_solves</cite>,  Newton
+returns to its default behavior.</p>
+<p>For example, if you set <cite>max_sub_solves</cite> to zero, then the solvers on subsystems are executed during the initial
+evaluation, but not during any subsequent iteration.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.double_sellar</span> <span class="kn">import</span> <span class="n">SubSellar</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;g1&#39;</span><span class="p">,</span> <span class="n">SubSellar</span><span class="p">())</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;g2&#39;</span><span class="p">,</span> <span class="n">SubSellar</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;g1.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;g2.x&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;g2.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;g1.x&#39;</span><span class="p">)</span>
+
+<span class="c1"># Converge the outer loop with Gauss Seidel, with a looser tolerance.</span>
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">g1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">g1</span>
+<span class="n">g1</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">g1</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0e-5</span>
+<span class="n">g1</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">g2</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">g2</span>
+<span class="n">g2</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">g2</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0e-5</span>
+<span class="n">g2</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyKrylov</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_sub_solves&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>+  
++  ==
++  g1
++  ==
++  NL: Newton Converged in 2 iterations
++  
++  ==
++  g2
++  ==
++  NL: Newton Converged in 2 iterations
+NL: Newton Converged in 3 iterations</pre></div></div></div></blockquote>
+<p><strong>err_on_non_converge</strong></p>
+<blockquote>
+<div><p>If you set this to True, then when the solver doesn’t converge, either by hitting the iteration limit
+without meeting the tolerance criteria, or by encountering a NaN or inf, it
+will raise an AnalysisError exception. This is mainly important when coupled with a higher-level solver or
+driver (e.g., <cite>pyOptSparseDriver</cite>)that can handle the AnalysisError by adapting the stepsize and retrying.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDis1withDerivatives</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">nlgbs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">nlgbs</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">nlgbs</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;err_on_non_converge&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">om</span><span class="o">.</span><span class="n">AnalysisError</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>["NL: NewtonSolver 'NL: Newton' on system '' failed to converge in 1 iterations."]</pre></div></div><p>This feature can be set on any iterative nonlinear or linear solver.</p>
+</div></blockquote>
+</div>
+<div class="section" id="specifying-a-linear-solver">
+<h2>Specifying a Linear Solver<a class="headerlink" href="#specifying-a-linear-solver" title="Permalink to this headline">¶</a></h2>
+<p>We can choose a different linear solver for calculating the Newton step by setting the <cite>linear_solver</cite> attribute. The default is to use the
+linear solver that was specified on the containing system, which by default is LinearBlockGS. In the following example,
+we modify the model to use <a class="reference internal" href="../../../../_srcdocs/packages/solvers.linear/direct.html#openmdao-solvers-linear-direct-py"><span class="std std-ref">DirectSolver</span></a> instead.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDis1withDerivatives</span><span class="p">,</span> \
+     <span class="n">SellarDis2withDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">LinearBlockGS</span><span class="p">()</span>
+
+<span class="n">nlgbs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+
+<span class="n">nlgbs</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton Converged in 3 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[25.58830237]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[12.05848815]</pre></div></div></div>
+<div class="section" id="specifying-a-line-search-algorithm">
+<h2>Specifying a Line Search Algorithm<a class="headerlink" href="#specifying-a-line-search-algorithm" title="Permalink to this headline">¶</a></h2>
+<p>NewtonSolver has a <cite>linesearch</cite> attribute, which supports specification of a supplemental algorithm that can find a better point
+along the Newton search direction. This is typically used for cases where we have declared upper
+or lower bounds on some of the model outputs and we want to prevent Newton from moving into this
+non-feasible space during iteration. An algorithm that does this is called a line search.</p>
+<p>By default, NewtonSolver does not perform a line search. We will show how to specify one. First,
+let’s set up a problem that has implicit bounds on one of its states.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CompAtan</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple implicit component with the following equation:</span>
+
+<span class="sd">    F(x, y) = 33.0 * atan(y-20)**2 + x</span>
+
+<span class="sd">    x is an input, y is the state to be solved.</span>
+<span class="sd">    for x = -100, y should be 19.68734033</span>
+
+<span class="sd">    This equation poses a challenge because a guess that is far from the solution yields large</span>
+<span class="sd">    gradients and divergence. Additionally, the jacobian becomes singular at y = 20. To address</span>
+<span class="sd">    this, a lower and upper bound are added on y so that a solver with a BoundsEnforceLS does not</span>
+<span class="sd">    allow it to stray into problematic regions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">19.9</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">33.0</span> <span class="o">*</span> <span class="n">atan</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mf">20.0</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span>
+
+    <span class="k">def</span> <span class="nf">linearize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">jacobian</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+
+        <span class="n">jacobian</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2178.0</span><span class="o">*</span><span class="n">atan</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mf">20.0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">40.0</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="mf">401.0</span><span class="p">)</span>
+        <span class="n">jacobian</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+<p>This equation poses a challenge because a guess that is far from the solution yields large
+gradients and the solution will diverge. Additionally, the jacobian becomes singular at y = 20. To address
+both of these problems, a lower and upper bound are added on y so that a solver with a BoundsEnforceLS does not
+allow it to stray into problematic regions. Without the linsearch, Newton is unable to solve this problem unless you start
+very close to the solution.</p>
+<p>Here, we specify <a class="reference internal" href="../../../../_srcdocs/packages/solvers.linesearch/backtracking.html#openmdao-solvers-linesearch-backtracking-py"><span class="std std-ref">BoundsEnforceLS</span></a>
+as our line search algorithm, and we get the expected solution for “y”.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.solvers.linesearch.tests.test_backtracking</span> <span class="kn">import</span> <span class="n">CompAtan</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">100.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">CompAtan</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Initial value for the state:</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">12.0</span>
+
+<span class="c1"># You can change the om.NewtonSolver settings after setup is called</span>
+<span class="n">newton</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BoundsEnforceLS</span><span class="p">()</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: Newton 0 ; 2178.39766 1
+|  LS: BCHK 0 ; 89.1820479 0.0409392874
+NL: Newton 1 ; 89.1820479 0.0409392874
+|  LS: BCHK 0 ; 146.249915 1.63990308
+NL: Newton 2 ; 146.249915 0.0671364633
+|  LS: BCHK 0 ; 14.6043983 0.0998591916
+NL: Newton 3 ; 14.6043983 0.00670419295
+|  LS: BCHK 0 ; 0.371568958 0.0254422641
+NL: Newton 4 ; 0.371568958 0.000170569848
+|  LS: BCHK 0 ; 0.000278617482 0.000749840578
+NL: Newton 5 ; 0.000278617482 1.27900193e-07
+|  LS: BCHK 0 ; 1.58237867e-10 5.67939478e-07
+NL: Newton 6 ; 1.58237867e-10 7.2639569e-14
+NL: Newton Converged</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[19.68734036]</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../../tags/Solver.html#solver"><span class="std std-ref">Solver</span></a>, <a class="reference internal" href="../../../../tags/NonlinearSolver.html#nonlinearsolver"><span class="std std-ref">NonlinearSolver</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="broyden.html" title="BroydenSolver"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="nonlinear_runonce.html" title="NonlinearRunOnce"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../index.html" >Solvers</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="index.html" >Nonlinear Solvers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,692 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ExecComp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="BalanceComp" href="balance_comp.html" />
+    <link rel="prev" title="Components" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="balance_comp.html" title="BalanceComp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Components"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <span class="target" id="feature-exec-comp"></span><div class="section" id="execcomp">
+<span id="index-0"></span><h1>ExecComp<a class="headerlink" href="#execcomp" title="Permalink to this headline">¶</a></h1>
+<p><cite>ExecComp</cite> is a component that provides a shortcut for building an ExplicitComponent that
+represents a set of simple mathematical relationships between inputs and outputs. The ExecComp
+automatically takes care of all of the component API methods, so you just need to instantiate
+it with an equation.</p>
+<div class="section" id="execcomp-options">
+<h2>ExecComp Options<a class="headerlink" href="#execcomp-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="3%" />
+<col width="7%" />
+<col width="10%" />
+<col width="73%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>distributed</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>True if the component has variables that are distributed across multiple processes.</td>
+</tr>
+<tr class="row-odd"><td>has_diag_partials</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>If True, treat all array/array partials as diagonal if both arrays have size &gt; 1. All arrays with size &gt; 1 must have the same flattened size or an exception will be raised.</td>
+</tr>
+<tr class="row-even"><td>shape</td>
+<td>None</td>
+<td>N/A</td>
+<td>[‘int’, ‘tuple’, ‘list’]</td>
+<td>Shape to be assigned to all variables in this component. Default is None, which means shape is provided for variables individually.</td>
+</tr>
+<tr class="row-odd"><td>units</td>
+<td>None</td>
+<td>N/A</td>
+<td>[‘str’]</td>
+<td>Units to be assigned to all variables in this component. Default is None, which means units are provided for variables individually.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="execcomp-constructor">
+<h2>ExecComp Constructor<a class="headerlink" href="#execcomp-constructor" title="Permalink to this headline">¶</a></h2>
+<p>The call signature for the <cite>ExecComp</cite> constructor is:</p>
+<dl class="method">
+<dt>
+<code class="descclassname">ExecComp.</code><code class="descname">__init__</code><span class="sig-paren">(</span><em>exprs=[]</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/exec_comp.html#ExecComp.__init__"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Create a &lt;Component&gt; using only an expression string.</p>
+<p>Given a list of assignment statements, this component creates
+input and output variables at construction time.  All variables
+appearing on the left-hand side of an assignment are outputs,
+and the rest are inputs.  Each variable is assumed to be of
+type float unless the initial value for that variable is supplied
+in **kwargs.  Derivatives are calculated using complex step.</p>
+<p>The following functions are available for use in expressions:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="41%" />
+<col width="59%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Function</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>abs(x)</td>
+<td>Absolute value of x</td>
+</tr>
+<tr class="row-odd"><td>acos(x)</td>
+<td>Inverse cosine of x</td>
+</tr>
+<tr class="row-even"><td>acosh(x)</td>
+<td>Inverse hyperbolic cosine of x</td>
+</tr>
+<tr class="row-odd"><td>arange(start, stop, step)</td>
+<td>Array creation</td>
+</tr>
+<tr class="row-even"><td>arccos(x)</td>
+<td>Inverse cosine of x</td>
+</tr>
+<tr class="row-odd"><td>arccosh(x)</td>
+<td>Inverse hyperbolic cosine of x</td>
+</tr>
+<tr class="row-even"><td>arcsin(x)</td>
+<td>Inverse sine of x</td>
+</tr>
+<tr class="row-odd"><td>arcsinh(x)</td>
+<td>Inverse hyperbolic sine of x</td>
+</tr>
+<tr class="row-even"><td>arctan(x)</td>
+<td>Inverse tangent of x</td>
+</tr>
+<tr class="row-odd"><td>asin(x)</td>
+<td>Inverse sine of x</td>
+</tr>
+<tr class="row-even"><td>asinh(x)</td>
+<td>Inverse hyperbolic sine of x</td>
+</tr>
+<tr class="row-odd"><td>atan(x)</td>
+<td>Inverse tangent of x</td>
+</tr>
+<tr class="row-even"><td>cos(x)</td>
+<td>Cosine of x</td>
+</tr>
+<tr class="row-odd"><td>cosh(x)</td>
+<td>Hyperbolic cosine of x</td>
+</tr>
+<tr class="row-even"><td>dot(x, y)</td>
+<td>Dot product of x and y</td>
+</tr>
+<tr class="row-odd"><td>e</td>
+<td>Euler’s number</td>
+</tr>
+<tr class="row-even"><td>erf(x)</td>
+<td>Error function</td>
+</tr>
+<tr class="row-odd"><td>erfc(x)</td>
+<td>Complementary error function</td>
+</tr>
+<tr class="row-even"><td>exp(x)</td>
+<td>Exponential function</td>
+</tr>
+<tr class="row-odd"><td>expm1(x)</td>
+<td>exp(x) - 1</td>
+</tr>
+<tr class="row-even"><td>factorial(x)</td>
+<td>Factorial of all numbers in x</td>
+</tr>
+<tr class="row-odd"><td>fmax(x, y)</td>
+<td>Element-wise maximum of x and y</td>
+</tr>
+<tr class="row-even"><td>fmin(x, y)</td>
+<td>Element-wise minimum of x and y</td>
+</tr>
+<tr class="row-odd"><td>inner(x, y)</td>
+<td>Inner product of arrays x and y</td>
+</tr>
+<tr class="row-even"><td>isinf(x)</td>
+<td>Element-wise detection of np.inf</td>
+</tr>
+<tr class="row-odd"><td>isnan(x)</td>
+<td>Element-wise detection of np.nan</td>
+</tr>
+<tr class="row-even"><td>kron(x, y)</td>
+<td>Kronecker product of arrays x and y</td>
+</tr>
+<tr class="row-odd"><td>linspace(x, y, N)</td>
+<td>Numpy linear spaced array creation</td>
+</tr>
+<tr class="row-even"><td>log(x)</td>
+<td>Natural logarithm of x</td>
+</tr>
+<tr class="row-odd"><td>log10(x)</td>
+<td>Base-10 logarithm of x</td>
+</tr>
+<tr class="row-even"><td>log1p(x)</td>
+<td>log(1+x)</td>
+</tr>
+<tr class="row-odd"><td>matmul(x, y)</td>
+<td>Matrix multiplication of x and y</td>
+</tr>
+<tr class="row-even"><td>maximum(x, y)</td>
+<td>Element-wise maximum of x and y</td>
+</tr>
+<tr class="row-odd"><td>minimum(x, y)</td>
+<td>Element-wise minimum of x and y</td>
+</tr>
+<tr class="row-even"><td>ones(N)</td>
+<td>Create an array of ones</td>
+</tr>
+<tr class="row-odd"><td>outer(x, y)</td>
+<td>Outer product of x and y</td>
+</tr>
+<tr class="row-even"><td>pi</td>
+<td>Pi</td>
+</tr>
+<tr class="row-odd"><td>power(x, y)</td>
+<td>Element-wise x**y</td>
+</tr>
+<tr class="row-even"><td>prod(x)</td>
+<td>The product of all elements in x</td>
+</tr>
+<tr class="row-odd"><td>sin(x)</td>
+<td>Sine of x</td>
+</tr>
+<tr class="row-even"><td>sinh(x)</td>
+<td>Hyperbolic sine of x</td>
+</tr>
+<tr class="row-odd"><td>sum(x)</td>
+<td>The sum of all elements in x</td>
+</tr>
+<tr class="row-even"><td>tan(x)</td>
+<td>Tangent of x</td>
+</tr>
+<tr class="row-odd"><td>tanh(x)</td>
+<td>Hyperbolic tangent of x</td>
+</tr>
+<tr class="row-even"><td>tensordot(x, y)</td>
+<td>Tensor dot product of x and y</td>
+</tr>
+<tr class="row-odd"><td>zeros(N)</td>
+<td>Create an array of zeros</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>exprs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, tuple of str or list of str</span></dt>
+<dd><p class="first last">An assignment statement or iter of them. These express how the
+outputs are calculated based on the inputs.  In addition to
+standard Python operators, a subset of numpy and scipy functions
+is supported.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict of named args</span></dt>
+<dd><p class="first last">Initial values of variables can be set by setting a named
+arg with the var name.  If the value is a dict it is assumed
+to contain metadata.  To set the initial value in addition to
+other metadata, assign the initial value to the ‘value’ entry
+of the dict.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If a variable has an initial value that is anything other than 1.0,
+either because it has a different type than float or just because its
+initial value is != 1.0, you must use a keyword arg
+to set the initial value.  For example, let’s say we have an
+ExecComp that takes an array ‘x’ as input and outputs a float variable
+‘y’ which is the sum of the entries in ‘x’.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="n">excomp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=sum(x)&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In this example, ‘y’ would be assumed to be the default type of float
+and would be given the default initial value of 1.0, while ‘x’ would be
+initialized with a size 10 float array of ones.</p>
+<p>If you want to assign certain metadata for ‘x’ in addition to its
+initial value, you can do it as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">excomp</span> <span class="o">=</span> <span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=sum(x)&#39;</span><span class="p">,</span>
+                  <span class="n">x</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+                     <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;ft&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="execcomp-variable-metadata">
+<h2>ExecComp Variable Metadata<a class="headerlink" href="#execcomp-variable-metadata" title="Permalink to this headline">¶</a></h2>
+<p>The values of the <cite>kwargs</cite> can be <cite>dicts</cite> which define the initial value for the variables along with
+other metadata. For example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;xdot=x/t&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;ft&#39;</span><span class="p">},</span> <span class="n">t</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;s&#39;</span><span class="p">},</span> <span class="n">xdot</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;ft/s&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is a list of the possible metadata that can be assigned to a variable in this way. The <strong>Applies To</strong> column indicates
+whether the metadata is appropriate for input variables, output variables, or both.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="35%" />
+<col width="40%" />
+<col width="9%" />
+<col width="5%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">Description</th>
+<th class="head">Valid Types</th>
+<th class="head">Applies To</th>
+<th class="head">Default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>value</td>
+<td>Initial value in user-defined units</td>
+<td>float, list, tuple, ndarray</td>
+<td>input &amp; output</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>shape</td>
+<td>Variable shape, only needed if not an array</td>
+<td>int, tuple, list, None</td>
+<td>input &amp; output</td>
+<td>None</td>
+</tr>
+<tr class="row-even"><td>units</td>
+<td>Units of variable</td>
+<td>str, None</td>
+<td>input &amp; output</td>
+<td>None</td>
+</tr>
+<tr class="row-odd"><td>desc</td>
+<td>Description of variable</td>
+<td>str</td>
+<td>input &amp; output</td>
+<td>“”</td>
+</tr>
+<tr class="row-even"><td>res_units</td>
+<td>Units of residuals</td>
+<td>str, None</td>
+<td>output</td>
+<td>None</td>
+</tr>
+<tr class="row-odd"><td>ref</td>
+<td>Value of variable when scaled value is 1</td>
+<td>float, ndarray</td>
+<td>output</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>ref0</td>
+<td>Value of variable when scaled value is 0</td>
+<td>float, ndarray</td>
+<td>output</td>
+<td>0</td>
+</tr>
+<tr class="row-odd"><td>res_ref</td>
+<td>Value of residual when scaled value is 1</td>
+<td>float, ndarray</td>
+<td>output</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>lower</td>
+<td>Lower bound of variable</td>
+<td>float, list, tuple, ndarray, Iterable, None</td>
+<td>output</td>
+<td>None</td>
+</tr>
+<tr class="row-odd"><td>upper</td>
+<td>Lower bound of variable</td>
+<td>float, list, tuple, ndarray, Iterable, None</td>
+<td>output</td>
+<td>None</td>
+</tr>
+<tr class="row-even"><td>src_indices</td>
+<td>Global indices of the variable</td>
+<td>int, list of ints, tuple of ints, int ndarray, Iterable, None</td>
+<td>input</td>
+<td>None</td>
+</tr>
+<tr class="row-odd"><td>flat_src_indices</td>
+<td>If True, src_indices are indices into flattened source</td>
+<td>bool</td>
+<td>input</td>
+<td>None</td>
+</tr>
+<tr class="row-even"><td>tags</td>
+<td>Used to tag variables for later filtering</td>
+<td>str, list of strs</td>
+<td>input &amp; ouput</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<p>These metadata are passed to the <code class="code docutils literal notranslate"><span class="pre">Component</span></code> methods <code class="code docutils literal notranslate"><span class="pre">add_input</span></code> and <code class="code docutils literal notranslate"><span class="pre">add_output</span></code>.
+For more information about these metadata, see the documentation for the arguments to these Component methods:</p>
+<ul class="simple">
+<li><a class="reference internal" href="../../../_srcdocs/packages/core/component.html#openmdao.core.component.Component.add_input" title="openmdao.core.component.Component.add_input"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_input</span></code></a></li>
+<li><a class="reference internal" href="../../../_srcdocs/packages/core/component.html#openmdao.core.component.Component.add_output" title="openmdao.core.component.Component.add_output"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_output</span></code></a></li>
+</ul>
+</div>
+<div class="section" id="execcomp-example-simple">
+<h2>ExecComp Example: Simple<a class="headerlink" href="#execcomp-example-simple" title="Permalink to this headline">¶</a></h2>
+<p>For example, here is a simple component that takes the input and adds one to it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=x+1.&#39;</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[3.]</pre></div></div></div>
+<div class="section" id="execcomp-example-multiple-outputs">
+<h2>ExecComp Example: Multiple Outputs<a class="headerlink" href="#execcomp-example-multiple-outputs" title="Permalink to this headline">¶</a></h2>
+<p>You can also create an ExecComp with multiple outputs by placing the expressions in a list.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">([</span><span class="s1">&#39;y1=x+1.&#39;</span><span class="p">,</span> <span class="s1">&#39;y2=x-1.&#39;</span><span class="p">]))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[3.]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.]</pre></div></div></div>
+<div class="section" id="execcomp-example-arrays">
+<h2>ExecComp Example: Arrays<a class="headerlink" href="#execcomp-example-arrays" title="Permalink to this headline">¶</a></h2>
+<p>You can declare an ExecComp with arrays for inputs and outputs, but when you do, you must also
+pass in a correctly-sized array as an argument to the ExecComp call. This can be the initial value
+in the case of unconnected inputs, or just an empty array with the correct size.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">])))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=x[1]&#39;</span><span class="p">,</span>
+                                        <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]),</span>
+                                        <span class="n">y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[2.]</pre></div></div></div>
+<div class="section" id="execcomp-example-math-functions">
+<h2>ExecComp Example: Math Functions<a class="headerlink" href="#execcomp-example-math-functions" title="Permalink to this headline">¶</a></h2>
+<p>Functions from the math library are available for use in the expression strings.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;z = sin(x)**2 + cos(y)**2&#39;</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.]</pre></div></div></div>
+<div class="section" id="execcomp-example-variable-properties">
+<h2>ExecComp Example: Variable Properties<a class="headerlink" href="#execcomp-example-variable-properties" title="Permalink to this headline">¶</a></h2>
+<p>You can also declare properties like ‘units’, ‘upper’, or ‘lower’ on the inputs and outputs. In this
+example we declare all our inputs to be inches to trigger conversion from a variable expressed in feet
+in one connection source.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;inch&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;ft&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;z=x+y&#39;</span><span class="p">,</span>
+                                        <span class="n">x</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;inch&#39;</span><span class="p">},</span>
+                                        <span class="n">y</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;inch&#39;</span><span class="p">},</span>
+                                        <span class="n">z</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;inch&#39;</span><span class="p">}))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[24.]</pre></div></div></div>
+<div class="section" id="execcomp-example-diagonal-partials">
+<h2>ExecComp Example: Diagonal Partials<a class="headerlink" href="#execcomp-example-diagonal-partials" title="Permalink to this headline">¶</a></h2>
+<p>If all of your ExecComp’s array inputs and array outputs are the same size and happen to have
+diagonal partials, you can make computation of derivatives for your ExecComp faster by specifying a
+<cite>has_diag_partials=True</cite> argument
+to <cite>__init__</cite> or via the component options. This will cause the ExecComp to solve for its partials
+by complex stepping all entries of an array input at once instead of looping over each entry individually.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;indep&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=3.0*x + 2.5&#39;</span><span class="p">,</span> <span class="n">has_diag_partials</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;indep.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">J</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">compute_totals</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">],</span> <span class="n">wrt</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;indep.x&#39;</span><span class="p">],</span> <span class="n">return_format</span><span class="o">=</span><span class="s1">&#39;array&#39;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">J</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[[ 3. -0. -0. -0. -0.]
+ [-0.  3. -0. -0. -0.]
+ [-0. -0.  3. -0. -0.]
+ [-0. -0. -0.  3. -0.]
+ [-0. -0. -0. -0.  3.]]</pre></div></div></div>
+<div class="section" id="execcomp-example-options">
+<h2>ExecComp Example: Options<a class="headerlink" href="#execcomp-example-options" title="Permalink to this headline">¶</a></h2>
+<p>Other options that can apply to all the variables in the component are variable shape and units.
+These can also be set as a keyword argument in the constructor or via the component options. In the
+following example the variables all share the same shape, which is specified in the constructor, and
+common units that are specified by setting the option.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+
+<span class="n">indep</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;indep&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,),</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">))</span>
+<span class="n">xcomp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=2*x&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,)))</span>
+
+<span class="n">xcomp</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;m&#39;</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;indep.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;indep.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">100.</span><span class="p">,</span> <span class="mf">200.</span><span class="p">]</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;comp.y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[2. 4.]</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/ExecComp.html#execcomp"><span class="std std-ref">ExecComp</span></a>, <a class="reference internal" href="../../../tags/Component.html#component"><span class="std std-ref">Component</span></a>, <a class="reference internal" href="../../../tags/Examples.html#examples"><span class="std std-ref">Examples</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="balance_comp.html" title="BalanceComp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Components"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

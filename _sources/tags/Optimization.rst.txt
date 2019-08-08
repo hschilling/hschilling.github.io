@@ -1,0 +1,10 @@
+.. _Optimization: 
+
+=========================
+Optimization
+=========================
+  .. toctree::
+     ../features/building_blocks/drivers/genetic_algorithm.rst
+     ../features/building_blocks/drivers/pyoptsparse_driver.rst
+     ../features/building_blocks/drivers/scipy_optimize_driver.rst
+     ../features/building_blocks/components/ks_comp.rst

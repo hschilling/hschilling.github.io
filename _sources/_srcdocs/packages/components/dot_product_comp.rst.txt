@@ -1,0 +1,16 @@
+.. index:: dot_product_comp.py
+
+.. _openmdao.components.dot_product_comp.py:
+
+dot_product_comp.py
+-------------------
+
+.. automodule:: openmdao.components.dot_product_comp
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

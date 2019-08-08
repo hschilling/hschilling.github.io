@@ -1,0 +1,9 @@
+.. _ExternalCodeComp: 
+
+=========================
+ExternalCodeComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/external_code_comp.rst
+     ../features/building_blocks/components/external_code_implicit_comp.rst
+     ../other/file_wrap.rst

@@ -1,0 +1,562 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Building Models with Solvers and Implicit Components &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Using BalanceComp to Create Implicit Relationships in Groups" href="implicit_with_balancecomp.html" />
+    <link rel="prev" title="Advanced User Guide" href="../index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="implicit_with_balancecomp.html" title="Using BalanceComp to Create Implicit Relationships in Groups"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Advanced User Guide"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Advanced User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="building-models-with-solvers-and-implicit-components">
+<span id="defining-icomps-tutorial"></span><h1>Building Models with Solvers and Implicit Components<a class="headerlink" href="#building-models-with-solvers-and-implicit-components" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial will show you how to define implicit components and build models with them.
+We’ll use a nonlinear circuit analysis example problem.</p>
+<div class="section" id="circuit-analysis">
+<h2>Circuit analysis<a class="headerlink" href="#circuit-analysis" title="Permalink to this headline">¶</a></h2>
+<p>Consider a simple electrical circuit made up from two resistors, a diode, and a constant current source.
+Our goal is to solve for the steady-state voltages at node 1 and node 2.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../../_images/circuit_diagram.png"><img alt="diagram of a simple circuit with two resistors and one diode" src="../../_images/circuit_diagram.png" style="width: 50%;" /></a>
+</div>
+<p>In order to find the voltages, we’ll employ <a class="reference external" href="https://en.wikipedia.org/wiki/Kirchhoff%27s_circuit_laws">Kirchoff’s current law</a>,
+and solve for the voltages needed at each node to drive the net current to 0.</p>
+<p>This means that the voltages at each node are <em>state variables</em> for the analysis.
+In other words, V1 and V2 are defined implicitly by the following residual equation:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{R_{node_j}} = \sum_k I_{k}^{in} - \sum_k I_{k}^{out} = 0 .\]</div>
+<p>To build this model we’re going to define three different components:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Resistor (Explicit)</li>
+<li>Diode (Explicit)</li>
+<li>Node (Implicit)</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="explicitcomponents-resistor-and-diode">
+<h2>ExplicitComponents - Resistor and Diode<a class="headerlink" href="#explicitcomponents-resistor-and-diode" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="code docutils literal notranslate"><span class="pre">Resistor</span></code> and <code class="code docutils literal notranslate"><span class="pre">Diode</span></code> components will each compute their current, given the voltages on either side.
+These calculations are analytic functions, so we’ll inherit from <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a>.
+These components will each declare some options to allow you to pass in the relevant physical constants, and to
+allow you to give some reasonable default values.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Resistor</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes current across a resistor using Ohm&#39;s law.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Resistance in Ohms&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">deltaV</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_in&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_out&#39;</span><span class="p">]</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">deltaV</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Diode</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes current across a diode using the Shockley diode equation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;Is&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Saturation current in Amps&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;Vt&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=.</span><span class="mo">025</span><span class="mi">875</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Thermal voltage in Volts&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">deltaV</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_in&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_out&#39;</span><span class="p">]</span>
+        <span class="n">Is</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;Is&#39;</span><span class="p">]</span>
+        <span class="n">Vt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;Vt&#39;</span><span class="p">]</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Is</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">deltaV</span> <span class="o">/</span> <span class="n">Vt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Since we’ve provided default values for the options, they won’t be required arguments when instantiating <code class="code docutils literal notranslate"><span class="pre">Resistor</span></code> or <code class="code docutils literal notranslate"><span class="pre">Diode</span></code>.
+Check out the <a class="reference internal" href="../../features/index.html#features"><span class="std std-ref">Features</span></a> section for more details on how to use <a class="reference internal" href="../../features/core_features/defining_components/options.html#component-options"><span class="std std-ref">component options</span></a>.</p>
+</div>
+</div>
+<div class="section" id="implicitcomponent-node">
+<h2>ImplicitComponent - Node<a class="headerlink" href="#implicitcomponent-node" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="code docutils literal notranslate"><span class="pre">Node</span></code> component inherits from <a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a>, which has a different interface than <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a>.
+Rather than compute the values of its outputs, it computes residuals via the <code class="code docutils literal notranslate"><span class="pre">apply_nonlinear</span></code> method.
+When those residuals have been driven to zero, the values of the outputs will be implicitly known.
+<code class="code docutils literal notranslate"><span class="pre">apply_nonlinear</span></code> computes the <code class="code docutils literal notranslate"><span class="pre">residuals</span></code> using values from  <code class="code docutils literal notranslate"><span class="pre">inputs</span></code> and <code class="code docutils literal notranslate"><span class="pre">outputs</span></code>.
+Notice that we still define <em>V</em> as an output of the <code class="code docutils literal notranslate"><span class="pre">Node</span></code> component, albeit one that is implicitly defined.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes voltage residual across a node based on incoming and outgoing current.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;n_in&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;number of connections with + assumed in&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;n_out&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;number of current connections + assumed out&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_in&#39;</span><span class="p">]):</span>
+            <span class="n">i_name</span> <span class="o">=</span> <span class="s1">&#39;I_in:{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">i_name</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_out&#39;</span><span class="p">]):</span>
+            <span class="n">i_name</span> <span class="o">=</span> <span class="s1">&#39;I_out:{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">i_name</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="c1">#note: we don&#39;t declare any partials wrt `V` here,</span>
+        <span class="c1">#      because the residual doesn&#39;t directly depend on it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;I*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">for</span> <span class="n">i_conn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_in&#39;</span><span class="p">]):</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;I_in:{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_conn</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">i_conn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_out&#39;</span><span class="p">]):</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;I_out:{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_conn</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>Every state variable must have exactly one corresponding residual which is defined in the <code class="code docutils literal notranslate"><span class="pre">apply_nonlinear</span></code> method. The <code class="code docutils literal notranslate"><span class="pre">residuals</span></code> equations
+in an implicit component are not analogous to the <code class="code docutils literal notranslate"><span class="pre">outputs</span></code> equations in the <code class="code docutils literal notranslate"><span class="pre">compute</span></code> method of an explicit component.
+Instead of defining an explicit equation for the output, <code class="code docutils literal notranslate"><span class="pre">residuals['example_output']</span></code> defines an equation for the residual <em>associated with</em> the
+output (state variable) <code class="code docutils literal notranslate"><span class="pre">example_output</span></code>. In our example, <code class="code docutils literal notranslate"><span class="pre">residuals['V']</span></code> defines the equation of the residual associated with the state variable <em>V</em>. There will be no explicit
+equation defining <em>V</em>, instead, the residual equation sums the currents associated with <em>V</em> so the sum can be driven to zero.</p>
+<p>An implicit component varies its outputs (state variables, in this case <em>V</em>) to drive the residual equation to zero. In our model, <em>V</em> does not show up directly in the residual
+equation. Instead, our explicit components <code class="code docutils literal notranslate"><span class="pre">Resistor</span></code> and <code class="code docutils literal notranslate"><span class="pre">Diode</span></code> create a dependence of the currents on <em>V</em>, so by using a solver on a higher level of the model
+hierarchy, we can vary <em>V</em> to have an effect on current, and we can drive the residuals to zero.</p>
+<p>All implicit components must define the <code class="code docutils literal notranslate"><span class="pre">apply_nonlinear</span></code> method, but it is not a requirement that every <a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a>  define the
+<code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> method. (The <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> method provides a way to explicitly define an output within an implicit component.) In fact, for the <code class="code docutils literal notranslate"><span class="pre">Node</span></code>
+component, it is not even possible to define a <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> because <em>V</em> does not show up directly in the residual function.
+So the implicit function represented by instances of the <code class="code docutils literal notranslate"><span class="pre">Node</span></code> component must be converged at a higher level in the model hierarchy.</p>
+<p>There are cases where it is possible, and even advantageous, to define the <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> method.
+For example, when a component is performing an engineering analysis with its own specialized nonlinear solver routines (e.g. CFD or FEM),
+then it makes sense to expose those to OpenMDAO via <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> so OpenMDAO can make use of them.
+Just remember that <code class="code docutils literal notranslate"><span class="pre">apply_nonlinear</span></code> must be defined, regardless of whether you also define <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this case, the residual equation is not a direct function of the state variable <em>V</em>.
+Often, however, the residual might be a direct function of one or more output variables.
+If that is the case, you can access the values via <code class="code docutils literal notranslate"><span class="pre">outputs['V']</span></code>.
+See the <a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a> documentation for an example of this.</p>
+</div>
+</div>
+<div class="section" id="building-the-circuit-group-and-solving-it-with-newtonsolver">
+<h2>Building the Circuit Group and Solving It with NewtonSolver<a class="headerlink" href="#building-the-circuit-group-and-solving-it-with-newtonsolver" title="Permalink to this headline">¶</a></h2>
+<p>We can combine the <code class="code docutils literal notranslate"><span class="pre">Resistor</span></code>, <code class="code docutils literal notranslate"><span class="pre">Diode</span></code>, and <code class="code docutils literal notranslate"><span class="pre">Node</span></code> into the circuit pictured above using a <a class="reference internal" href="../../features/core_features/grouping_components/index.html#feature-grouping-components"><span class="std std-ref">Group</span></a>.
+Adding components and connecting their variables is the same as what you’ve seen before in the <a class="reference internal" href="../../basic_guide/sellar.html#sellar"><span class="std std-ref">Sellar - Two Discipline</span></a> tutorial.
+What is new here is the additional use of the nonlinear <a class="reference internal" href="../../features/building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a> and linear <a class="reference internal" href="../../features/building_blocks/solvers/linear/direct_solver.html#directsolver"><span class="std std-ref">DirectSolver</span></a> to converge the system.</p>
+<p>In previous tutorials, we used a gradient-free <a class="reference internal" href="../../features/building_blocks/solvers/nonlinear/nonlinear_block_gs.html#nlbgs"><span class="std std-ref">NonlinearBlockGaussSeidel</span></a> solver, but that won’t work here.
+Just above, we discussed that the <code class="code docutils literal notranslate"><span class="pre">Node</span></code> class does not, and in fact can not, define its own <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> method.
+Hence, there would be no calculations for the GaussSeidel solver to iterate on.
+Instead we use the Newton solver at the <code class="code docutils literal notranslate"><span class="pre">Circuit</span></code> level, which uses Jacobian information to compute group level updates for all the variables simultaneously.
+The Newton solver’s use of that Jacobian information is why we need to declare a linear solver in this case.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">OpenMDAO provides a library of <a class="reference internal" href="../../features/building_blocks/solvers/linear/index.html#feature-linear-solvers"><span class="std std-ref">linear solvers</span></a> that are useful in different advanced scenarios.
+For many problems, especially problems built from components with mostly scalar variables, the <a class="reference internal" href="../../features/building_blocks/solvers/linear/direct_solver.html#directsolver"><span class="std std-ref">DirectSolver</span></a>
+will be both the most efficient and the easiest to use.
+We recommend you stick with <a class="reference internal" href="../../features/building_blocks/solvers/linear/direct_solver.html#directsolver"><span class="std std-ref">DirectSolver</span></a> unless you have a good reason to switch.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Resistor</span><span class="p">,</span> <span class="n">Diode</span><span class="p">,</span> <span class="n">Node</span>
+
+<span class="k">class</span> <span class="nc">Circuit</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;n1&#39;</span><span class="p">,</span> <span class="n">Node</span><span class="p">(</span><span class="n">n_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_out</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;I_in:0&#39;</span><span class="p">,</span> <span class="s1">&#39;I_in&#39;</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;n2&#39;</span><span class="p">,</span> <span class="n">Node</span><span class="p">())</span>  <span class="c1"># leaving defaults</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;R1&#39;</span><span class="p">,</span> <span class="n">Resistor</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="mf">100.</span><span class="p">),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="s1">&#39;Vg&#39;</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;R2&#39;</span><span class="p">,</span> <span class="n">Resistor</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="mf">10000.</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;D1&#39;</span><span class="p">,</span> <span class="n">Diode</span><span class="p">(),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="s1">&#39;Vg&#39;</span><span class="p">)])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;n1.V&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;R1.V_in&#39;</span><span class="p">,</span> <span class="s1">&#39;R2.V_in&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;R1.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n1.I_out:0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;R2.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n1.I_out:1&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;n2.V&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;R2.V_out&#39;</span><span class="p">,</span> <span class="s1">&#39;D1.V_in&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;R2.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n2.I_in:0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;D1.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n2.I_out:0&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># set some initial guesses</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>=======
+circuit
+=======
+NL: Newton 0 ; 59.9046598 1
+NL: Newton 1 ; 22.3887968 0.373740489
+NL: Newton 2 ; 8.23629948 0.13749013
+NL: Newton 3 ; 3.02978539 0.0505767899
+NL: Newton 4 ; 1.11437824 0.0186025301
+NL: Newton 5 ; 0.409725119 0.00683962016
+NL: Newton 6 ; 0.150492273 0.00251219644
+NL: Newton 7 ; 0.0551239641 0.000920194929
+NL: Newton 8 ; 0.0200403261 0.000334537016
+NL: Newton 9 ; 0.00713760492 0.000119149411
+NL: Newton 10 ; 0.00240281896 4.01107188e-05
+NL: Newton 11 ; 0.000692025597 1.15521163e-05
+NL: Newton 12 ; 0.000129140479 2.15576685e-06
+NL: Newton 13 ; 7.60315074e-06 1.26920857e-07
+NL: Newton 14 ; 3.10658301e-08 5.18587873e-10
+NL: Newton 15 ; 1.12044944e-12 1.87038778e-14
+NL: Newton Converged</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[9.90804735]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.71278185]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.09908047]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R2.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.00091953]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.00091953]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sanity check: should sum to .1 Amps</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.1]</pre></div></div></div>
+<div class="section" id="modifying-solver-settings-in-your-run-script">
+<h2>Modifying Solver Settings in Your Run Script<a class="headerlink" href="#modifying-solver-settings-in-your-run-script" title="Permalink to this headline">¶</a></h2>
+<p>In the above run script, we set some initial guess values: <code class="code docutils literal notranslate"><span class="pre">prob['n1.V']=10</span></code> and <code class="code docutils literal notranslate"><span class="pre">prob['n2.V']=1</span></code>.
+If you try to play around with those initial guesses a bit, you will see that convergence is really sensitive to
+the initial guess you used for <em>n2.V</em>.
+Below we provide a second run script that uses the same <code class="code docutils literal notranslate"><span class="pre">Circuit</span></code> group we defined previously, but which additionally
+modifies some solver settings and initial guesses.
+If we set the initial guess for <code class="code docutils literal notranslate"><span class="pre">prob['n2.V']=1e-3</span></code>, then the model starts out with a massive residual.
+It also converges much more slowly, so although we gave it more than twice the number of iterations, it doesn’t even get
+close to a converged answer.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Circuit</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># you can change the NewtonSolver settings in circuit after setup is called</span>
+<span class="n">newton</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="c1"># set some initial guesses</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>=======
+circuit
+=======
+NL: Newton 0 ; 2.53337743 1
+NL: Newton 1 ; 6.97216645e+152 2.75212306e+152
+NL: Newton 2 ; 2.56496626e+152 1.01246906e+152
+NL: Newton 3 ; 9.43616587e+151 3.72473748e+151
+NL: Newton 4 ; 3.4714385e+151 1.37028082e+151
+NL: Newton 5 ; 1.27709553e+151 5.04107883e+150
+NL: Newton 6 ; 4.6982627e+150 1.8545451e+150
+NL: Newton 7 ; 1.72842765e+150 6.82262198e+149
+NL: Newton 8 ; 6.35865285e+149 2.50995086e+149
+NL: Newton 9 ; 2.33926286e+149 9.23377161e+148
+NL: Newton 10 ; 8.60583343e+148 3.39698038e+148
+NL: Newton 11 ; 3.16597036e+148 1.24970339e+148
+NL: Newton 12 ; 1.16471791e+148 4.59749068e+147
+NL: Newton 13 ; 4.28484054e+147 1.69135498e+147
+NL: Newton 14 ; 1.5763352e+147 6.22226749e+146
+NL: Newton 15 ; 5.79912518e+146 2.28908852e+146
+NL: Newton 16 ; 2.13342016e+146 8.42124877e+145
+NL: Newton 17 ; 7.84856581e+145 3.09806416e+145
+NL: Newton 18 ; 2.88738179e+145 1.13973613e+145
+NL: Newton 19 ; 1.06222892e+145 4.19293593e+144
+NL: Newton 20 ; 3.90779734e+144 1.54252473e+144
+NL: Newton 21 ; 1.43762608e+144 5.67474102e+143
+NL: Newton 22 ; 5.28883299e+143 2.0876609e+143
+NL: Newton 23 ; 1.94569052e+143 7.68022363e+142
+NL: Newton 24 ; 7.15793373e+142 2.82545098e+142
+NL: Newton 25 ; 2.63330754e+142 1.03944541e+142
+NL: Newton 26 ; 9.68758424e+141 3.82397985e+141
+NL: Newton 27 ; 3.56393194e+141 1.40679075e+141
+NL: Newton 28 ; 1.31112263e+141 5.17539397e+140
+NL: Newton 29 ; 4.8234438e+140 1.90395783e+140
+NL: Newton 30 ; 1.7744801e+140 7.00440477e+139
+NL: Newton 31 ; 6.5280736e+139 2.57682631e+139
+NL: Newton 32 ; 2.40159047e+139 9.47979738e+138
+NL: Newton 33 ; 8.83512832e+138 3.48748995e+138
+NL: Newton 34 ; 3.25032487e+138 1.28300064e+138
+NL: Newton 35 ; 1.1957508e+138 4.7199868e+137
+NL: Newton 36 ; 4.39900637e+137 1.73641966e+137
+NL: Newton 37 ; 1.61833528e+137 6.38805438e+136
+NL: Newton 38 ; 5.95363781e+136 2.35007928e+136
+NL: Newton 39 ; 2.19026327e+136 8.64562558e+135
+NL: Newton 40 ; 8.05768397e+135 3.18060936e+135
+NL: Newton 41 ; 2.96431356e+135 1.1701034e+135
+NL: Newton 42 ; 1.09053109e+135 4.30465304e+134
+NL: Newton 43 ; 4.01191718e+134 1.58362396e+134
+NL: Newton 44 ; 1.47593037e+134 5.82593952e+133
+NL: Newton 45 ; 5.42974931e+133 2.14328479e+133
+NL: Newton 46 ; 1.99753174e+133 7.88485645e+132
+NL: Newton 47 ; 7.34865059e+132 2.90073264e+132
+NL: Newton 48 ; 2.70346971e+132 1.06714052e+132
+NL: Newton 49 ; 9.94570145e+131 3.92586645e+131
+NL: Newton 50 ; 3.65888979e+131 1.44427346e+131
+NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;circuit&#x27; failed to converge in 50 iterations.</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[9.98744708]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[8.73215484]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sanity check: should sum to .1 Amps</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.09987447]</pre></div></div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You actually <em>can</em> get this model to converge. But you have to set the options for <code class="code docutils literal notranslate"><span class="pre">maxiter=400</span></code> and <code class="code docutils literal notranslate"><span class="pre">rtol=1e-100</span></code>.
+(The <code class="code docutils literal notranslate"><span class="pre">rtol</span></code> value needs to be very low to prevent premature termination.)</p>
+</div>
+</div>
+<div class="section" id="tweaking-newton-solver-settings-to-get-more-robust-convergence">
+<h2>Tweaking Newton Solver Settings to Get More Robust Convergence<a class="headerlink" href="#tweaking-newton-solver-settings-to-get-more-robust-convergence" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="../../features/building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a> has a lot of features that allow you to modify its behavior to handle more challenging problems.
+We’re going to look at two of the most important ones here:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><a class="reference internal" href="../../features/building_blocks/solvers/backtracking/index.html#feature-line-search"><span class="std std-ref">Line searches</span></a></li>
+<li>The <em>solve_subsystems</em> option</li>
+</ol>
+</div></blockquote>
+<p>If we use both of these in combination, we can dramatically improve the robustness of the solver for this problem.
+The <em>linesearch</em> attribute makes sure that the solver doesn’t take too big of a step. The <em>solve_subsystems</em> option allows
+the <code class="code docutils literal notranslate"><span class="pre">Resistor</span></code> and <code class="code docutils literal notranslate"><span class="pre">Diode</span></code> components (the two <code class="code docutils literal notranslate"><span class="pre">ExplicitComponents</span></code>) to help the convergence by updating their own output values given their inputs.
+When you use <a class="reference internal" href="../../features/building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a> on models with a lot of <code class="code docutils literal notranslate"><span class="pre">ExplicitComponents</span></code>, you may find that turning on <em>solve_subsystems</em> helps convergence,
+but you need to be careful about the <a class="reference internal" href="../../features/core_features/grouping_components/set_order.html#feature-set-order"><span class="std std-ref">execution order</span></a> when you try this.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For this case, we used the <a class="reference internal" href="../../features/building_blocks/solvers/backtracking/armijo_goldstein.html#feature-armijo-goldstein"><span class="std std-ref">ArmijoGoldsteinLS</span></a>, which basically limits step sizes so that the residual always goes down.
+For many problems you might want to use <a class="reference internal" href="../../features/building_blocks/solvers/backtracking/bounds_enforce.html#feature-bounds-enforce"><span class="std std-ref">BoundsEnforceLS</span></a> instead, which only activates the
+line search to enforce upper and lower bounds on the outputs in the model.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Circuit</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># you can change the NewtonSolver settings in circuit after setup is called</span>
+<span class="n">newton</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ArmijoGoldsteinLS</span><span class="p">()</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="c1"># set some initial guesses</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>=======
+circuit
+=======
+NL: Newton 0 ; 0.00141407214 1
+|  LS: AG 1 ; 6.97072428e+152 1
+|  LS: AG 2 ; 8.51199023e+68 0.5
+|  LS: AG 3 ; 9.40605951e+26 0.25
+|  LS: AG 4 ; 988771.693 0.125
+|  LS: AG 5 ; 0.00130322117 0.0625
+NL: Newton 1 ; 0.00130322117 0.921608691
+|  LS: AG 1 ; 5578243.07 1
+|  LS: AG 2 ; 13.3717913 0.5
+|  LS: AG 3 ; 0.0197991803 0.25
+|  LS: AG 4 ; 0.000828009765 0.125
+NL: Newton 2 ; 0.000828009765 0.585549875
+NL: Newton 3 ; 7.03445167e-06 0.00497460594
+NL: Newton 4 ; 2.66239247e-08 1.88278405e-05
+NL: Newton 5 ; 8.96307984e-13 6.33848839e-10
+NL: Newton Converged</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[9.90804735]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.71278185]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.09908047]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R2.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.00091953]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.00091953]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sanity check: should sum to .1 Amps</span>
+<span class="k">print</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.R1.I&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.D1.I&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.1]</pre></div></div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This tutorial used finite difference to approximate the partial derivatives for all the components.
+Check out <a class="reference internal" href="../../examples/circuit_analysis.html#circuit-analysis-examples"><span class="std std-ref">this example</span></a> if you want to see the same problem solved with analytic derivatives.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="implicit_with_balancecomp.html" title="Using BalanceComp to Create Implicit Relationships in Groups"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Advanced User Guide"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Advanced User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

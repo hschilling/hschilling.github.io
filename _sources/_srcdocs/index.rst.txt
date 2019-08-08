@@ -1,0 +1,30 @@
+:orphan:
+
+.. _source_documentation:
+
+********************
+Source Docs
+********************
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   packages/openmdao.approximation_schemes
+   packages/openmdao.core
+   packages/openmdao.components
+   packages/openmdao.drivers
+   packages/openmdao.error_checking
+   packages/openmdao.jacobians
+   packages/openmdao.matrices
+   packages/openmdao.proc_allocators
+   packages/openmdao.recorders
+   packages/openmdao.solvers
+   packages/openmdao.surrogate_models
+   packages/openmdao.solvers.linear
+   packages/openmdao.solvers.nonlinear
+   packages/openmdao.solvers.linesearch
+   packages/openmdao.test_suite.components
+   packages/openmdao.test_suite.scripts
+   packages/openmdao.vectors
+   packages/openmdao.utils

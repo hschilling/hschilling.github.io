@@ -1,0 +1,8 @@
+.. _ImplicitComponent: 
+
+=========================
+ImplicitComponent
+=========================
+  .. toctree::
+     ../features/core_features/defining_components/implicitcomp.rst
+     ../basic_guide/component_types.rst

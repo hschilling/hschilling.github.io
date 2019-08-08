@@ -1,0 +1,10 @@
+.. _NonlinearSolver: 
+
+=========================
+NonlinearSolver
+=========================
+  .. toctree::
+     ../features/building_blocks/solvers/nonlinear/nonlinear_runonce.rst
+     ../features/building_blocks/solvers/nonlinear/nonlinear_block_jac.rst
+     ../features/building_blocks/solvers/nonlinear/nonlinear_block_gs.rst
+     ../features/building_blocks/solvers/nonlinear/newton.rst

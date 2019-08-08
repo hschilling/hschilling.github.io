@@ -1,0 +1,313 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Defining Partial Derivatives on Explicit Components &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Defining Partial Derivatives on Implicit Components" href="partial_derivs_implicit.html" />
+    <link rel="prev" title="Using BalanceComp to Create Implicit Relationships in Groups" href="../implicit_comps/implicit_with_balancecomp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="partial_derivs_implicit.html" title="Defining Partial Derivatives on Implicit Components"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../implicit_comps/implicit_with_balancecomp.html" title="Using BalanceComp to Create Implicit Relationships in Groups"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Advanced User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p id="advanced-guide-partial-derivs-explicit">OpenMDAO considers component derivatives to be <strong>partial derivatives</strong>.
+The framework uses these partial derivatives in order to compute the <strong>total derivatives</strong> across your whole model.
+This tutorial is focused on how to define the partial derivatives for components that inherit from <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a>.</p>
+<div class="section" id="defining-partial-derivatives-on-explicit-components">
+<h1>Defining Partial Derivatives on Explicit Components<a class="headerlink" href="#defining-partial-derivatives-on-explicit-components" title="Permalink to this headline">¶</a></h1>
+<p>For any <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a> you are going to provide derivatives of the <strong>outputs with respect to the inputs</strong>.
+Whenever you are going to define derivatives, there are two things you’re required to do:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Declare the partial derivatives via <code class="code docutils literal notranslate"><span class="pre">declare_partials</span></code>.</li>
+<li>Specify their values via <code class="code docutils literal notranslate"><span class="pre">compute_partials</span></code>.</li>
+</ol>
+</div></blockquote>
+<p>Here is an example, based on the <a class="reference internal" href="../../examples/betz_limit/betz.html#betz-limit-tutorial"><span class="std std-ref">Betz Limit Example</span></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ActuatorDisc</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple wind turbine model based on actuator disc theory&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Induced Velocity Factor&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;Area&#39;</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;m**2&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Rotor disc area&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;rho&#39;</span><span class="p">,</span> <span class="mf">1.225</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kg/m**3&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Air density&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;Vu&#39;</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;m/s&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Freestream air velocity, upstream of rotor&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;Vr&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;m/s&quot;</span><span class="p">,</span>
+                        <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Air velocity at rotor exit plane&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;Vd&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;m/s&quot;</span><span class="p">,</span>
+                        <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Slipstream air velocity, downstream of rotor&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;Ct&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Thrust Coefficient&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;thrust&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">,</span>
+                        <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Thrust produced by the rotor&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;Cp&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Power Coefficient&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Power produced by the rotor&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;Vr&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;Vu&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;Vd&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;Ct&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;thrust&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;Area&#39;</span><span class="p">,</span> <span class="s1">&#39;rho&#39;</span><span class="p">,</span> <span class="s1">&#39;Vu&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;Cp&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;Area&#39;</span><span class="p">,</span> <span class="s1">&#39;rho&#39;</span><span class="p">,</span> <span class="s1">&#39;Vu&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Considering the entire rotor as a single disc that extracts</span>
+<span class="sd">        velocity uniformly from the incoming flow and converts it to</span>
+<span class="sd">        power.&quot;&quot;&quot;</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">Vu</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Vu&#39;</span><span class="p">]</span>
+
+        <span class="n">qA</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;rho&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Area&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">2</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Vd&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Vd</span> <span class="o">=</span> <span class="n">Vu</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Vr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Vu</span> <span class="o">+</span> <span class="n">Vd</span><span class="p">)</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Ct&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ct</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;thrust&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ct</span> <span class="o">*</span> <span class="n">qA</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Cp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Cp</span> <span class="o">=</span> <span class="n">Ct</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Cp</span> <span class="o">*</span> <span class="n">qA</span> <span class="o">*</span> <span class="n">Vu</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">J</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Jacobian of partial derivatives.&quot;&quot;&quot;</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">Vu</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Vu&#39;</span><span class="p">]</span>
+        <span class="n">Area</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Area&#39;</span><span class="p">]</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;rho&#39;</span><span class="p">]</span>
+
+        <span class="c1"># pre-compute commonly needed quantities</span>
+        <span class="n">a_times_area</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">Area</span>
+        <span class="n">one_minus_a</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">a</span>
+        <span class="n">a_area_rho_vu</span> <span class="o">=</span> <span class="n">a_times_area</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">Vu</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;Vr&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">Vu</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;Vr&#39;</span><span class="p">,</span> <span class="s1">&#39;Vu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">one_minus_a</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;Vd&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">Vu</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;Ct&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">-</span> <span class="mf">8.0</span> <span class="o">*</span> <span class="n">a</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;thrust&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Area</span> <span class="o">*</span> <span class="n">J</span><span class="p">[</span><span class="s1">&#39;Ct&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;thrust&#39;</span><span class="p">,</span> <span class="s1">&#39;Area&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">one_minus_a</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;thrust&#39;</span><span class="p">,</span> <span class="s1">&#39;rho&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">a_times_area</span> <span class="o">*</span> <span class="n">Vu</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">one_minus_a</span><span class="p">)</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;thrust&#39;</span><span class="p">,</span> <span class="s1">&#39;Vu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">a_area_rho_vu</span> <span class="o">*</span> <span class="p">(</span><span class="n">one_minus_a</span><span class="p">)</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;Cp&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">a</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">one_minus_a</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">Area</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mf">2.0</span> <span class="o">*</span> <span class="n">a</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">Area</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">one_minus_a</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="s1">&#39;Area&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">one_minus_a</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="s1">&#39;rho&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">a_times_area</span> <span class="o">*</span> <span class="n">Vu</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">one_minus_a</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="s1">&#39;Vu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">6.0</span> <span class="o">*</span> <span class="n">Area</span> <span class="o">*</span> <span class="n">Vu</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">one_minus_a</span><span class="o">**</span><span class="mi">2</span>
+</pre></div>
+</div>
+<p>The calls to <code class="code docutils literal notranslate"><span class="pre">declare_partials</span></code> tell OpenMDAO which partial derivatives to expect.
+This is always done inside the <code class="code docutils literal notranslate"><span class="pre">setup</span></code> method.
+In this example, not all the outputs depend on all the inputs, and you’ll see that if you look at the derivative declarations.
+Any partial that is not declared is assumed to be zero.
+You may declare all the partials in just one line as follows (see the documentation on <a class="reference internal" href="../../features/core_features/working_with_derivatives/specifying_partials.html#feature-specify-partials"><span class="std std-ref">specifying partials</span></a> for more details):</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Declaring the partials in this fashion, however, indicates to OpenMDAO that all the partials are nonzero.
+While you may save yourself a few lines of code using this method, the line savings could come at the expense of performance.
+Generally, it is better to be more specific, and declare only the nonzero partials.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">There are a few more options to <code class="code docutils literal notranslate"><span class="pre">declare_partials</span></code> that are worth taking a look at.
+There is support for when your derivatives are constant, and there is support for specifying derivatives in a sparse AIJ format.
+The full details can be found in the documentation on <a class="reference internal" href="../../features/core_features/working_with_derivatives/specifying_partials.html#feature-specify-partials"><span class="std std-ref">specifying partials</span></a>.</p>
+</div>
+<p>After you declare the nonzero partial derivatives, you need to implement the <code class="code docutils literal notranslate"><span class="pre">compute_partials</span></code> method to perform the actual
+derivative computations.
+OpenMDAO will call this method whenever it needs to work with the partial derivatives.
+The values are stored in the Jacobian object, <code class="code docutils literal notranslate"><span class="pre">J</span></code>, and get used in the linear solutions that are necessary to compute model-level total derivatives.
+This API results in the assembly of a Jacobian matrix in memory.
+The <code class="code docutils literal notranslate"><span class="pre">compute_partials</span></code> API is the most appropriate way to declare derivatives in the vast majority of circumstances,
+and you should use it unless you have a good reason not to.</p>
+<div class="section" id="providing-derivatives-using-the-matrix-free-api">
+<h2>Providing Derivatives Using the Matrix-Free API<a class="headerlink" href="#providing-derivatives-using-the-matrix-free-api" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you don’t want to assemble the full partial-derivative Jacobian of your component in memory.
+The reasons why you might not want this are beyond the scope of this tutorial.
+For now, let’s assume that if matrix assembly won’t work for your application, that you are likely already well aware of this issue.
+So if you can’t imagine why you would want to use a matrix-free API, you may disregard the following link.
+If you do need to work matrix-free, there is a <code class="code docutils literal notranslate"><span class="pre">compute_jacvec_product</span></code> API, examples of which can be found
+in the feature document for <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a>.</p>
+</div>
+<div class="section" id="how-do-i-know-if-my-derivatives-are-correct">
+<h2>How Do I Know If My Derivatives Are Correct?<a class="headerlink" href="#how-do-i-know-if-my-derivatives-are-correct" title="Permalink to this headline">¶</a></h2>
+<p>It is really important, if you are going to provide analytic derivatives, that you make sure they are correct.
+It is hard to overstate the importance of accurate derivatives in the convergence of analysis and optimization problems.
+OpenMDAO provides a helper function to make it easier to verify your partial derivatives.
+Any time you implement analytic derivatives, or change the nonlinear equations of your analysis, you should check your partial derivatives this way.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.test_betz_limit</span> <span class="kn">import</span> <span class="n">ActuatorDisc</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;a_disk&#39;</span><span class="p">,</span> <span class="n">ActuatorDisc</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>--------------------------------
+Component: ActuatorDisc &#x27;a_disk&#x27;
+--------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+
+&#x27;Cp&#x27;       wrt &#x27;Area&#x27;       | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Cp&#x27;       wrt &#x27;Vu&#x27;         | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Cp&#x27;       wrt &#x27;a&#x27;          | 1.0000e+00 | 1.0000e+00 | 2.0000e-06 | 2.0000e-06 &gt;ABS_TOL &gt;REL_TOL
+&#x27;Cp&#x27;       wrt &#x27;rho&#x27;        | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Ct&#x27;       wrt &#x27;Area&#x27;       | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Ct&#x27;       wrt &#x27;Vu&#x27;         | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Ct&#x27;       wrt &#x27;a&#x27;          | 0.0000e+00 | 4.0000e-06 | 4.0000e-06 | 1.0000e+00 &gt;ABS_TOL &gt;REL_TOL
+&#x27;Ct&#x27;       wrt &#x27;rho&#x27;        | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Vd&#x27;       wrt &#x27;Area&#x27;       | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Vd&#x27;       wrt &#x27;Vu&#x27;         | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Vd&#x27;       wrt &#x27;a&#x27;          | 2.0000e+01 | 2.0000e+01 | 5.7511e-10 | 2.8756e-11
+&#x27;Vd&#x27;       wrt &#x27;rho&#x27;        | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Vr&#x27;       wrt &#x27;Area&#x27;       | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;Vr&#x27;       wrt &#x27;Vu&#x27;         | 5.0000e-01 | 5.0000e-01 | 0.0000e+00 | 0.0000e+00
+&#x27;Vr&#x27;       wrt &#x27;a&#x27;          | 1.0000e+01 | 1.0000e+01 | 9.3132e-10 | 9.3132e-11
+&#x27;Vr&#x27;       wrt &#x27;rho&#x27;        | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | nan
+&#x27;power&#x27;    wrt &#x27;Area&#x27;       | 3.0625e+02 | 3.0625e+02 | 0.0000e+00 | 0.0000e+00
+&#x27;power&#x27;    wrt &#x27;Vu&#x27;         | 9.1875e+02 | 9.1875e+02 | 9.1076e-05 | 9.9130e-08 &gt;ABS_TOL
+&#x27;power&#x27;    wrt &#x27;a&#x27;          | 6.1250e+03 | 6.1250e+03 | 1.2250e-02 | 2.0001e-06 &gt;ABS_TOL &gt;REL_TOL
+&#x27;power&#x27;    wrt &#x27;rho&#x27;        | 2.5000e+03 | 2.5000e+03 | 0.0000e+00 | 0.0000e+00
+&#x27;thrust&#x27;   wrt &#x27;Area&#x27;       | 6.1250e+01 | 6.1250e+01 | 7.1054e-15 | 1.1601e-16
+&#x27;thrust&#x27;   wrt &#x27;Vu&#x27;         | 1.2250e+02 | 1.2250e+02 | 5.9605e-06 | 4.8657e-08 &gt;ABS_TOL
+&#x27;thrust&#x27;   wrt &#x27;a&#x27;          | 0.0000e+00 | 2.4501e-03 | 2.4501e-03 | 1.0000e+00 &gt;ABS_TOL &gt;REL_TOL
+&#x27;thrust&#x27;   wrt &#x27;rho&#x27;        | 5.0000e+02 | 5.0000e+02 | 0.0000e+00 | 0.0000e+00
+
+###############################################################
+Sub Jacobian with Largest Relative Error: ActuatorDisc &#x27;a_disk&#x27;
+###############################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+&#x27;Ct&#x27;       wrt &#x27;a&#x27;          | 0.0000e+00 | 4.0000e-06 | 4.0000e-06 | 1.0000e+00</pre></div></div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="code docutils literal notranslate"><span class="pre">check_partials</span></code> is <strong>really</strong> important when you’re coding derivatives.
+It has some options to give you more detailed outputs for debugging and to let you limit which components get tested.
+You should look over the complete documentation on <a class="reference internal" href="../../features/core_features/working_with_derivatives/basic_check_partials.html#feature-check-partials"><span class="std std-ref">check_partials</span></a> before you start doing heavy development with derivatives.</p>
+</div>
+<p>There is a lot of information there, but for now, just take a look at the <em>r(fwd-chk)</em> column, which shows the norm of the relative difference
+between the analytic derivatives Jacobian and one that was approximated using finite differences.
+Here, all the numbers are really small, and that’s what you want to see.
+It’s rare, except for linear functions, that the finite difference and analytic derivatives will match exactly, but they should be pretty close.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="partial_derivs_implicit.html" title="Defining Partial Derivatives on Implicit Components"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../implicit_comps/implicit_with_balancecomp.html" title="Using BalanceComp to Create Implicit Relationships in Groups"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Advanced User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

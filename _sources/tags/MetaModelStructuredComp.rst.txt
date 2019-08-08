@@ -1,0 +1,7 @@
+.. _MetaModelStructuredComp: 
+
+=========================
+MetaModelStructuredComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/metamodelstructured_comp.rst

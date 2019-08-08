@@ -1,0 +1,763 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.recorders.sqlite_recorder &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.recorders.sqlite_recorder</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Class definition for SqliteRecorder, which provides dictionary backed by SQLite.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="n">cPickle</span> <span class="k">as</span> <span class="n">pickle</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.recorders.case_recorder</span> <span class="k">import</span> <span class="n">CaseRecorder</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.record_util</span> <span class="k">import</span> <span class="n">values_to_array</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.options_dictionary</span> <span class="k">import</span> <span class="n">OptionsDictionary</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">simple_warning</span><span class="p">,</span> <span class="n">make_serializable</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.driver</span> <span class="k">import</span> <span class="n">Driver</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.system</span> <span class="k">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.problem</span> <span class="k">import</span> <span class="n">Problem</span>
+<span class="kn">from</span> <span class="nn">openmdao.solvers.solver</span> <span class="k">import</span> <span class="n">Solver</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">SQL case database version history.</span>
+<span class="sd">----------------------------------</span>
+<span class="sd">5 -- OpenMDAO 2.5</span>
+<span class="sd">     Added source column (driver name, system/solver pathname) to global iterations table.</span>
+<span class="sd">4 -- OpenMDAO 2.4</span>
+<span class="sd">     Added variable settings metadata that contains scaling info.</span>
+<span class="sd">3 -- OpenMDAO 2.4</span>
+<span class="sd">     Storing most data as JSON rather than binary numpy arrays.</span>
+<span class="sd">2 -- OpenMDAO 2.4, merged 20 July 2018.</span>
+<span class="sd">     Added support for recording derivatives from driver, resulting in a new table.</span>
+<span class="sd">1 -- Through OpenMDAO 2.3</span>
+<span class="sd">     Original implementation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">format_version</span> <span class="o">=</span> <span class="mi">5</span>
+
+
+<div class="viewcode-block" id="array_to_blob"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.array_to_blob">[docs]</a><span class="k">def</span> <span class="nf">array_to_blob</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make numpy array in to BLOB type.</span>
+
+<span class="sd">    Convert a numpy array to something that can be written</span>
+<span class="sd">    to a BLOB field in sqlite.</span>
+
+<span class="sd">    TODO: move this to a util file?</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    array : array</span>
+<span class="sd">        The array that will be converted to a blob.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    blob :</span>
+<span class="sd">        The blob created from the array.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="blob_to_array"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.blob_to_array">[docs]</a><span class="k">def</span> <span class="nf">blob_to_array</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert sqlite BLOB to numpy array.</span>
+
+<span class="sd">    TODO: move this to a util file?</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    blob : blob</span>
+<span class="sd">        The blob that will be converted to an array.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array :</span>
+<span class="sd">        The array created from the blob.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SqliteRecorder"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder">[docs]</a><span class="k">class</span> <span class="nc">SqliteRecorder</span><span class="p">(</span><span class="n">CaseRecorder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recorder that saves cases in a sqlite db.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _record_viewer_data : bool</span>
+<span class="sd">        Flag indicating whether to record data needed to generate N2 diagram.</span>
+<span class="sd">    connection : sqlite connection object</span>
+<span class="sd">        Connection to the sqlite3 database.</span>
+<span class="sd">    _abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">    _prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">    _abs2meta : {&#39;name&#39;: {}}</span>
+<span class="sd">        Dictionary mapping absolute variable names to their metadata including units,</span>
+<span class="sd">        bounds, and scaling.</span>
+<span class="sd">    _pickle_version : int</span>
+<span class="sd">        The pickle protocol version to use when pickling metadata.</span>
+<span class="sd">    _filepath : str</span>
+<span class="sd">        Path to the recorder file.</span>
+<span class="sd">    _database_initialized : bool</span>
+<span class="sd">        Flag indicating whether or not the database has been initialized.</span>
+<span class="sd">    _record_on_proc : bool</span>
+<span class="sd">        Flag indicating whether to record on this processor when running in parallel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SqliteRecorder.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pickle_version</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">record_viewer_data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the SqliteRecorder.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filepath : str</span>
+<span class="sd">            Path to the recorder file.</span>
+<span class="sd">        append : bool, optional</span>
+<span class="sd">            Optional. If True, append to an existing case recorder file.</span>
+<span class="sd">        pickle_version : int, optional</span>
+<span class="sd">            The pickle protocol version to use when pickling metadata.</span>
+<span class="sd">        record_viewer_data : bool, optional</span>
+<span class="sd">            If True, record data needed for visualization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">append</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Append feature not implemented for SqliteRecorder&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_viewer_data</span> <span class="o">=</span> <span class="n">record_viewer_data</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;output&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;output&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_version</span> <span class="o">=</span> <span class="n">pickle_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span> <span class="o">=</span> <span class="n">filepath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_database_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># default to record on all procs when running in parallel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_on_proc</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">SqliteRecorder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">record_viewer_data</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_initialize_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parallel</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_on_proc</span><span class="p">:</span>
+                <span class="n">filepath</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">,</span> <span class="n">rank</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Note: SqliteRecorder is running on multiple processors. &quot;</span>
+                      <span class="s2">&quot;Cases from rank </span><span class="si">%d</span><span class="s2"> are being written to </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span>
+                      <span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">filepath</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">filepath</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span>
+
+        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE metadata(format_version INT, &quot;</span>
+                          <span class="s2">&quot;abs2prom TEXT, prom2abs TEXT, abs2meta TEXT, var_settings TEXT)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO metadata(format_version, abs2prom, prom2abs) &quot;</span>
+                          <span class="s2">&quot;VALUES(?,?,?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">format_version</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+                <span class="c1"># used to keep track of the order of the case records across all case tables</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE global_iterations(id INTEGER PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;record_type TEXT, rowid INT, source TEXT)&quot;</span><span class="p">)</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE driver_iterations(id INTEGER PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;counter INT, iteration_coordinate TEXT, timestamp REAL, &quot;</span>
+                          <span class="s2">&quot;success INT, msg TEXT, inputs TEXT, outputs TEXT)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE driver_derivatives(id INTEGER PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;counter INT, iteration_coordinate TEXT, timestamp REAL, &quot;</span>
+                          <span class="s2">&quot;success INT, msg TEXT, derivatives BLOB)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE INDEX driv_iter_ind on driver_iterations(iteration_coordinate)&quot;</span><span class="p">)</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE problem_cases(id INTEGER PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;counter INT, case_name TEXT, timestamp REAL, &quot;</span>
+                          <span class="s2">&quot;success INT, msg TEXT, outputs TEXT)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE INDEX prob_name_ind on problem_cases(case_name)&quot;</span><span class="p">)</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE system_iterations(id INTEGER PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;counter INT, iteration_coordinate TEXT, timestamp REAL, &quot;</span>
+                          <span class="s2">&quot;success INT, msg TEXT, inputs TEXT, outputs TEXT, residuals TEXT)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE INDEX sys_iter_ind on system_iterations(iteration_coordinate)&quot;</span><span class="p">)</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE solver_iterations(id INTEGER PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;counter INT, iteration_coordinate TEXT, timestamp REAL, &quot;</span>
+                          <span class="s2">&quot;success INT, msg TEXT, abs_err REAL, rel_err REAL, &quot;</span>
+                          <span class="s2">&quot;solver_inputs TEXT, solver_output TEXT, solver_residuals TEXT)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE INDEX solv_iter_ind on solver_iterations(iteration_coordinate)&quot;</span><span class="p">)</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE driver_metadata(id TEXT PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;model_viewer_data TEXT)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE system_metadata(id TEXT PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;scaling_factors BLOB, component_metadata BLOB)&quot;</span><span class="p">)</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE solver_metadata(id TEXT PRIMARY KEY, &quot;</span>
+                          <span class="s2">&quot;solver_options BLOB, solver_class TEXT)&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_database_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_cleanup_abs2meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert all abs2meta variable properties to a form that can be dumped as JSON.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">prop</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_serializable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">prop</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_cleanup_var_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_settings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert all var_settings variable properties to a form that can be dumped as JSON.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var_settings : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable settings.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        var_settings : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to var settings that are JSON compatible.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># otherwise we trample on values that are used elsewhere</span>
+        <span class="n">var_settings</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">var_settings</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">var_settings</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">var_settings</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+                <span class="n">var_settings</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">prop</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_serializable</span><span class="p">(</span><span class="n">var_settings</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">prop</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">var_settings</span>
+
+<div class="viewcode-block" id="SqliteRecorder.startup"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.startup">[docs]</a>    <span class="k">def</span> <span class="nf">startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare for a new run and create/update the abs2prom and prom2abs variables.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            Object to which this recorder is attached.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SqliteRecorder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">startup</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_initialized</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_database</span><span class="p">()</span>
+
+        <span class="n">driver</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># grab the system</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">Driver</span><span class="p">):</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+            <span class="n">driver</span> <span class="o">=</span> <span class="n">recording_requester</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">System</span><span class="p">):</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="n">recording_requester</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">Problem</span><span class="p">):</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">model</span>
+            <span class="n">driver</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">driver</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">Solver</span><span class="p">):</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">_system</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Driver encountered a recording_requester it cannot handle&#39;</span>
+                             <span class="s1">&#39;: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">))</span>
+
+        <span class="n">states</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_list_states_allprocs</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">desvars</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">get_sizes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">responses</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">get_responses</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">get_sizes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">objectives</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                <span class="n">constraints</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">responses</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;con&#39;</span><span class="p">:</span>
+                        <span class="n">constraints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">objectives</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">desvars</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">_designvars</span>
+                <span class="n">constraints</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">_cons</span>
+                <span class="n">objectives</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">_objs</span>
+                <span class="n">responses</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">_responses</span>
+
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+            <span class="n">full_var_set</span> <span class="o">=</span> <span class="p">[(</span><span class="n">outputs</span><span class="p">,</span> <span class="s1">&#39;output&#39;</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">desvars</span><span class="p">,</span> <span class="s1">&#39;desvar&#39;</span><span class="p">),</span> <span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="s1">&#39;response&#39;</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">objectives</span><span class="p">,</span> <span class="s1">&#39;objective&#39;</span><span class="p">),</span> <span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="s1">&#39;constraint&#39;</span><span class="p">)]</span>
+
+            <span class="c1"># merge current abs2prom and prom2abs with this system&#39;s version</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">abs_names</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_prom2abs_list</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">abs_names</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">v</span><span class="p">],</span>
+                                                                <span class="n">abs_names</span><span class="p">)))</span>
+
+            <span class="c1"># for outputs, there can be only one abs name per promoted name</span>
+            <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">abs_names</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_prom2abs_list</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">abs_names</span>
+
+            <span class="k">for</span> <span class="n">var_set</span><span class="p">,</span> <span class="n">var_type</span> <span class="ow">in</span> <span class="n">full_var_set</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">var_set</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;explicit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+                    <span class="k">if</span> <span class="n">var_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var_type</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;explicit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;explicit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_abs2meta</span><span class="p">()</span>
+
+            <span class="c1"># store the updated abs2prom and prom2abs</span>
+            <span class="n">abs2prom</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">)</span>
+            <span class="n">prom2abs</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">)</span>
+            <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">)</span>
+
+            <span class="n">var_settings</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">var_settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">desvars</span><span class="p">)</span>
+            <span class="n">var_settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">objectives</span><span class="p">)</span>
+            <span class="n">var_settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+            <span class="n">var_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_var_settings</span><span class="p">(</span><span class="n">var_settings</span><span class="p">)</span>
+            <span class="n">var_settings_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">var_settings</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE metadata SET abs2prom=?, prom2abs=?, abs2meta=?, var_settings=?&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="n">abs2prom</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">var_settings_json</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_iteration_driver"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_driver">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration_driver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record data and metadata from a Driver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            Driver in need of recording.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing desvars, objectives, constraints, responses, and System vars.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Dictionary containing execution metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;out&#39;</span><span class="p">]</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;in&#39;</span><span class="p">]</span>
+
+            <span class="c1"># convert to list so this can be dumped as JSON</span>
+            <span class="k">for</span> <span class="n">in_out</span> <span class="ow">in</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">in_out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">in_out</span><span class="p">:</span>
+                    <span class="n">in_out</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_serializable</span><span class="p">(</span><span class="n">in_out</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
+
+            <span class="n">outputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+            <span class="n">inputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>  <span class="c1"># need a real cursor for lastrowid</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO driver_iterations(counter, iteration_coordinate, &quot;</span>
+                          <span class="s2">&quot;timestamp, success, msg, inputs, outputs) VALUES(?,?,?,?,?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_coordinate</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">],</span>
+                           <span class="n">inputs_text</span><span class="p">,</span> <span class="n">outputs_text</span><span class="p">))</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO global_iterations(record_type, rowid, source) VALUES(?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">lastrowid</span><span class="p">,</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">_get_name</span><span class="p">()))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_iteration_problem"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_problem">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record data and metadata from a Problem.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            Problem in need of recording.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing desvars, objectives, and constraints.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Dictionary containing execution metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;out&#39;</span><span class="p">]</span>
+
+            <span class="c1"># convert to list so this can be dumped as JSON</span>
+            <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+                    <span class="n">outputs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_serializable</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
+
+            <span class="n">outputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>  <span class="c1"># need a real cursor for lastrowid</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO problem_cases(counter, case_name, &quot;</span>
+                          <span class="s2">&quot;timestamp, success, msg, outputs) VALUES(?,?,?,?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counter</span><span class="p">,</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                           <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">],</span>
+                           <span class="n">outputs_text</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_iteration_system"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_system">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration_system</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record data and metadata from a System.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : System</span>
+<span class="sd">            System in need of recording.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing inputs, outputs, and residuals.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Dictionary containing execution metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">]</span>
+            <span class="n">residuals</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+
+            <span class="c1"># convert to list so this can be dumped as JSON</span>
+            <span class="k">for</span> <span class="n">i_o_r</span> <span class="ow">in</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i_o_r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">i_o_r</span><span class="p">:</span>
+                    <span class="n">i_o_r</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_serializable</span><span class="p">(</span><span class="n">i_o_r</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
+
+            <span class="n">outputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+            <span class="n">inputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">residuals_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>  <span class="c1"># need a real cursor for lastrowid</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO system_iterations(counter, iteration_coordinate, &quot;</span>
+                          <span class="s2">&quot;timestamp, success, msg, inputs , outputs , residuals ) &quot;</span>
+                          <span class="s2">&quot;VALUES(?,?,?,?,?,?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_coordinate</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">],</span>
+                           <span class="n">inputs_text</span><span class="p">,</span> <span class="n">outputs_text</span><span class="p">,</span> <span class="n">residuals_text</span><span class="p">))</span>
+
+                <span class="c1"># get the pathname of the source system</span>
+                <span class="n">source_system</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">pathname</span>
+                <span class="k">if</span> <span class="n">source_system</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="n">source_system</span> <span class="o">=</span> <span class="s1">&#39;root&#39;</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO global_iterations(record_type, rowid, source) VALUES(?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">lastrowid</span><span class="p">,</span> <span class="n">source_system</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_iteration_solver"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_solver">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record data and metadata from a Solver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : Solver</span>
+<span class="sd">            Solver in need of recording.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing outputs, residuals, and errors.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Dictionary containing execution metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="nb">abs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;abs&#39;</span><span class="p">]</span>
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;rel&#39;</span><span class="p">]</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">]</span>
+            <span class="n">residuals</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+
+            <span class="c1"># convert to list so this can be dumped as JSON</span>
+            <span class="k">for</span> <span class="n">i_o_r</span> <span class="ow">in</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i_o_r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">i_o_r</span><span class="p">:</span>
+                    <span class="n">i_o_r</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_serializable</span><span class="p">(</span><span class="n">i_o_r</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
+
+            <span class="n">outputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+            <span class="n">inputs_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">residuals_text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>  <span class="c1"># need a real cursor for lastrowid</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO solver_iterations(counter, iteration_coordinate, &quot;</span>
+                          <span class="s2">&quot;timestamp, success, msg, abs_err, rel_err, &quot;</span>
+                          <span class="s2">&quot;solver_inputs, solver_output, solver_residuals) &quot;</span>
+                          <span class="s2">&quot;VALUES(?,?,?,?,?,?,?,?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_coordinate</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">],</span>
+                           <span class="nb">abs</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">inputs_text</span><span class="p">,</span> <span class="n">outputs_text</span><span class="p">,</span> <span class="n">residuals_text</span><span class="p">))</span>
+
+                <span class="c1"># get the pathname of the source system</span>
+                <span class="n">source_system</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">pathname</span>
+                <span class="k">if</span> <span class="n">source_system</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="n">source_system</span> <span class="o">=</span> <span class="s1">&#39;root&#39;</span>
+
+                <span class="c1"># get solver type from SOLVER class attribute to determine the solver pathname</span>
+                <span class="n">solver_type</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">SOLVER</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">solver_type</span> <span class="o">==</span> <span class="s1">&#39;NL&#39;</span><span class="p">:</span>
+                    <span class="n">source_solver</span> <span class="o">=</span> <span class="n">source_system</span> <span class="o">+</span> <span class="s1">&#39;.nonlinear_solver&#39;</span>
+                <span class="k">elif</span> <span class="n">solver_type</span> <span class="o">==</span> <span class="s1">&#39;LS&#39;</span><span class="p">:</span>
+                    <span class="n">source_solver</span> <span class="o">=</span> <span class="n">source_system</span> <span class="o">+</span> <span class="s1">&#39;.nonlinear_solver.linesearch&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Solver type &#39;</span><span class="si">%s</span><span class="s2">&#39; not recognized during recording. &quot;</span>
+                                       <span class="s2">&quot;Expecting NL or LS&quot;</span> <span class="o">%</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">SOLVER</span><span class="p">)</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO global_iterations(record_type, rowid, source) VALUES(?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="s1">&#39;solver&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">lastrowid</span><span class="p">,</span> <span class="n">source_solver</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_viewer_data"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_viewer_data">[docs]</a>    <span class="k">def</span> <span class="nf">record_viewer_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_viewer_data</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;Driver&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record model viewer data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model_viewer_data : dict</span>
+<span class="sd">            Data required to visualize the model.</span>
+<span class="sd">        key : str, optional</span>
+<span class="sd">            The unique ID to use for this data in the table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">model_viewer_data</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">make_serializable</span><span class="p">)</span>
+
+            <span class="c1"># Note: recorded to &#39;driver_metadata&#39; table for legacy/compatibility reasons.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO driver_metadata(id, model_viewer_data) VALUES(?,?)&quot;</span><span class="p">,</span>
+                              <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">json_data</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">IntegrityError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model viewer data has already has already been recorded for </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_metadata_system"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata_system">[docs]</a>    <span class="k">def</span> <span class="nf">record_metadata_system</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record system metadata.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : System</span>
+<span class="sd">            The System that would like to record its metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="n">scaling_vecs</span><span class="p">,</span> <span class="n">user_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_metadata_system</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">scaling_vecs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="n">scaling_factors</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">scaling_vecs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_version</span><span class="p">)</span>
+
+            <span class="c1"># try to pickle the metadata, report if it failed</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pickled_metadata</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">user_options</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_version</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">pickled_metadata</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">OptionsDictionary</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_version</span><span class="p">)</span>
+                <span class="n">simple_warning</span><span class="p">(</span><span class="s2">&quot;Trying to record options which cannot be pickled &quot;</span>
+                               <span class="s2">&quot;on system with name: </span><span class="si">%s</span><span class="s2">. Use the &#39;options_excludes&#39; &quot;</span>
+                               <span class="s2">&quot;recording option on system objects to avoid attempting &quot;</span>
+                               <span class="s2">&quot;to record options which cannot be pickled. Skipping &quot;</span>
+                               <span class="s2">&quot;recording options for this system.&quot;</span> <span class="o">%</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                               <span class="ne">RuntimeWarning</span><span class="p">)</span>
+
+            <span class="n">path</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">pathname</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;root&#39;</span>
+
+            <span class="n">scaling_factors</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">scaling_factors</span><span class="p">)</span>
+            <span class="n">pickled_metadata</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">pickled_metadata</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="c1"># Because we can have a recorder attached to multiple Systems,</span>
+                <span class="c1">#   and because we are now recording System metadata recursively,</span>
+                <span class="c1">#   we can store System metadata multiple times. Need to ignore when that happens</span>
+                <span class="c1">#   so we don&#39;t get database errors. So use OR IGNORE</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT OR IGNORE INTO system_metadata&quot;</span>
+                          <span class="s2">&quot;(id, scaling_factors, component_metadata) &quot;</span>
+                          <span class="s2">&quot;VALUES(?,?,?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">scaling_factors</span><span class="p">,</span> <span class="n">pickled_metadata</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_metadata_solver"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata_solver">[docs]</a>    <span class="k">def</span> <span class="nf">record_metadata_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record solver metadata.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : Solver</span>
+<span class="sd">            The Solver that would like to record its metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">pathname</span>
+            <span class="n">solver_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;root&#39;</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">solver_class</span><span class="p">)</span>
+
+            <span class="n">solver_options</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">recording_requester</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_version</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO solver_metadata(id, solver_options, solver_class) &quot;</span>
+                          <span class="s2">&quot;VALUES(?,?,?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">solver_options</span><span class="p">),</span> <span class="n">solver_class</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.record_derivatives_driver"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_derivatives_driver">[docs]</a>    <span class="k">def</span> <span class="nf">record_derivatives_driver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record derivatives data from a Driver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            Driver in need of recording.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing derivatives keyed by &#39;of,wrt&#39; to be recorded.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Dictionary containing execution metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+
+            <span class="n">data_array</span> <span class="o">=</span> <span class="n">values_to_array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">data_blob</span> <span class="o">=</span> <span class="n">array_to_blob</span><span class="p">(</span><span class="n">data_array</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>  <span class="c1"># need a real cursor for lastrowid</span>
+
+                <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO driver_derivatives(counter, iteration_coordinate, &quot;</span>
+                          <span class="s2">&quot;timestamp, success, msg, derivatives) VALUES(?,?,?,?,?,?)&quot;</span><span class="p">,</span>
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_coordinate</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">],</span>
+                           <span class="n">data_blob</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SqliteRecorder.shutdown"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_recorder.html#openmdao.recorders.sqlite_recorder.SqliteRecorder.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shut down the recorder.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># close database connection</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

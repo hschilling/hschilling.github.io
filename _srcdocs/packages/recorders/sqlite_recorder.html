@@ -1,0 +1,515 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>sqlite_recorder.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="openmdao.solvers" href="../openmdao.solvers.html" />
+    <link rel="prev" title="sqlite_reader.py" href="sqlite_reader.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.solvers.html" title="openmdao.solvers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sqlite_reader.html" title="sqlite_reader.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" accesskey="U">openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.recorders.sqlite_recorder">
+<span id="sqlite-recorder-py"></span><span id="openmdao-recorders-sqlite-recorder-py"></span><span id="index-0"></span><h1>sqlite_recorder.py<a class="headerlink" href="#module-openmdao.recorders.sqlite_recorder" title="Permalink to this headline">¶</a></h1>
+<p>Class definition for SqliteRecorder, which provides dictionary backed by SQLite.</p>
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_recorder.</code><code class="descname">SqliteRecorder</code><span class="sig-paren">(</span><em>filepath</em>, <em>append=False</em>, <em>pickle_version=2</em>, <em>record_viewer_data=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="case_recorder.html#openmdao.recorders.case_recorder.CaseRecorder" title="openmdao.recorders.case_recorder.CaseRecorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.recorders.case_recorder.CaseRecorder</span></code></a></p>
+<p>Recorder that saves cases in a sqlite db.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="82%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>connection</strong></td>
+<td>(sqlite connection object) Connection to the sqlite3 database.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filepath</em>, <em>append=False</em>, <em>pickle_version=2</em>, <em>record_viewer_data=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the SqliteRecorder.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filepath</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Path to the recorder file.</p>
+</dd>
+<dt><strong>append</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Optional. If True, append to an existing case recorder file.</p>
+</dd>
+<dt><strong>pickle_version</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">The pickle protocol version to use when pickling metadata.</p>
+</dd>
+<dt><strong>record_viewer_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, record data needed for visualization.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_derivatives">
+<code class="descname">record_derivatives</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route the record_derivatives call to the proper method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">System, Solver, Driver in need of recording.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing derivatives keyed by ‘of,wrt’ to be recorded.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">keyword args</span></dt>
+<dd><p class="first last">Some implementations of record_derivatives need additional args.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_derivatives_driver">
+<code class="descname">record_derivatives_driver</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_derivatives_driver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_derivatives_driver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record derivatives data from a Driver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">Driver in need of recording.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing derivatives keyed by ‘of,wrt’ to be recorded.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route the record_iteration call to the proper method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">System, Solver, Driver in need of recording.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing desvars, objectives, constraints, responses, and System vars.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">keyword args</span></dt>
+<dd><p class="first last">Some implementations of record_iteration need additional args.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_driver">
+<code class="descname">record_iteration_driver</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_iteration_driver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_driver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record data and metadata from a Driver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">Driver in need of recording.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing desvars, objectives, constraints, responses, and System vars.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_problem">
+<code class="descname">record_iteration_problem</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_iteration_problem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_problem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record data and metadata from a Problem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">Problem in need of recording.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing desvars, objectives, and constraints.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_solver">
+<code class="descname">record_iteration_solver</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_iteration_solver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record data and metadata from a Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Solver</span></dt>
+<dd><p class="first last">Solver in need of recording.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing outputs, residuals, and errors.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_system">
+<code class="descname">record_iteration_system</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_iteration_system"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_iteration_system" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record data and metadata from a System.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">System in need of recording.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing inputs, outputs, and residuals.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing execution metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata">
+<code class="descname">record_metadata</code><span class="sig-paren">(</span><em>recording_requester</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route the record_metadata call to the proper method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that would like to record its metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata_solver">
+<code class="descname">record_metadata_solver</code><span class="sig-paren">(</span><em>recording_requester</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_metadata_solver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record solver metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Solver</span></dt>
+<dd><p class="first last">The Solver that would like to record its metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata_system">
+<code class="descname">record_metadata_system</code><span class="sig-paren">(</span><em>recording_requester</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_metadata_system"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_metadata_system" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record system metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">The System that would like to record its metadata.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.record_viewer_data">
+<code class="descname">record_viewer_data</code><span class="sig-paren">(</span><em>model_viewer_data</em>, <em>key='Driver'</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.record_viewer_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.record_viewer_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record model viewer data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>model_viewer_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Data required to visualize the model.</p>
+</dd>
+<dt><strong>key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">The unique ID to use for this data in the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.shutdown">
+<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down the recorder.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_recorder.SqliteRecorder.startup">
+<code class="descname">startup</code><span class="sig-paren">(</span><em>recording_requester</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#SqliteRecorder.startup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.SqliteRecorder.startup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare for a new run and create/update the abs2prom and prom2abs variables.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">Object to which this recorder is attached.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.recorders.sqlite_recorder.array_to_blob">
+<code class="descclassname">openmdao.recorders.sqlite_recorder.</code><code class="descname">array_to_blob</code><span class="sig-paren">(</span><em>array</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#array_to_blob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.array_to_blob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make numpy array in to BLOB type.</p>
+<p>Convert a numpy array to something that can be written
+to a BLOB field in sqlite.</p>
+<p>TODO: move this to a util file?</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd><p class="first last">The array that will be converted to a blob.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>blob :</strong></dt>
+<dd><p class="first last">The blob created from the array.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.recorders.sqlite_recorder.blob_to_array">
+<code class="descclassname">openmdao.recorders.sqlite_recorder.</code><code class="descname">blob_to_array</code><span class="sig-paren">(</span><em>blob</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_recorder.html#blob_to_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_recorder.blob_to_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert sqlite BLOB to numpy array.</p>
+<p>TODO: move this to a util file?</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>blob</strong> <span class="classifier-delimiter">:</span> <span class="classifier">blob</span></dt>
+<dd><p class="first last">The blob that will be converted to an array.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>array :</strong></dt>
+<dd><p class="first last">The array created from the blob.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.solvers.html" title="openmdao.solvers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sqlite_reader.html" title="sqlite_reader.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" >openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

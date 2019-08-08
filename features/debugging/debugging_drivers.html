@@ -1,0 +1,348 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Driver Debug Printing &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Solver Debug Printing" href="debugging_solvers.html" />
+    <link rel="prev" title="Listing Variables" href="listing_variables.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="debugging_solvers.html" title="Solver Debug Printing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="listing_variables.html" title="Listing Variables"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Debugging</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="driver-debug-printing">
+<span id="debugging-drivers"></span><h1>Driver Debug Printing<a class="headerlink" href="#driver-debug-printing" title="Permalink to this headline">¶</a></h1>
+<p>When working with a model, it may sometimes be helpful to print out the design variables, constraints, and
+objectives as the <code class="code docutils literal notranslate"><span class="pre">Driver</span></code> iterates. OpenMDAO provides options on the <code class="code docutils literal notranslate"><span class="pre">Driver</span></code> to let you do that.</p>
+<div class="section" id="driver-options">
+<h2>Driver Options<a class="headerlink" href="#driver-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="4%" />
+<col width="9%" />
+<col width="8%" />
+<col width="73%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>debug_print</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>List of what type of Driver variables to print at each iteration. Valid items in list are ‘desvars’, ‘ln_cons’, ‘nl_cons’, ‘objs’, ‘totals’</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>This example shows how to use the <code class="code docutils literal notranslate"><span class="pre">Driver</span></code> debug printing options. The <code class="code docutils literal notranslate"><span class="pre">debug_print</span></code> option is a list of strings.
+Valid strings include ‘desvars’, ‘ln_cons’, ‘nl_cons’, and ‘objs’. Note that the values for the design variables
+printed are unscaled, physical values.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid</span> <span class="kn">import</span> <span class="n">Paraboloid</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">Paraboloid</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;c = - x + y&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;SLSQP&#39;</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;tol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-9</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;disp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;desvars&#39;</span><span class="p">,</span><span class="s1">&#39;ln_cons&#39;</span><span class="p">,</span><span class="s1">&#39;nl_cons&#39;</span><span class="p">,</span><span class="s1">&#39;objs&#39;</span><span class="p">]</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;f_xy&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=-</span><span class="mf">15.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Driver debug print for iter coord: rank0:ScipyOptimize_SLSQP|0
+--------------------------------------------------------------
+Design Vars
+{&#x27;p1.x&#x27;: array([50.]), &#x27;p2.y&#x27;: array([50.])}
+
+Nonlinear constraints
+{&#x27;con.c&#x27;: array([0.])}
+
+Linear constraints
+None
+
+Objectives
+{&#x27;comp.f_xy&#x27;: array([7622.])}
+
+Driver debug print for iter coord: rank0:ScipyOptimize_SLSQP|1
+--------------------------------------------------------------
+Design Vars
+{&#x27;p1.x&#x27;: array([50.]), &#x27;p2.y&#x27;: array([50.])}
+
+Nonlinear constraints
+{&#x27;con.c&#x27;: array([0.])}
+
+Linear constraints
+None
+
+Objectives
+{&#x27;comp.f_xy&#x27;: array([7622.])}
+
+Driver debug print for iter coord: rank0:ScipyOptimize_SLSQP|2
+--------------------------------------------------------------
+Design Vars
+{&#x27;p1.x&#x27;: array([-35.]), &#x27;p2.y&#x27;: array([-50.])}
+
+Nonlinear constraints
+{&#x27;con.c&#x27;: array([-15.])}
+
+Linear constraints
+None
+
+Objectives
+{&#x27;comp.f_xy&#x27;: array([5307.])}
+
+Driver debug print for iter coord: rank0:ScipyOptimize_SLSQP|3
+--------------------------------------------------------------
+Design Vars
+{&#x27;p1.x&#x27;: array([7.16706813]), &#x27;p2.y&#x27;: array([-7.83293187])}
+
+Nonlinear constraints
+{&#x27;con.c&#x27;: array([-15.])}
+
+Linear constraints
+None
+
+Objectives
+{&#x27;comp.f_xy&#x27;: array([-27.08333285])}
+
+Driver debug print for iter coord: rank0:ScipyOptimize_SLSQP|4
+--------------------------------------------------------------
+Design Vars
+{&#x27;p1.x&#x27;: array([7.16666667]), &#x27;p2.y&#x27;: array([-7.83333333])}
+
+Nonlinear constraints
+{&#x27;con.c&#x27;: array([-15.])}
+
+Linear constraints
+None
+
+Objectives
+{&#x27;comp.f_xy&#x27;: array([-27.08333333])}</pre></div></div></div></blockquote>
+<p>We can also use the debug printing to print some basic information about the derivative calculations so that you can see
+which derivative is being solved, how long it takes, and the computed values by including the ‘totals’ string in the “debug_print” list.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid</span> <span class="kn">import</span> <span class="n">Paraboloid</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">Paraboloid</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;c = - x + y&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;SLSQP&#39;</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;tol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-9</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;disp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;totals&#39;</span><span class="p">]</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;f_xy&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=-</span><span class="mf">15.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Driver total derivatives for iteration: 2
+-----------------------------------------
+
+Solving variable: p1.x
+Elapsed Time: 0.00017309188842773438 
+
+Solving variable: p2.y
+Elapsed Time: 0.00012111663818359375 
+
+{(&#x27;comp.f_xy&#x27;, &#x27;p1.x&#x27;): array([[144.]])}
+{(&#x27;comp.f_xy&#x27;, &#x27;p2.y&#x27;): array([[158.]])}
+{(&#x27;con.c&#x27;, &#x27;p1.x&#x27;): array([[-1.]])}
+{(&#x27;con.c&#x27;, &#x27;p2.y&#x27;): array([[1.]])}
+
+Driver total derivatives for iteration: 3
+-----------------------------------------
+
+Solving variable: p1.x
+Elapsed Time: 0.00016117095947265625 
+
+Solving variable: p2.y
+Elapsed Time: 0.00010919570922851562 
+
+{(&#x27;comp.f_xy&#x27;, &#x27;p1.x&#x27;): array([[-126.]])}
+{(&#x27;comp.f_xy&#x27;, &#x27;p2.y&#x27;): array([[-127.]])}
+{(&#x27;con.c&#x27;, &#x27;p1.x&#x27;): array([[-1.]])}
+{(&#x27;con.c&#x27;, &#x27;p2.y&#x27;): array([[1.]])}
+
+Driver total derivatives for iteration: 4
+-----------------------------------------
+
+Solving variable: p1.x
+Elapsed Time: 0.00013899803161621094 
+
+Solving variable: p2.y
+Elapsed Time: 0.000125885009765625 
+
+{(&#x27;comp.f_xy&#x27;, &#x27;p1.x&#x27;): array([[0.50120438]])}
+{(&#x27;comp.f_xy&#x27;, &#x27;p2.y&#x27;): array([[-0.49879562]])}
+{(&#x27;con.c&#x27;, &#x27;p1.x&#x27;): array([[-1.]])}
+{(&#x27;con.c&#x27;, &#x27;p2.y&#x27;): array([[1.]])}
+
+Driver total derivatives for iteration: 5
+-----------------------------------------
+
+Solving variable: p1.x
+Elapsed Time: 0.00013899803161621094 
+
+Solving variable: p2.y
+Elapsed Time: 0.00011992454528808594 
+
+{(&#x27;comp.f_xy&#x27;, &#x27;p1.x&#x27;): array([[0.5]])}
+{(&#x27;comp.f_xy&#x27;, &#x27;p2.y&#x27;): array([[-0.5]])}
+{(&#x27;con.c&#x27;, &#x27;p1.x&#x27;): array([[-1.]])}
+{(&#x27;con.c&#x27;, &#x27;p2.y&#x27;): array([[1.]])}</pre></div></div></div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="debugging_solvers.html" title="Solver Debug Printing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="listing_variables.html" title="Listing Variables"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Debugging</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

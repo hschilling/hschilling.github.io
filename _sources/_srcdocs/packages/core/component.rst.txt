@@ -1,0 +1,16 @@
+.. index:: component.py
+
+.. _openmdao.core.component.py:
+
+component.py
+------------
+
+.. automodule:: openmdao.core.component
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

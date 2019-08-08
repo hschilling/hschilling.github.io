@@ -1,0 +1,820 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>file_wrap.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="find_cite.py" href="find_cite.html" />
+    <link rel="prev" title="concurrent.py" href="concurrent.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="find_cite.html" title="find_cite.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="concurrent.html" title="concurrent.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.file_wrap">
+<span id="file-wrap-py"></span><span id="openmdao-utils-file-wrap-py"></span><span id="index-0"></span><h1>file_wrap.py<a class="headerlink" href="#module-openmdao.utils.file_wrap" title="Permalink to this headline">¶</a></h1>
+<p>A collection of utilities for file wrapping.</p>
+<p>Note: This is a work in progress.</p>
+<dl class="class">
+<dt id="openmdao.utils.file_wrap.FileParser">
+<em class="property">class </em><code class="descclassname">openmdao.utils.file_wrap.</code><code class="descname">FileParser</code><span class="sig-paren">(</span><em>end_of_line_comment_char=None</em>, <em>full_line_comment_char=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility to locate and read data from a file.</p>
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>end_of_line_comment_char=None</em>, <em>full_line_comment_char=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>end_of_line_comment_char</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string, optional</span></dt>
+<dd><p class="first last">end-of-line comment character to be ignored.
+(e.g., Python supports in-line comments with “#”.)</p>
+</dd>
+<dt><strong>full_line_comment_char</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string, optional</span></dt>
+<dd><p class="first last">comment character that signifies a line should be skipped.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.mark_anchor">
+<code class="descname">mark_anchor</code><span class="sig-paren">(</span><em>anchor</em>, <em>occurrence=1</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.mark_anchor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.mark_anchor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark the location of a landmark, which lets you describe data by relative position.</p>
+<p>Note that a forward search begins at the old anchor location. If you want to restart
+the search for the anchor at the file beginning, then call <code class="docutils literal notranslate"><span class="pre">reset_anchor()</span></code> before
+<code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>anchor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The text you want to search for.</p>
+</dd>
+<dt><strong>occurrence</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Find nth instance of text; default is 1 (first). Use -1 to
+find last occurrence. Reverse searches always start at the end
+of the file no matter the state of any previous anchor.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.reset_anchor">
+<code class="descname">reset_anchor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.reset_anchor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.reset_anchor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset anchor to the beginning of the file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.set_delimiters">
+<code class="descname">set_delimiters</code><span class="sig-paren">(</span><em>delimiter</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.set_delimiters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.set_delimiters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the delimiters that are used to identify field boundaries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>delimiter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">A string containing characters to be used as delimiters. The
+default value is ‘ t’, which means that spaces and tabs are not
+taken as data but instead mark the boundaries. Note that the
+parser is smart enough to recognize characters within quotes as
+non-delimiters.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.set_file">
+<code class="descname">set_file</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.set_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.set_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the name of the file that will be generated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the input file to be generated.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.transfer_2Darray">
+<code class="descname">transfer_2Darray</code><span class="sig-paren">(</span><em>rowstart</em>, <em>fieldstart</em>, <em>rowend</em>, <em>fieldend=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.transfer_2Darray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.transfer_2Darray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a 2D array of variables relative to the current anchor.</p>
+<p>Each line of data is placed in a separate row.</p>
+<p>If the delimiter is set to ‘columns’, then the values contained in
+fieldstart and fieldend should be the column number instead of the
+field number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>rowstart</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Row number to start, relative to the current anchor.</p>
+</dd>
+<dt><strong>fieldstart</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Field number to start.</p>
+</dd>
+<dt><strong>rowend</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Row number to end relative to current anchor.</p>
+</dd>
+<dt><strong>fieldend</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer (optional)</span></dt>
+<dd><p class="first last">Field number to end. If not specified, grabs all fields up to the
+end of the line.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">data from the requested location in the file</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.transfer_array">
+<code class="descname">transfer_array</code><span class="sig-paren">(</span><em>rowstart</em>, <em>fieldstart</em>, <em>rowend=None</em>, <em>fieldend=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.transfer_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.transfer_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an array of variables relative to the current anchor.</p>
+<p>Setting the delimiter to ‘columns’ elicits some special behavior
+from this method. Normally, the extraction process wraps around
+at the end of a line and continues grabbing each field at the start of
+a newline. When the delimiter is set to columns, the parameters
+(rowstart, fieldstart, rowend, fieldend) demark a box, and all
+values in that box are retrieved. Note that standard whitespace
+is the secondary delimiter in this case.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>rowstart</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Row number to start, relative to the current anchor.</p>
+</dd>
+<dt><strong>fieldstart</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Field number to start.</p>
+</dd>
+<dt><strong>rowend</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer, optional</span></dt>
+<dd><p class="first last">Row number to end. If not set, then only one row is grabbed.</p>
+</dd>
+<dt><strong>fieldend</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Field number to end.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">data from the requested location in the file</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.transfer_keyvar">
+<code class="descname">transfer_keyvar</code><span class="sig-paren">(</span><em>key</em>, <em>field</em>, <em>occurrence=1</em>, <em>rowoffset=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.transfer_keyvar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.transfer_keyvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for a key relative to the current anchor and get a field from that line.</p>
+<p>You can do the same thing with a call to <code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code> and <code class="docutils literal notranslate"><span class="pre">transfer_var</span></code>.
+This function just combines them for convenience.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the key to search for.</p>
+</dd>
+<dt><strong>field</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Which field to transfer. Field 0 is the key.</p>
+</dd>
+<dt><strong>occurrence</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Find nth instance of text; default is 1 (first value
+field). Use -1 to find last occurance. Position 0 is the key
+field, so it should not be used as a value for occurrence.</p>
+</dd>
+<dt><strong>rowoffset</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer (optional)</span></dt>
+<dd><p class="first last">Optional row offset from the occurrence of key. This can
+also be negative.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">data from the requested location in the file</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.transfer_line">
+<code class="descname">transfer_line</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.transfer_line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.transfer_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an entire line, relative to current anchor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>row</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Number of lines offset from anchor line (0 is anchor line).
+This can be negative.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">line at the location requested</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.FileParser.transfer_var">
+<code class="descname">transfer_var</code><span class="sig-paren">(</span><em>row</em>, <em>field</em>, <em>fieldend=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#FileParser.transfer_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.FileParser.transfer_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a single variable relative to the current anchor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>row</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Number of lines offset from anchor line (0 is anchor line).
+This can be negative.</p>
+</dd>
+<dt><strong>field</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">If the delimiter is a set of chars: which word in line to retrieve.
+If the delimiter is ‘columns’: character position to start.</p>
+</dd>
+<dt><strong>fieldend</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer (optional)</span></dt>
+<dd><p class="first last">If the delimiter is a set of chars: IGNORED.
+If the delimiter is ‘columns’: position of last character to return, or if
+omitted, the end of the line is used.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">data from the requested location in the file</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator">
+<em class="property">class </em><code class="descclassname">openmdao.utils.file_wrap.</code><code class="descname">InputFileGenerator</code><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility to generate an input file from a template.</p>
+<p>Substitution of values is supported. Data is located with a simple API.</p>
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize attributes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.clearline">
+<code class="descname">clearline</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.clearline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.clearline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace the contents of a row with the newline character.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>row</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Row number to clear, relative to current anchor.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>return_data=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the template file to generate the input file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>return_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">if True, generated file data will be returned as a string</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">the generated file data if return_data is True or output filename
+has not been provided, else None</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.mark_anchor">
+<code class="descname">mark_anchor</code><span class="sig-paren">(</span><em>anchor</em>, <em>occurrence=1</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.mark_anchor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.mark_anchor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark the location of a landmark.</p>
+<p>This lets you describe data by relative position. Note that a forward
+search begins at the old anchor location. If you want to restart the
+search for the anchor at the file beginning, then call <code class="docutils literal notranslate"><span class="pre">reset_anchor()</span></code>
+before <code class="docutils literal notranslate"><span class="pre">mark_anchor</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>anchor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">The text you want to search for.</p>
+</dd>
+<dt><strong>occurrence</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer, optional</span></dt>
+<dd><p class="first last">Find nth instance of text; default is 1 (first). Use -1 to
+find last occurrence. Reverse searches always start at the end
+of the file no matter the state of any previous anchor.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.reset_anchor">
+<code class="descname">reset_anchor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.reset_anchor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.reset_anchor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset anchor to the beginning of the file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.set_delimiters">
+<code class="descname">set_delimiters</code><span class="sig-paren">(</span><em>delimiter</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.set_delimiters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.set_delimiters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the delimiters that are used to identify field boundaries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>delimiter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">A string containing characters to be used as delimiters.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.set_generated_file">
+<code class="descname">set_generated_file</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.set_generated_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.set_generated_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the name of the file that will be generated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the input file to be generated.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.set_template_file">
+<code class="descname">set_template_file</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.set_template_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.set_template_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the name of the template file to be used.</p>
+<p>The template file is also read into memory when this method is called.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the template file to be used.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.transfer_2Darray">
+<code class="descname">transfer_2Darray</code><span class="sig-paren">(</span><em>value</em>, <em>row_start</em>, <em>row_end</em>, <em>field_start</em>, <em>field_end</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.transfer_2Darray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.transfer_2Darray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the values of a 2D array in the template relative to the current anchor.</p>
+<p>This method is specialized for 2D arrays, where each row of the array is
+on its own line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Array of values to insert.</p>
+</dd>
+<dt><strong>row_start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Starting row for inserting the array. This is relative
+to the anchor, and can be negative.</p>
+</dd>
+<dt><strong>row_end</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Final row for the array, relative to the anchor.</p>
+</dd>
+<dt><strong>field_start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">starting field in the given row_start as denoted by
+delimiter(s).</p>
+</dd>
+<dt><strong>field_end</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">The final field the array uses in row_end.
+We need this to figure out if the template is too small or large.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.transfer_array">
+<code class="descname">transfer_array</code><span class="sig-paren">(</span><em>value</em>, <em>row_start</em>, <em>field_start</em>, <em>field_end</em>, <em>row_end=None</em>, <em>sep='</em>, <em>'</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.transfer_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.transfer_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the values of an array in the template relative to the current anchor.</p>
+<p>This should generally be used for one-dimensional or free form arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, integer, bool, str</span></dt>
+<dd><p class="first last">Array of values to insert.</p>
+</dd>
+<dt><strong>row_start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Starting row for inserting the array. This is relative
+to the anchor, and can be negative.</p>
+</dd>
+<dt><strong>field_start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Starting field in the given row_start as denoted by
+delimiter(s).</p>
+</dd>
+<dt><strong>field_end</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">The final field the array uses in row_end.
+We need this to figure out if the template is too small or large</p>
+</dd>
+<dt><strong>row_end</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer, optional</span></dt>
+<dd><p class="first last">Use if the array wraps to cover additional lines.</p>
+</dd>
+<dt><strong>sep</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer, optional</span></dt>
+<dd><p class="first last">Separator to use if we go beyond the template.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.InputFileGenerator.transfer_var">
+<code class="descname">transfer_var</code><span class="sig-paren">(</span><em>value</em>, <em>row</em>, <em>field</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#InputFileGenerator.transfer_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.InputFileGenerator.transfer_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change a single variable in the template relative to the current anchor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, integer, bool, string</span></dt>
+<dd><p class="first last">New value to set at the location.</p>
+</dd>
+<dt><strong>row</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Number of lines offset from anchor line (0 is anchor line).
+This can be negative.</p>
+</dd>
+<dt><strong>field</strong> <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd><p class="first last">Which word in line to replace, as denoted by delimiter(s)</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.file_wrap.ToFloat">
+<em class="property">class </em><code class="descclassname">openmdao.utils.file_wrap.</code><code class="descname">ToFloat</code><span class="sig-paren">(</span><em>expr</em>, <em>savelist=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToFloat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToFloat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converter for PyParsing that is used to turn a token into a float.</p>
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.ToFloat.postParse">
+<code class="descname">postParse</code><span class="sig-paren">(</span><em>instring</em>, <em>loc</em>, <em>tokenlist</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToFloat.postParse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToFloat.postParse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert token into a float.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>instring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the input string</p>
+</dd>
+<dt><strong>loc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the location of the matching string</p>
+</dd>
+<dt><strong>tokenlist</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">list of matched tokens</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">float value for token.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.file_wrap.ToInf">
+<em class="property">class </em><code class="descclassname">openmdao.utils.file_wrap.</code><code class="descname">ToInf</code><span class="sig-paren">(</span><em>expr</em>, <em>savelist=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToInf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToInf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converter for PyParsing that is used to turn a token into Python inf.</p>
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.ToInf.postParse">
+<code class="descname">postParse</code><span class="sig-paren">(</span><em>instring</em>, <em>loc</em>, <em>tokenlist</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToInf.postParse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToInf.postParse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert token into Python inf.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>instring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the input string</p>
+</dd>
+<dt><strong>loc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the location of the matching string</p>
+</dd>
+<dt><strong>tokenlist</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">list of matched tokens</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">the float value for infinity.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.file_wrap.ToInteger">
+<em class="property">class </em><code class="descclassname">openmdao.utils.file_wrap.</code><code class="descname">ToInteger</code><span class="sig-paren">(</span><em>expr</em>, <em>savelist=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToInteger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToInteger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converter for PyParsing that is used to turn a token into an int.</p>
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.ToInteger.postParse">
+<code class="descname">postParse</code><span class="sig-paren">(</span><em>instring</em>, <em>loc</em>, <em>tokenlist</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToInteger.postParse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToInteger.postParse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert token into an integer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>instring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the input string</p>
+</dd>
+<dt><strong>loc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the location of the matching string</p>
+</dd>
+<dt><strong>tokenlist</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">list of matched tokens</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">integer value for token.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.file_wrap.ToNan">
+<em class="property">class </em><code class="descclassname">openmdao.utils.file_wrap.</code><code class="descname">ToNan</code><span class="sig-paren">(</span><em>expr</em>, <em>savelist=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToNan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToNan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converter for PyParsing that is used to turn a token into Python nan.</p>
+<dl class="method">
+<dt id="openmdao.utils.file_wrap.ToNan.postParse">
+<code class="descname">postParse</code><span class="sig-paren">(</span><em>instring</em>, <em>loc</em>, <em>tokenlist</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/file_wrap.html#ToNan.postParse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.file_wrap.ToNan.postParse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert token into Python nan.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>instring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the input string</p>
+</dd>
+<dt><strong>loc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the location of the matching string</p>
+</dd>
+<dt><strong>tokenlist</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">list of matched tokens</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">the float value for NaN.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="find_cite.html" title="find_cite.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="concurrent.html" title="concurrent.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

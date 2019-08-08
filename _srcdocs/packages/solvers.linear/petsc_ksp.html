@@ -1,0 +1,564 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>petsc_ksp.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="scipy_iter_solver.py" href="scipy_iter_solver.html" />
+    <link rel="prev" title="linear_runonce.py" href="linear_runonce.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scipy_iter_solver.html" title="scipy_iter_solver.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="linear_runonce.html" title="linear_runonce.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.solvers.linear.html" accesskey="U">openmdao.solvers.linear</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.solvers.linear.petsc_ksp">
+<span id="petsc-ksp-py"></span><span id="openmdao-solvers-linear-petsc-ksp-py"></span><span id="index-0"></span><h1>petsc_ksp.py<a class="headerlink" href="#module-openmdao.solvers.linear.petsc_ksp" title="Permalink to this headline">¶</a></h1>
+<p>LinearSolver that uses PetSC KSP to solve for a system’s derivatives.</p>
+<dl class="class">
+<dt id="openmdao.solvers.linear.petsc_ksp.Monitor">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.linear.petsc_ksp.</code><code class="descname">Monitor</code><span class="sig-paren">(</span><em>solver</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#Monitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.Monitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Prints output from PETSc’s KSP solvers.</p>
+<p>Callable object given to KSP as a callback for printing the residual.</p>
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.Monitor.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>solver</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#Monitor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.Monitor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store pointer to the openmdao solver and initialize norms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>solver</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">the openmdao solver.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.linear.petsc_ksp.</code><code class="descname">PETScKrylov</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PETScKrylov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../solvers/solver.html#openmdao.solvers.solver.LinearSolver" title="openmdao.solvers.solver.LinearSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.solver.LinearSolver</span></code></a></p>
+<p>LinearSolver that uses PetSC KSP to solve for a system’s derivatives.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="89%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>precon</strong></td>
+<td>(Solver) Preconditioner for linear solve. Default is None for no preconditioner.</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'LN: PETScKrylov'</em><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PETScKrylov.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare the solver options.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">dictionary of options set by the instantiating class/script.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><em>mat</em>, <em>in_vec</em>, <em>result</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PETScKrylov.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply preconditioner.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Mat</span></dt>
+<dd><p class="first last">PETSc matrix object.</p>
+</dd>
+<dt><strong>in_vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Vector</span></dt>
+<dd><p class="first last">Incoming vector</p>
+</dd>
+<dt><strong>result</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Vector</span></dt>
+<dd><p class="first last">Empty vector in which the preconditioned in_vec is stored.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.mult">
+<code class="descname">mult</code><span class="sig-paren">(</span><em>mat</em>, <em>in_vec</em>, <em>result</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PETScKrylov.mult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.mult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply Jacobian matrix (KSP Callback).</p>
+<p>The following attributes must be defined when solve is called to
+provide information used in this callback:</p>
+<dl class="docutils">
+<dt>_system <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd>pointer to the owning system.</dd>
+<dt>_vec_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>the right-hand-side (RHS) vector name.</dd>
+<dt>_mode <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>‘fwd’ or ‘rev’.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Mat</span></dt>
+<dd><p class="first last">PETSc matrix object.</p>
+</dd>
+<dt><strong>in_vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PetSC Vector</span></dt>
+<dd><p class="first last">Incoming vector.</p>
+</dd>
+<dt><strong>result</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PetSC Vector</span></dt>
+<dd><p class="first last">Empty array into which we place the matrix-vector product.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.preconditioner">
+<code class="descname">preconditioner</code><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.preconditioner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide ‘preconditioner’ property for backwards compatibility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>&lt;LinearSolver&gt;</strong></dt>
+<dd><p class="first last">reference to the ‘precon’ property.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PETScKrylov.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>rel_systems=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PETScKrylov.solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the linear system for the problem in self._system.</p>
+<p>The full solution vector is returned.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">list of vector names.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Derivative mode, can be ‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>rel_systems</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Names of systems relevant to the current solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.linear.petsc_ksp.</code><code class="descname">PetscKSP</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PetscKSP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.solvers.linear.petsc_ksp.PETScKrylov" title="openmdao.solvers.linear.petsc_ksp.PETScKrylov"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.linear.petsc_ksp.PETScKrylov</span></code></a></p>
+<p>Deprecated.  Use PETScKrylov.</p>
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'LN: PETScKrylov'</em><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/linear/petsc_ksp.html#PetscKSP.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Named args.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><em>mat</em>, <em>in_vec</em>, <em>result</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply preconditioner.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Mat</span></dt>
+<dd><p class="first last">PETSc matrix object.</p>
+</dd>
+<dt><strong>in_vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Vector</span></dt>
+<dd><p class="first last">Incoming vector</p>
+</dd>
+<dt><strong>result</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Vector</span></dt>
+<dd><p class="first last">Empty vector in which the preconditioned in_vec is stored.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.mult">
+<code class="descname">mult</code><span class="sig-paren">(</span><em>mat</em>, <em>in_vec</em>, <em>result</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.mult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply Jacobian matrix (KSP Callback).</p>
+<p>The following attributes must be defined when solve is called to
+provide information used in this callback:</p>
+<dl class="docutils">
+<dt>_system <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd>pointer to the owning system.</dd>
+<dt>_vec_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>the right-hand-side (RHS) vector name.</dd>
+<dt>_mode <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>‘fwd’ or ‘rev’.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PETSc.Mat</span></dt>
+<dd><p class="first last">PETSc matrix object.</p>
+</dd>
+<dt><strong>in_vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PetSC Vector</span></dt>
+<dd><p class="first last">Incoming vector.</p>
+</dd>
+<dt><strong>result</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PetSC Vector</span></dt>
+<dd><p class="first last">Empty array into which we place the matrix-vector product.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.preconditioner">
+<code class="descname">preconditioner</code><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.preconditioner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide ‘preconditioner’ property for backwards compatibility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>&lt;LinearSolver&gt;</strong></dt>
+<dd><p class="first last">reference to the ‘precon’ property.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.linear.petsc_ksp.PetscKSP.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>rel_systems=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.linear.petsc_ksp.PetscKSP.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the linear system for the problem in self._system.</p>
+<p>The full solution vector is returned.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">list of vector names.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Derivative mode, can be ‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>rel_systems</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Names of systems relevant to the current solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scipy_iter_solver.html" title="scipy_iter_solver.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="linear_runonce.html" title="linear_runonce.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.solvers.linear.html" >openmdao.solvers.linear</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

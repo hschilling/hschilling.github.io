@@ -1,0 +1,10 @@
+.. _Derivatives: 
+
+=========================
+Derivatives
+=========================
+  .. toctree::
+     ../features/core_features/working_with_derivatives/partial_derivative_viz.rst
+     ../features/core_features/working_with_derivatives/parallel_derivs.rst
+     ../features/core_features/working_with_derivatives/compute_totals.rst
+     ../features/core_features/working_with_derivatives/check_total_derivatives.rst

@@ -1,0 +1,678 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>solver.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="openmdao.surrogate_models" href="../openmdao.surrogate_models.html" />
+    <link rel="prev" title="openmdao.solvers" href="../openmdao.solvers.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.surrogate_models.html" title="openmdao.surrogate_models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.solvers.html" title="openmdao.solvers"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.solvers.html" accesskey="U">openmdao.solvers</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.solvers.solver">
+<span id="solver-py"></span><span id="openmdao-solvers-solver-py"></span><span id="index-0"></span><h1>solver.py<a class="headerlink" href="#module-openmdao.solvers.solver" title="Permalink to this headline">¶</a></h1>
+<p>Define the base Solver, NonlinearSolver, and LinearSolver classes.</p>
+<dl class="class">
+<dt id="openmdao.solvers.solver.BlockLinearSolver">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.solver.</code><code class="descname">BlockLinearSolver</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#BlockLinearSolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.solvers.solver.LinearSolver" title="openmdao.solvers.solver.LinearSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.solver.LinearSolver</span></code></a></p>
+<p>A base class for LinearBlockGS and LinearBlockJac.</p>
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'base_solver'</em><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">options dictionary.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.BlockLinearSolver.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>rel_systems=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#BlockLinearSolver.solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.BlockLinearSolver.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>rel_systems</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Set of names of relevant systems based on the current linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.solver.LinearSolver">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.solver.</code><code class="descname">LinearSolver</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#LinearSolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.solvers.solver.Solver" title="openmdao.solvers.solver.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.solver.Solver</span></code></a></p>
+<p>Base class for linear solvers.</p>
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.LinearSolver.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'base_solver'</em><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.LinearSolver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#LinearSolver.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">options dictionary.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.LinearSolver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#LinearSolver.add_recorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.LinearSolver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.LinearSolver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.LinearSolver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.LinearSolver.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>rel_systems=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#LinearSolver.solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.LinearSolver.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>rel_systems</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Set of names of relevant systems based on the current linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.solver.NonlinearSolver">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.solver.</code><code class="descname">NonlinearSolver</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#NonlinearSolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.solvers.solver.Solver" title="openmdao.solvers.solver.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.solvers.solver.Solver</span></code></a></p>
+<p>Base class for nonlinear solvers.</p>
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.NonlinearSolver.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'base_solver'</em><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.NonlinearSolver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#NonlinearSolver.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">options dictionary.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.NonlinearSolver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.NonlinearSolver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.NonlinearSolver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.NonlinearSolver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.NonlinearSolver.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#NonlinearSolver.solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.NonlinearSolver.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the solver.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.solver.Solver">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.solver.</code><code class="descname">Solver</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#Solver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.Solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base solver class.</p>
+<p>This class is subclassed by NonlinearSolver and LinearSolver,
+which are in turn subclassed by actual solver implementations.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>cite</strong></td>
+<td>(str) Listing of relevant citations that should be referenced when publishing work that uses this class.</td>
+</tr>
+<tr class="row-even"><td><strong>options</strong></td>
+<td>(&lt;OptionsDictionary&gt;) Options dictionary.</td>
+</tr>
+<tr class="row-odd"><td><strong>recording_options</strong></td>
+<td>(&lt;OptionsDictionary&gt;) Recording options dictionary.</td>
+</tr>
+<tr class="row-even"><td><strong>supports</strong></td>
+<td>(&lt;OptionsDictionary&gt;) Options dictionary describing what features are supported by this solver.</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.Solver.SOLVER">
+<code class="descname">SOLVER</code><em class="property"> = 'base_solver'</em><a class="headerlink" href="#openmdao.solvers.solver.Solver.SOLVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.Solver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#Solver.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.Solver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict of keyword arguments</span></dt>
+<dd><p class="first last">Keyword arguments that will be mapped into the Solver options.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.Solver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#Solver.add_recorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.Solver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the solver’s RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance to be added to RecManager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.Solver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#Solver.cleanup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.Solver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.solvers.solver.Solver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.solvers.solver.Solver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.Solver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#Solver.record_iteration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.Solver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Solver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Keyword arguments (used for abs and rel error).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.solvers.solver.SolverInfo">
+<em class="property">class </em><code class="descclassname">openmdao.solvers.solver.</code><code class="descname">SolverInfo</code><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Communal object for storing some formatting for solver iprint.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="87%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>prefix</strong></td>
+<td>(str) Prefix to prepend during this iprint.</td>
+</tr>
+<tr class="row-even"><td><strong>stack</strong></td>
+<td>(List) List of strings; strings are popped and appended as needed.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.append_precon">
+<code class="descname">append_precon</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.append_precon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.append_precon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new level for any preconditioner to a linear solver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.append_solver">
+<code class="descname">append_solver</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.append_solver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.append_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new level for the main solver in a group.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.append_subsolver">
+<code class="descname">append_subsolver</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.append_subsolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.append_subsolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new level for any sub-solver for your solver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear out the iprint stack, in case something is left over from a handled exception.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.pop">
+<code class="descname">pop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove one level of solver depth in the printing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.restore_cache">
+<code class="descname">restore_cache</code><span class="sig-paren">(</span><em>cache</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.restore_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.restore_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restore previously saved iprint stack names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple(str, list)</span></dt>
+<dd><p class="first last">cache of current stack</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.solvers.solver.SolverInfo.save_cache">
+<code class="descname">save_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/solvers/solver.html#SolverInfo.save_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.solvers.solver.SolverInfo.save_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save prefix and stack so that they can be restored later in event of an exception recovery.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>tuple(str, list)</strong></dt>
+<dd><p class="first last">cache of current stack</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.surrogate_models.html" title="openmdao.surrogate_models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.solvers.html" title="openmdao.solvers"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.solvers.html" >openmdao.solvers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

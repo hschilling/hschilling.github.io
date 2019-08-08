@@ -1,0 +1,16 @@
+.. index:: multifi_meta_model_unstructured_comp.py
+
+.. _openmdao.components.multifi_meta_model_unstructured_comp.py:
+
+multifi_meta_model_unstructured_comp.py
+---------------------------------------
+
+.. automodule:: openmdao.components.multifi_meta_model_unstructured_comp
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

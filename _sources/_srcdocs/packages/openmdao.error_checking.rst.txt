@@ -1,0 +1,7 @@
+openmdao.error_checking
+-----------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    error_checking/check_config

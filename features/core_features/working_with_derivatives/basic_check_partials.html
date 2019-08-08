@@ -1,0 +1,471 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Checking Partial Derivatives with Finite Difference &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Changing Check Settings for FD or CS" href="check_partials_settings.html" />
+    <link rel="prev" title="Sparse Partial Derivatives" href="sparse_partials.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="check_partials_settings.html" title="Changing Check Settings for FD or CS"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sparse_partials.html" title="Sparse Partial Derivatives"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="checking-partial-derivatives-with-finite-difference">
+<span id="feature-check-partials"></span><h1>Checking Partial Derivatives with Finite Difference<a class="headerlink" href="#checking-partial-derivatives-with-finite-difference" title="Permalink to this headline">¶</a></h1>
+<p>In addition to using approximations to estimate partial derivatives, you can also use
+approximations to check your implementations of the partial derivatives for a component.</p>
+<dl class="docutils">
+<dt><code class="code docutils literal notranslate"><span class="pre">Problem</span></code> has a method, <code class="code docutils literal notranslate"><span class="pre">check_partials</span></code>, that checks partial derivatives</dt>
+<dd>comprehensively for all Components in your model. To do this check, the framework compares the
+analytic result against a finite difference result. This means that the check_partials
+function can be quite computationally expensive. So use it to check your work, but don’t leave
+the call in your production run scripts.</dd>
+</dl>
+<dl class="method">
+<dt>
+<code class="descclassname">Problem.</code><code class="descname">check_partials</code><span class="sig-paren">(</span><em>out_stream=&lt;object object&gt;</em>, <em>includes=None</em>, <em>excludes=None</em>, <em>compact_print=False</em>, <em>abs_err_tol=1e-06</em>, <em>rel_err_tol=1e-06</em>, <em>method='fd'</em>, <em>step=None</em>, <em>form='forward'</em>, <em>step_calc='abs'</em>, <em>force_dense=True</em>, <em>show_only_incorrect=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/core/problem.html#Problem.check_partials"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Check partial derivatives comprehensively for all components in your model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>out_stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like object</span></dt>
+<dd><p class="first last">Where to send human readable output. By default it goes to stdout.
+Set to None to suppress.</p>
+</dd>
+<dt><strong>includes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None or list_like</span></dt>
+<dd><p class="first last">List of glob patterns for pathnames to include in the check. Default is None, which
+includes all components in the model.</p>
+</dd>
+<dt><strong>excludes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None or list_like</span></dt>
+<dd><p class="first last">List of glob patterns for pathnames to exclude from the check. Default is None, which
+excludes nothing.</p>
+</dd>
+<dt><strong>compact_print</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to just print the essentials, one line per unknown-param pair.</p>
+</dd>
+<dt><strong>abs_err_tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Threshold value for absolute error.  Errors about this value will have a ‘*’ displayed
+next to them in output, making them easy to search for. Default is 1.0E-6.</p>
+</dd>
+<dt><strong>rel_err_tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Threshold value for relative error.  Errors about this value will have a ‘*’ displayed
+next to them in output, making them easy to search for. Note at times there may be a
+significant relative error due to a minor absolute error.  Default is 1.0E-6.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method, ‘fd’ for finite difference or ‘cs’ for complex step. Default is ‘fd’.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for approximation. Default is None, which means 1e-6 for ‘fd’ and 1e-40 for
+‘cs’.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Form for finite difference, can be ‘forward’, ‘backward’, or ‘central’. Default
+‘forward’.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Step type for finite difference, can be ‘abs’ for absolute’, or ‘rel’ for relative.
+Default is ‘abs’.</p>
+</dd>
+<dt><strong>force_dense</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, analytic derivatives will be coerced into arrays. Default is True.</p>
+</dd>
+<dt><strong>show_only_incorrect</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Set to True if output should print only the subjacs found to be incorrect.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict of dicts of dicts</strong></dt>
+<dd><dl class="first last docutils">
+<dt>First key:</dt>
+<dd><p class="first last">is the component name;</p>
+</dd>
+<dt>Second key:</dt>
+<dd><p class="first last">is the (output, input) tuple of strings;</p>
+</dd>
+<dt>Third key:</dt>
+<dd><p class="first last">is one of [‘rel error’, ‘abs error’, ‘magnitude’, ‘J_fd’, ‘J_fwd’, ‘J_rev’];</p>
+</dd>
+<dt>For ‘rel error’, ‘abs error’, ‘magnitude’ the value is: A tuple containing norms for</dt>
+<dd><p class="first last">forward - fd, adjoint - fd, forward - adjoint.</p>
+</dd>
+<dt>For ‘J_fd’, ‘J_fwd’, ‘J_rev’ the value is: A numpy array representing the computed</dt>
+<dd><p class="first last">Jacobian for the three different methods of computation.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>For components that provide their partials directly (from the <cite>compute_partials</cite> or <cite>linearize</cite> methods, only information about the forward derivatives are
+shown. For components that are matrix-free, both forward and reverse derivative information is shown.</p>
+<p class="last">Implicit components are matrix-free if they define a <code class="code docutils literal notranslate"><span class="pre">apply</span> <span class="pre">linear</span></code> method. Explicit components are matrix-free if they
+define either <code class="code docutils literal notranslate"><span class="pre">compute_jacvec_product</span></code> or <code class="code docutils literal notranslate"><span class="pre">compute_multi_jacvec_product</span></code> methods.</p>
+</div>
+<div class="section" id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>When the difference between the FD derivative and the provided derivative is larger (in either a relative or absolute sense) than <code class="code docutils literal notranslate"><span class="pre">1e-6</span></code>, that partial derivative will be marked with a <code class="code docutils literal notranslate"><span class="pre">'*'</span></code>.</li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="k">class</span> <span class="nc">MyComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Intentionally incorrect derivative.&quot;&quot;&quot;</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">partials</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.0</span><span class="p">])</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">40</span><span class="p">])</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">MyComp</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x1&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x1&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.x2&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x2&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">()</span>
+
+<span class="n">x1_error</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;comp&#39;</span><span class="p">][</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x1&#39;</span><span class="p">][</span><span class="s1">&#39;abs error&#39;</span><span class="p">]</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x1_error</span><span class="o">.</span><span class="n">forward</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x1_error</span><span class="o">.</span><span class="n">reverse</span><span class="p">)</span>
+
+<span class="n">x2_error</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;comp&#39;</span><span class="p">][</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">][</span><span class="s1">&#39;rel error&#39;</span><span class="p">]</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x2_error</span><span class="o">.</span><span class="n">forward</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x2_error</span><span class="o">.</span><span class="n">reverse</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>------------------------
+Component: MyComp &#x27;comp&#x27;
+------------------------
+  comp: &#x27;y&#x27; wrt &#x27;x1&#x27;
+    Forward Magnitude : 4.000000e+00
+         Fd Magnitude : 3.000000e+00 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 1.000000e+00 *
+
+    Relative Error (Jfor  - Jfd) : 3.333333e-01 *
+
+    Raw Forward Derivative (Jfor)
+[[4.]]
+
+    Raw FD Derivative (Jfd)
+[[3.]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  comp: &#x27;y&#x27; wrt &#x27;x2&#x27;
+    Forward Magnitude : 4.000000e+01
+         Fd Magnitude : 4.000000e+00 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 3.600000e+01 *
+
+    Relative Error (Jfor  - Jfd) : 9.000000e+00 *
+
+    Raw Forward Derivative (Jfor)
+[[40.]]
+
+    Raw FD Derivative (Jfd)
+[[4.]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+1.0000000004688445
+1.0000000004688445
+8.99999999860222
+8.99999999860222
+</pre></div></div><hr class="docutils" />
+<ol class="arabic simple" start="2">
+<li>Turn off standard output and just view the derivatives in the return:</li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="k">class</span> <span class="nc">MyComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Intentionally incorrect derivative.&quot;&quot;&quot;</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">partials</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.0</span><span class="p">])</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">40</span><span class="p">])</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">MyComp</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x1&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x1&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.x2&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x2&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">out_stream</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;comp&#x27;: {(&#x27;y&#x27;, &#x27;x1&#x27;): {&#x27;J_fwd&#x27;: array([[4.]]), &#x27;J_rev&#x27;: array([[4.]]), &#x27;J_fd&#x27;: array([[3.]]), &#x27;abs error&#x27;: ErrorTuple(forward=1.0000000004688445, reverse=1.0000000004688445, forward_reverse=0.0), &#x27;magnitude&#x27;: MagnitudeTuple(forward=4.0, reverse=4.0, fd=2.9999999995311555), &#x27;rel error&#x27;: ErrorTuple(forward=0.3333333335417087, reverse=0.3333333335417087, forward_reverse=0.0)}, (&#x27;y&#x27;, &#x27;x2&#x27;): {&#x27;J_fwd&#x27;: array([[40.]]), &#x27;J_rev&#x27;: array([[40.]]), &#x27;J_fd&#x27;: array([[4.]]), &#x27;abs error&#x27;: ErrorTuple(forward=35.99999999944089, reverse=35.99999999944089, forward_reverse=0.0), &#x27;magnitude&#x27;: MagnitudeTuple(forward=40.0, reverse=40.0, fd=4.000000000559112), &#x27;rel error&#x27;: ErrorTuple(forward=8.99999999860222, reverse=8.99999999860222, forward_reverse=0.0)}}}
+</pre></div></div></div>
+<div class="section" id="show-only-incorrect-printing-option">
+<h2>Show Only Incorrect Printing Option<a class="headerlink" href="#show-only-incorrect-printing-option" title="Permalink to this headline">¶</a></h2>
+<p>If you are only concerned with seeing the partials calculations that are incorrect, set <code class="code docutils literal notranslate"><span class="pre">show_only_incorrect</span></code> to
+True. This applies to both <code class="code docutils literal notranslate"><span class="pre">compact_print</span></code> <code class="code docutils literal notranslate"><span class="pre">True</span></code> and <code class="code docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="k">class</span> <span class="nc">MyCompGoodPartials</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Correct derivative.&quot;&quot;&quot;</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">partials</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.0</span><span class="p">])</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.0</span><span class="p">])</span>
+
+<span class="k">class</span> <span class="nc">MyCompBadPartials</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Intentionally incorrect derivative.&quot;&quot;&quot;</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">partials</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">33.0</span><span class="p">])</span>
+        <span class="n">J</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">40.0</span><span class="p">])</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p0&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;good&#39;</span><span class="p">,</span> <span class="n">MyCompGoodPartials</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;bad&#39;</span><span class="p">,</span> <span class="n">MyCompBadPartials</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p0.x1&#39;</span><span class="p">,</span> <span class="s1">&#39;good.x1&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x2&#39;</span><span class="p">,</span> <span class="s1">&#39;good.x2&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;good.y&#39;</span><span class="p">,</span> <span class="s1">&#39;bad.y1&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;bad.y2&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">show_only_incorrect</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">show_only_incorrect</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>
+** Only writing information about components with incorrect Jacobians **
+
+----------------------------------
+Component: MyCompBadPartials &#x27;bad&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+
+&#x27;z&#x27;        wrt &#x27;y1&#x27;         | 3.3000e+01 | 3.0000e+00 | 3.0000e+01 | 1.0000e+01 &gt;ABS_TOL &gt;REL_TOL
+&#x27;z&#x27;        wrt &#x27;y2&#x27;         | 4.0000e+01 | 4.0000e+00 | 3.6000e+01 | 9.0000e+00 &gt;ABS_TOL &gt;REL_TOL
+
+#################################################################
+Sub Jacobian with Largest Relative Error: MyCompBadPartials &#x27;bad&#x27;
+#################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+&#x27;z&#x27;        wrt &#x27;y1&#x27;         | 3.3000e+01 | 3.0000e+00 | 3.0000e+01 | 1.0000e+01
+
+** Only writing information about components with incorrect Jacobians **
+
+----------------------------------
+Component: MyCompBadPartials &#x27;bad&#x27;
+----------------------------------
+  bad: &#x27;z&#x27; wrt &#x27;y1&#x27;
+    Forward Magnitude : 3.300000e+01
+         Fd Magnitude : 3.000000e+00 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 3.000000e+01 *
+
+    Relative Error (Jfor  - Jfd) : 1.000000e+01 *
+
+    Raw Forward Derivative (Jfor)
+[[33.]]
+
+    Raw FD Derivative (Jfd)
+[[3.00000001]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bad: &#x27;z&#x27; wrt &#x27;y2&#x27;
+    Forward Magnitude : 4.000000e+01
+         Fd Magnitude : 4.000000e+00 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 3.600000e+01 *
+
+    Relative Error (Jfor  - Jfd) : 9.000000e+00 *
+
+    Raw Forward Derivative (Jfor)
+[[40.]]
+
+    Raw FD Derivative (Jfd)
+[[4.]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+</pre></div></div></div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="check_partials_settings.html" title="Changing Check Settings for FD or CS"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sparse_partials.html" title="Sparse Partial Derivatives"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,339 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.components.ks_comp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.components.ks_comp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">KS Function Component.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.explicitcomponent</span> <span class="k">import</span> <span class="n">ExplicitComponent</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+
+
+<span class="n">CITATIONS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">@conference {Martins:2005:SOU,</span>
+<span class="s2">        title = {On Structural Optimization Using Constraint Aggregation},</span>
+<span class="s2">        booktitle = {Proceedings of the 6th World Congress on Structural and Multidisciplinary</span>
+<span class="s2">                     Optimization},</span>
+<span class="s2">        year = </span><span class="si">{2005}</span><span class="s2">,</span>
+<span class="s2">        month = </span><span class="si">{May}</span><span class="s2">,</span>
+<span class="s2">        address = {Rio de Janeiro, Brazil},</span>
+<span class="s2">        author = {Joaquim R. R. A. Martins and Nicholas M. K. Poon}</span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="KSfunction"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSfunction">[docs]</a><span class="k">class</span> <span class="nc">KSfunction</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper class for KSComp.</span>
+
+<span class="sd">    Helper class that can be used to aggregate constraint vectors with a</span>
+<span class="sd">    Kreisselmeier-Steinhauser Function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_compute_values</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute values needed by the KS function for the given array of constraints.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        g : ndarray</span>
+<span class="sd">            Array of constraint values, where negative means satisfied and positive means violated.</span>
+<span class="sd">        rho : float</span>
+<span class="sd">            Constraint Aggregation Factor.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            g_max, g_diff, exponents and summation as needed by compute and derivates functions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">g_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="n">g_diff</span> <span class="o">=</span> <span class="n">g</span> <span class="o">-</span> <span class="n">g_max</span>
+        <span class="n">exponents</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">g_diff</span><span class="p">)</span>
+        <span class="n">summation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">exponents</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">g_max</span><span class="p">,</span> <span class="n">g_diff</span><span class="p">,</span> <span class="n">exponents</span><span class="p">,</span> <span class="n">summation</span>
+
+<div class="viewcode-block" id="KSfunction.compute"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSfunction.compute">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">50.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the value of the KS function for the given array of constraints.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        g : ndarray</span>
+<span class="sd">            Array of constraint values, where negative means satisfied and positive means violated.</span>
+<span class="sd">        rho : float</span>
+<span class="sd">            Constraint Aggregation Factor.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Value of KS function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">g_max</span><span class="p">,</span> <span class="n">g_diff</span><span class="p">,</span> <span class="n">exponents</span><span class="p">,</span> <span class="n">summation</span> <span class="o">=</span> <span class="n">KSfunction</span><span class="o">.</span><span class="n">_compute_values</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho</span><span class="p">)</span>
+
+        <span class="n">KS</span> <span class="o">=</span> <span class="n">g_max</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">summation</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">KS</span></div>
+
+<div class="viewcode-block" id="KSfunction.derivatives"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSfunction.derivatives">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">derivatives</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">50.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute elements of [dKS_gd, dKS_drho] for the given array of constraints.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        g : ndarray</span>
+<span class="sd">            Array of constraint values, where negative means satisfied and positive means violated.</span>
+<span class="sd">        rho : float</span>
+<span class="sd">            Constraint Aggregation Factor.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Derivative of KS function with respect to parameter values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">g_max</span><span class="p">,</span> <span class="n">g_diff</span><span class="p">,</span> <span class="n">exponents</span><span class="p">,</span> <span class="n">summation</span> <span class="o">=</span> <span class="n">KSfunction</span><span class="o">.</span><span class="n">_compute_values</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho</span><span class="p">)</span>
+
+        <span class="n">dsum_dg</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">exponents</span>
+        <span class="n">dKS_dsum</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">summation</span><span class="p">)</span>
+        <span class="n">dKS_dg</span> <span class="o">=</span> <span class="n">dKS_dsum</span> <span class="o">*</span> <span class="n">dsum_dg</span>
+
+        <span class="n">dsum_drho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">g_diff</span> <span class="o">*</span> <span class="n">exponents</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="n">dKS_drho</span> <span class="o">=</span> <span class="n">dKS_dsum</span> <span class="o">*</span> <span class="n">dsum_drho</span>
+
+        <span class="k">return</span> <span class="n">dKS_dg</span><span class="p">,</span> <span class="n">dKS_drho</span></div></div>
+
+
+<div class="viewcode-block" id="KSComp"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComp">[docs]</a><span class="k">class</span> <span class="nc">KSComp</span><span class="p">(</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    KS function component.</span>
+
+<span class="sd">    Component that aggregates a number of functions to a single value via the</span>
+<span class="sd">    Kreisselmeier-Steinhauser Function. This new constraint is satisfied when it</span>
+<span class="sd">    is less than or equal to zero.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cite : str</span>
+<span class="sd">        Listing of relevant citations that should be referenced when publishing</span>
+<span class="sd">        work that uses this class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="KSComp.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the KS component.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Component options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KSComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cite</span> <span class="o">=</span> <span class="n">CITATIONS</span></div>
+
+<div class="viewcode-block" id="KSComp.initialize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComp.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;width&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Width of constraint vector.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;vec_size&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;The number of rows to independently aggregate.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;lower_flag&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Set to True to reverse sign of input constraints.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;rho&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Constraint Aggregation Factor.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Upper bound for constraint, default is zero.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="KSComp.setup"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComp.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare inputs, outputs, and derivatives for the KS component.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span>
+                       <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Array of function values to be aggregated&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;KS&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Value of the aggregate KS function&quot;</span><span class="p">)</span>
+
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span> <span class="n">width</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;KS&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="KSComp.compute"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComp.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the output of the KS function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : `Vector`</span>
+<span class="sd">            `Vector` containing inputs.</span>
+<span class="sd">        outputs : `Vector`</span>
+<span class="sd">            `Vector` containing outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+
+        <span class="n">con_val</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;g&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;lower_flag&#39;</span><span class="p">]:</span>
+            <span class="n">con_val</span> <span class="o">=</span> <span class="o">-</span><span class="n">con_val</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;KS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">KSfunction</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">con_val</span><span class="p">,</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;rho&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="KSComp.compute_partials"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComp.compute_partials">[docs]</a>    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute sub-jacobian parts. The model is assumed to be in an unscaled state.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        partials : Jacobian</span>
+<span class="sd">            sub-jac components written to partials[output_name, input_name]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+
+        <span class="n">con_val</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;g&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;lower_flag&#39;</span><span class="p">]:</span>
+            <span class="n">con_val</span> <span class="o">=</span> <span class="o">-</span><span class="n">con_val</span>
+
+        <span class="n">derivs</span> <span class="o">=</span> <span class="n">KSfunction</span><span class="o">.</span><span class="n">derivatives</span><span class="p">(</span><span class="n">con_val</span><span class="p">,</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;rho&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;lower_flag&#39;</span><span class="p">]:</span>
+            <span class="n">derivs</span> <span class="o">=</span> <span class="o">-</span><span class="n">derivs</span>
+
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;KS&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">derivs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="KSComponent"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComponent">[docs]</a><span class="k">class</span> <span class="nc">KSComponent</span><span class="p">(</span><span class="n">KSComp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deprecated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="KSComponent.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/components/ks_comp.html#openmdao.components.ks_comp.KSComponent.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Capture Initialize to throw warning.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : list</span>
+<span class="sd">            Deprecated arguments.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Deprecated arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;&#39;KSComponent&#39; has been deprecated. Use &quot;</span>
+                         <span class="s2">&quot;&#39;KSComp&#39; instead.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KSComponent</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

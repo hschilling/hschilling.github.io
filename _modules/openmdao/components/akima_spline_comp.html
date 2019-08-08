@@ -1,0 +1,566 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.components.akima_spline_comp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.components.akima_spline_comp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Simple interpolant based on Andrew Ning&#39;s implementation of Akima splines.</span>
+
+<span class="sd">Includes derivatives wrt training points.  Akima spline is regenerated during each compute.</span>
+
+<span class="sd">https://github.com/andrewning/akima</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">string_types</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.explicitcomponent</span> <span class="k">import</span> <span class="n">ExplicitComponent</span>
+
+
+<div class="viewcode-block" id="abs_smooth_dv"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.abs_smooth_dv">[docs]</a><span class="k">def</span> <span class="nf">abs_smooth_dv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_deriv</span><span class="p">,</span> <span class="n">delta_x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the absolute value in a smooth differentiable manner.</span>
+
+<span class="sd">    The valley is rounded off using a quadratic function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : float</span>
+<span class="sd">        Quantity value</span>
+<span class="sd">    x_deriv : float</span>
+<span class="sd">        Derivative value</span>
+<span class="sd">    delta_x : float</span>
+<span class="sd">        Half width of the rounded section.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Smooth absolute value of the quantity.</span>
+<span class="sd">    float</span>
+<span class="sd">        Smooth absolute value of the derivative.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">delta_x</span><span class="p">:</span>
+        <span class="n">y_deriv</span> <span class="o">=</span> <span class="n">x_deriv</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+
+    <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">delta_x</span><span class="p">:</span>
+        <span class="n">y_deriv</span> <span class="o">=</span> <span class="o">-</span><span class="n">x_deriv</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="o">-</span><span class="n">x</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">y_deriv</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x_deriv</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">delta_x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">delta_x</span><span class="p">)</span> <span class="o">+</span> <span class="n">delta_x</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">y_deriv</span></div>
+
+
+<div class="viewcode-block" id="AkimaSplineComp"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp">[docs]</a><span class="k">class</span> <span class="nc">AkimaSplineComp</span><span class="p">(</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolant component based on Andrew Ning&#39;s implementation of Akima splines.</span>
+
+<span class="sd">    Assumes a uniform distribution of points. Control points fully span the distribution.</span>
+<span class="sd">    Output (computational) points can be at either the end points or segment center</span>
+<span class="sd">    points.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x_grid : None or ndarray</span>
+<span class="sd">        Cached training grid.</span>
+<span class="sd">    x_cp_grid : None or ndarray</span>
+<span class="sd">        Cached interpolation grid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AkimaSplineComp.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            options dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AkimaSplineComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_cp_grid</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="AkimaSplineComp.initialize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Number of control points.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_points&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Number of interpolated points.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;vec_size&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of independent rows to interpolate.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;var&#39;</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Name to use for the interpolated variable.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;input_x&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;When True, the interpolated x grid is a component input.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;input_xcp&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;When True, the x control point grid is a component input.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="n">string_types</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Units to use for the y and ycp variables.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;x_units&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="n">string_types</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Units to use for the x and xcp variables.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;delta_x&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;half-width of the smoothing interval added in the valley of &quot;</span>
+                             <span class="s2">&quot;absolute-value function. This allows the derivatives with respect to&quot;</span>
+                             <span class="s2">&quot; the data points (dydxpt, dydypt) to also be C1 continuous. Set &quot;</span>
+                             <span class="s2">&quot;parameter to 0 to get the original Akima function (but only if you &quot;</span>
+                             <span class="s2">&quot;don&#39;t need dydxpt, dydypt&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;eval_at&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;end&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">,</span> <span class="s1">&#39;cell_center&#39;</span><span class="p">],</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Where the return values are evaluated on the spline. When set &quot;</span>
+                             <span class="s2">&quot;to &#39;end&#39;, compute num_points values spanning the full interval set &quot;</span>
+                             <span class="s2">&quot;by the training points. When set to &#39;cell_center&#39;, compute values &quot;</span>
+                             <span class="s2">&quot;at centerpoints of num_points cells. Only used if input_x is &quot;</span>
+                             <span class="s2">&quot;True.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-30</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Value that triggers division-by-zero safeguard.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AkimaSplineComp.setup"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up the akima spline component.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">num_control_points</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">]</span>
+        <span class="n">num_points</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_points&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+        <span class="n">eval_at</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;eval_at&#39;</span><span class="p">]</span>
+        <span class="n">input_xcp</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;input_xcp&#39;</span><span class="p">]</span>
+        <span class="n">input_x</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;input_x&#39;</span><span class="p">]</span>
+
+        <span class="n">name</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="n">x_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:x&quot;</span>
+        <span class="n">xcp_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:x_cp&quot;</span>
+        <span class="n">y_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:y&quot;</span>
+        <span class="n">ycp_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:y_cp&quot;</span>
+
+        <span class="k">if</span> <span class="n">input_xcp</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">xcp_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_control_points</span><span class="p">),</span>
+                           <span class="n">units</span><span class="o">=</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;x_units&#39;</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_cp_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">num_control_points</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">xcp_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_cp_grid</span><span class="p">,</span>
+                            <span class="n">units</span><span class="o">=</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;x_units&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">input_x</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">x_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_points</span><span class="p">),</span>
+                           <span class="n">units</span><span class="o">=</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;x_units&#39;</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">eval_at</span> <span class="o">==</span> <span class="s1">&#39;cell_center&#39;</span><span class="p">:</span>
+                <span class="n">x_ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">num_points</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x_ends</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x_ends</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+            <span class="k">elif</span> <span class="n">eval_at</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">num_points</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">x_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span><span class="p">,</span>
+                            <span class="n">units</span><span class="o">=</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;x_units&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">ycp_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">num_control_points</span><span class="p">),</span>
+                       <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">y_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">num_points</span><span class="p">),</span> <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">)</span>
+
+        <span class="c1"># Derivatives</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">),</span> <span class="n">num_control_points</span><span class="p">)</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_control_points</span><span class="p">),</span> <span class="n">num_points</span><span class="p">)</span>
+
+        <span class="n">ntot</span> <span class="o">=</span> <span class="n">num_points</span> <span class="o">*</span> <span class="n">num_control_points</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_points</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span> <span class="n">ntot</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_control_points</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span> <span class="n">ntot</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">y_name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">ycp_name</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">input_xcp</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_points</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span> <span class="n">ntot</span><span class="p">)</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">y_name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">xcp_name</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">input_x</span><span class="p">:</span>
+            <span class="n">row_col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">row_col</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_points</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vec_size</span><span class="p">),</span>
+                                                          <span class="n">num_points</span><span class="p">)</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">row_col</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">y_name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">x_name</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AkimaSplineComp.compute"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute values at the B-spline interpolation points.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : `Vector`</span>
+<span class="sd">            `Vector` containing inputs.</span>
+<span class="sd">        outputs : `Vector`</span>
+<span class="sd">            `Vector` containing outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="n">x_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:x&quot;</span>
+        <span class="n">xcp_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:x_cp&quot;</span>
+        <span class="n">y_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:y&quot;</span>
+        <span class="n">ycp_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:y_cp&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;input_xcp&#39;</span><span class="p">]:</span>
+            <span class="n">x_cp</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">xcp_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x_cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_cp_grid</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;input_x&#39;</span><span class="p">]:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">x_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span>
+
+        <span class="c1"># Train on control points.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">akima_setup_dv</span><span class="p">(</span><span class="n">x_cp</span><span class="p">,</span> <span class="n">inputs</span><span class="p">[</span><span class="n">ycp_name</span><span class="p">])</span>
+
+        <span class="c1"># Evaluate at computational points.</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="n">y_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">akima_iterpolate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_cp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AkimaSplineComp.compute_partials"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.compute_partials">[docs]</a>    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the pre-computed partials.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        partials : Jacobian</span>
+<span class="sd">            sub-jac components written to partials[output_name, input_name]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="n">x_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:x&quot;</span>
+        <span class="n">xcp_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:x_cp&quot;</span>
+        <span class="n">y_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:y&quot;</span>
+        <span class="n">ycp_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:y_cp&quot;</span>
+
+        <span class="n">partials</span><span class="p">[</span><span class="n">y_name</span><span class="p">,</span> <span class="n">ycp_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dy_dycp</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;input_xcp&#39;</span><span class="p">]:</span>
+            <span class="n">partials</span><span class="p">[</span><span class="n">y_name</span><span class="p">,</span> <span class="n">xcp_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dy_dxcp</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;input_x&#39;</span><span class="p">]:</span>
+            <span class="n">partials</span><span class="p">[</span><span class="n">y_name</span><span class="p">,</span> <span class="n">x_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dy_dx</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="AkimaSplineComp.akima_setup_dv"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.akima_setup_dv">[docs]</a>    <span class="k">def</span> <span class="nf">akima_setup_dv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xpt</span><span class="p">,</span> <span class="n">ypt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Train the akima spline and save the derivatives.</span>
+
+<span class="sd">        Conversion of fortran function AKIMA_DV.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        xpt : ndarray</span>
+<span class="sd">            Values at which the akima spline was trained.</span>
+<span class="sd">        ypt : ndarray</span>
+<span class="sd">            Training values for the akima spline.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">delta_x</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;delta_x&#39;</span><span class="p">]</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+        <span class="n">ncp</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">]</span>
+        <span class="n">nbdirs</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ncp</span>
+
+        <span class="c1"># Poly points and derivs</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">p0d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">nbdirs</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">p1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">nbdirs</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">p2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">nbdirs</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">p3d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">nbdirs</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="n">md</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbdirs</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">+</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">td</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbdirs</span><span class="p">,</span> <span class="n">ncp</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ncp</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="n">xptd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">ncp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+                          <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ncp</span><span class="p">,</span> <span class="n">ncp</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)])</span>
+        <span class="n">yptd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ncp</span><span class="p">,</span> <span class="n">ncp</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+                          <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">ncp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ypt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)])</span>
+
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">xpt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">xpt</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">dx2</span> <span class="o">=</span> <span class="n">dx</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">dxd</span> <span class="o">=</span> <span class="n">xptd</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">xptd</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">p0</span> <span class="o">=</span> <span class="n">ypt</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># TODO - It is possible to vectorize this further if some more effort is put in here.</span>
+        <span class="c1"># Returns might be marginal though, and counterbalanced by increased memory. For</span>
+        <span class="c1"># future investigation, here are the vectorized slopes:</span>
+        <span class="c1"># md_f[:, :, 2:ncp + 1] = ((yptd[:, 1:] - yptd[:, :-1]) * (xpt[1:] - xpt[:-1]) -</span>
+        <span class="c1">#                          np.einsum(&#39;ij,kj-&gt;ikj&#39;, ypt[:, 1:] - ypt[:, :-1],</span>
+        <span class="c1">#                                    xptd[:, 1:] - xptd[:, :-1])) / \</span>
+        <span class="c1">#     (xpt[1:] - xpt[:-1]) ** 2</span>
+        <span class="c1"># m_f[:, 2:ncp + 1] = (ypt[:, 1:] - ypt[:, :-1]) / (xpt[1:] - xpt[:-1])</span>
+
+        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vec_size</span><span class="p">):</span>
+
+            <span class="n">ypt_jj</span> <span class="o">=</span> <span class="n">ypt</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="p">:]</span>
+
+            <span class="c1"># Compute segment slopes</span>
+            <span class="n">md</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">yptd</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">yptd</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">xpt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">xpt</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span>
+                                <span class="p">(</span><span class="n">ypt_jj</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">ypt_jj</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">xptd</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">xptd</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">/</span> \
+                <span class="p">(</span><span class="n">xpt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">xpt</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+
+            <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ypt_jj</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">ypt_jj</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xpt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">xpt</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Estimation for end points.</span>
+            <span class="n">md</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">md</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">md</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="n">md</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">md</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">md</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+            <span class="n">md</span><span class="p">[:,</span> <span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">ncp</span><span class="p">]</span> <span class="o">-</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">md</span><span class="p">[:,</span> <span class="n">ncp</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">ncp</span><span class="p">]</span>
+
+            <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="n">ncp</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="p">[</span><span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="p">[</span><span class="n">ncp</span><span class="p">]</span>
+
+            <span class="c1"># Slope at points.</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">m1d</span> <span class="o">=</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span>
+                <span class="n">m2d</span> <span class="o">=</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">m3d</span> <span class="o">=</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+                <span class="n">m4d</span> <span class="o">=</span> <span class="n">md</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">arg1d</span> <span class="o">=</span> <span class="n">m4d</span> <span class="o">-</span> <span class="n">m3d</span>
+
+                <span class="n">m1</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span>
+                <span class="n">m2</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">m3</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">m4</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">arg1</span> <span class="o">=</span> <span class="n">m4</span> <span class="o">-</span> <span class="n">m3</span>
+
+                <span class="n">w1</span><span class="p">,</span> <span class="n">w1d</span> <span class="o">=</span> <span class="n">abs_smooth_dv</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg1d</span><span class="p">,</span> <span class="n">delta_x</span><span class="p">)</span>
+
+                <span class="n">arg1d</span> <span class="o">=</span> <span class="n">m2d</span> <span class="o">-</span> <span class="n">m1d</span>
+                <span class="n">arg1</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">-</span> <span class="n">m1</span>
+
+                <span class="n">w2</span><span class="p">,</span> <span class="n">w2d</span> <span class="o">=</span> <span class="n">abs_smooth_dv</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg1d</span><span class="p">,</span> <span class="n">delta_x</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">w1</span> <span class="o">&lt;</span> <span class="n">eps</span> <span class="ow">and</span> <span class="n">w2</span> <span class="o">&lt;</span> <span class="n">eps</span><span class="p">:</span>
+                    <span class="c1"># Special case to avoid divide by zero.</span>
+                    <span class="n">td</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">m2d</span> <span class="o">+</span> <span class="n">m3d</span><span class="p">)</span>
+                    <span class="n">t</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">m2</span> <span class="o">+</span> <span class="n">m3</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">td</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">w1d</span> <span class="o">*</span> <span class="n">m2</span> <span class="o">+</span> <span class="n">w1</span> <span class="o">*</span> <span class="n">m2d</span> <span class="o">+</span> <span class="n">w2d</span> <span class="o">*</span> <span class="n">m3</span> <span class="o">+</span> <span class="n">w2</span> <span class="o">*</span> <span class="n">m3d</span><span class="p">)</span> <span class="o">*</span>
+                                    <span class="p">(</span><span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">w1</span> <span class="o">*</span> <span class="n">m2</span> <span class="o">+</span> <span class="n">w2</span> <span class="o">*</span> <span class="n">m3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">w1d</span> <span class="o">+</span> <span class="n">w2d</span><span class="p">))</span> \
+                        <span class="o">/</span> <span class="p">(</span><span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+                    <span class="n">t</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span> <span class="o">*</span> <span class="n">m2</span> <span class="o">+</span> <span class="n">w2</span> <span class="o">*</span> <span class="n">m3</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span><span class="p">)</span>
+
+            <span class="c1"># Polynomial Coefficients</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">t</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+            <span class="n">p1</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">t1</span>
+            <span class="n">p2</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">3.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span> <span class="o">/</span> <span class="n">dx</span>
+            <span class="n">p3</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">dx2</span>
+
+            <span class="n">p0d</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">yptd</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">p1d</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">td</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">p2d</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="mf">3.0</span> <span class="o">*</span> <span class="n">md</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">td</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">td</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:])</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">-</span>
+                            <span class="p">(</span><span class="mf">3.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span> <span class="o">*</span> <span class="n">dxd</span><span class="p">)</span> <span class="o">/</span> <span class="n">dx2</span>
+            <span class="n">p3d</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">td</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">td</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">md</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">dx2</span> <span class="o">-</span>
+                            <span class="p">(</span><span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">ncp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">dxd</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">p0</span> <span class="o">=</span> <span class="n">p0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p1</span> <span class="o">=</span> <span class="n">p1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p2</span> <span class="o">=</span> <span class="n">p2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p3</span> <span class="o">=</span> <span class="n">p3</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp0_dxcp</span> <span class="o">=</span> <span class="n">p0d</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ncp</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp0_dycp</span> <span class="o">=</span> <span class="n">p0d</span><span class="p">[:,</span> <span class="n">ncp</span><span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp1_dxcp</span> <span class="o">=</span> <span class="n">p1d</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ncp</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp1_dycp</span> <span class="o">=</span> <span class="n">p1d</span><span class="p">[:,</span> <span class="n">ncp</span><span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp2_dxcp</span> <span class="o">=</span> <span class="n">p2d</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ncp</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp2_dycp</span> <span class="o">=</span> <span class="n">p2d</span><span class="p">[:,</span> <span class="n">ncp</span><span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp3_dxcp</span> <span class="o">=</span> <span class="n">p3d</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ncp</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp3_dycp</span> <span class="o">=</span> <span class="n">p3d</span><span class="p">[:,</span> <span class="n">ncp</span><span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AkimaSplineComp.akima_iterpolate"><a class="viewcode-back" href="../../../_srcdocs/packages/components/akima_spline_comp.html#openmdao.components.akima_spline_comp.AkimaSplineComp.akima_iterpolate">[docs]</a>    <span class="k">def</span> <span class="nf">akima_iterpolate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">xcp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interpolate the spline at the given points, returning values and derivatives.</span>
+
+<span class="sd">        Conversion of fortran function INTERP.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : ndarray</span>
+<span class="sd">            Values at which to interpolate.</span>
+<span class="sd">        xcp : ndarray</span>
+<span class="sd">            Values at which the akima spline was trained.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Interpolated values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">ncp</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_points&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+
+        <span class="n">p0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p0</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p1</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p2</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p3</span>
+
+        <span class="c1"># All vectorized points uses same grid, so find these once.</span>
+        <span class="n">j_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+
+            <span class="c1"># Find location in array (use end segments if out of bounds)</span>
+            <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">xcp</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Linear search for now</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncp</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">xcp</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                        <span class="k">break</span>
+
+            <span class="n">j_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">xcp</span><span class="p">[</span><span class="n">j_idx</span><span class="p">]</span>
+        <span class="n">dx2</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">dx</span>
+        <span class="n">dx3</span> <span class="o">=</span> <span class="n">dx2</span> <span class="o">*</span> <span class="n">dx</span>
+
+        <span class="c1"># Evaluate polynomial (and derivative)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">p0</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">p1</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">+</span> <span class="n">p2</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">dx2</span> <span class="o">+</span> <span class="n">p3</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">dx3</span>
+
+        <span class="n">dydx</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">p2</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">p3</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">dx2</span>
+
+        <span class="n">dydxcp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp0_dxcp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kij,i-&gt;kij&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp1_dxcp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dx</span><span class="p">)</span> <span class="o">+</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kij,i-&gt;kij&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp2_dxcp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dx2</span><span class="p">)</span> <span class="o">+</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kij,i-&gt;kij&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp3_dxcp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dx3</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vec_size</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">j_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">dydxcp</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dydx</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+
+        <span class="n">dydycp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp0_dycp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kij,i-&gt;kij&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp1_dycp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dx</span><span class="p">)</span> <span class="o">+</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kij,i-&gt;kij&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp2_dycp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dx2</span><span class="p">)</span> <span class="o">+</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kij,i-&gt;kij&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp3_dycp</span><span class="p">[:,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dx3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dy_dx</span> <span class="o">=</span> <span class="n">dydx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dy_dxcp</span> <span class="o">=</span> <span class="n">dydxcp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dy_dycp</span> <span class="o">=</span> <span class="n">dydycp</span>
+
+        <span class="k">return</span> <span class="n">y</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

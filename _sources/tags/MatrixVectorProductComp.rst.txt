@@ -1,0 +1,7 @@
+.. _MatrixVectorProductComp: 
+
+=========================
+MatrixVectorProductComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/matrix_vector_product_comp.rst

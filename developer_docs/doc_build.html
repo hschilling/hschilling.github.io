@@ -1,0 +1,163 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Local Building of OpenMDAO Documentation &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Automating Doc Build and Custom Doc Deployment from Travis CI" href="advanced_operations.html" />
+    <link rel="prev" title="Developer Docs (if you’re going to contribute code)" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="advanced_operations.html" title="Automating Doc Build and Custom Doc Deployment from Travis CI"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Developer Docs (if you’re going to contribute code)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Developer Docs (if you’re going to contribute code)</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="local-building-of-openmdao-documentation">
+<h1>Local Building of OpenMDAO Documentation<a class="headerlink" href="#local-building-of-openmdao-documentation" title="Permalink to this headline">¶</a></h1>
+<p>When developing new documentation for OpenMDAO, it’s necessary to build the documents locally, to ensure things like code
+embedding and formatting and links are all working the way the author intends them to work. There are a few options available
+to a developer who is building the OpenMDAO documentation locally. First, though, you’ll need to enter the docs directory:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">cd</span> <span class="pre">openmdao/docs</span></code></p>
+<p>Once you’re in the docs directory, you can try any of the commands listed below. If you have trouble remembering all the
+commands, <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> will provide a brief command summary for you.</p>
+<div class="section" id="make-clean">
+<h2>make clean<a class="headerlink" href="#make-clean" title="Permalink to this headline">¶</a></h2>
+<p>When starting off, it’s important to be sure that the docs you’re building are your own, that there are no vestiges of
+previous documentation builds holding you back.  That’s where <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> comes in. By invoking this command, everything is removed
+from <cite>_build</cite>, <cite>_srcdocs</cite>, <cite>tags</cite>, and <cite>tmp</cite>.  <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> is the go-to command for wiping things out and starting fresh.
+(often used in conjunction with <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">all</span></code>.</p>
+</div>
+<div class="section" id="make-all-make-html">
+<h2>make all / make html<a class="headerlink" href="#make-all-make-html" title="Permalink to this headline">¶</a></h2>
+<p><code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">all</span></code> (also aliased as <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code>) is the usual command for a first build of the docs. This build
+is what you want to do to make a baseline build of all the docs.  <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">all</span></code> will build the docs, and deposit the output into
+<code class="code docutils literal notranslate"><span class="pre">openmdao/docs/_build/html.</span></code> When the build completes, you need to simply <code class="code docutils literal notranslate"><span class="pre">open</span> <span class="pre">openmdao/docs/_build/html/index.html</span></code>
+to open your default browser and review what you’ve written.</p>
+<p>For the real clean-slate documentation build, combine the two commands: <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean;</span> <span class="pre">make</span> <span class="pre">all</span></code>.</p>
+</div>
+<div class="section" id="make-html-update-make">
+<h2>make html-update / make<a class="headerlink" href="#make-html-update-make" title="Permalink to this headline">¶</a></h2>
+<p><code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">html-update</span></code> (also the default behavior you’d get in <cite>OpenMDAO/docs</cite> for just typing <code class="code docutils literal notranslate"><span class="pre">make</span></code>) is intended to help save build time
+for a developer who is re-making one or two files over and over again. When there is no need to rebuild the entire document base, <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">html-update</span></code>
+just builds the docs that have been changed between this build and the previous build. Once your document appears to be working the way you want, it’s
+good practice to go ahead and do a full <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean;</span> <span class="pre">make</span> <span class="pre">all</span></code>.</p>
+</div>
+<div class="section" id="make-single-filename">
+<h2>make single &lt;filename&gt;<a class="headerlink" href="#make-single-filename" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes, when you’re embedding code and tests into documents, your Python <em>code</em> changes, not the <cite>rst</cite> document.
+You want to see what your document will look like, with that new code being embedded and/or running and embedding its output.
+This is another situation where you could <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean;</span> <span class="pre">make</span> <span class="pre">all</span></code>, but that takes a lot of time.
+That’s where <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">single</span> <span class="pre">file=&lt;filename&gt;</span></code> comes in. <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">single</span> <span class="pre">file=&lt;filename&gt;</span></code> touches the <cite>file</cite> argument provided, to
+make the rst file appear to have been updated, then runs <code class="code docutils literal notranslate"><span class="pre">html-update</span></code>, which means the named file and any others that
+have changed since the last build will be rebuilt.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The angle brackets above aren’t part of the syntax. An example: <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">single</span> <span class="pre">file=index.rst</span></code></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="advanced_operations.html" title="Automating Doc Build and Custom Doc Deployment from Travis CI"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Developer Docs (if you’re going to contribute code)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Developer Docs (if you’re going to contribute code)</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

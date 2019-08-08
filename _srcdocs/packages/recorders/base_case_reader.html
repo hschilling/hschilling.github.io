@@ -1,0 +1,316 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>base_case_reader.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="case.py" href="case.html" />
+    <link rel="prev" title="openmdao.recorders" href="../openmdao.recorders.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="case.html" title="case.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.recorders.html" title="openmdao.recorders"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" accesskey="U">openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.recorders.base_case_reader">
+<span id="base-case-reader-py"></span><span id="openmdao-recorders-base-case-reader-py"></span><span id="index-0"></span><h1>base_case_reader.py<a class="headerlink" href="#module-openmdao.recorders.base_case_reader" title="Permalink to this headline">¶</a></h1>
+<p>Base class for all CaseReaders.</p>
+<dl class="class">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.base_case_reader.</code><code class="descname">BaseCaseReader</code><span class="sig-paren">(</span><em>filename</em>, <em>pre_load=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class of all CaseReader implementations.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>problem_metadata</strong></td>
+<td>(dict) Metadata about the problem, including the system hierachy and connections.</td>
+</tr>
+<tr class="row-even"><td><strong>solver_metadata</strong></td>
+<td>(dict) The solver options for each solver in the recorded model.</td>
+</tr>
+<tr class="row-odd"><td><strong>system_metadata</strong></td>
+<td>(dict) Metadata about each system in the recorded model, including options and scaling factors.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>pre_load=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The path to the file containing the recorded data.</p>
+</dd>
+<dt><strong>pre_load</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, load all the data into memory during initialization.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>recurse=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader.get_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get case identified by case_id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
+<dd><p class="first last">The unique identifier of the case to return or an index into all cases.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will return all successors to the case as well.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The case identified by case_id</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source</em>, <em>recurse=True</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader.get_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over the cases.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘problem’, ‘driver’, component pathname, solver pathname, iteration_coordinate}</span></dt>
+<dd><p class="first last">Identifies which cases to return.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases identified by source</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=True</em>, <em>flat=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader.list_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over Driver, Solver and System cases in order.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘problem’, ‘driver’, component pathname, solver pathname, case_name}</span></dt>
+<dd><p class="first last">If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy.</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iterator or dict</strong></dt>
+<dd><p class="first last">An iterator or a nested dictionary of identified cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader.list_source_vars">
+<code class="descname">list_source_vars</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader.list_source_vars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader.list_source_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all inputs and outputs recorded by the specified source.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘problem’, ‘driver’, <cite>&lt;component hierarchy location&gt;</cite>,</span></dt>
+<dd><p class="first last"><cite>&lt;solver hierarchy location&gt;</cite>}
+Identifies the source for which to return information.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">{‘inputs’:[list of keys], ‘outputs’:[list of keys]}. Does not recurse.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.base_case_reader.BaseCaseReader.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/base_case_reader.html#BaseCaseReader.list_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.base_case_reader.BaseCaseReader.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all the different recording sources for which there is recorded data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">One or more of: <cite>problem</cite>, <cite>driver</cite>, <cite>&lt;component hierarchy location&gt;</cite>,
+<cite>&lt;solver hierarchy location&gt;</cite></p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="case.html" title="case.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.recorders.html" title="openmdao.recorders"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" >openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

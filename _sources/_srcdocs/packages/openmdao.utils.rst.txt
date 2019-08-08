@@ -1,0 +1,28 @@
+openmdao.utils
+--------------
+
+.. toctree::
+    :maxdepth: 1
+
+    utils/array_utils
+    utils/assert_utils
+    utils/class_util
+    utils/code_utils
+    utils/coloring
+    utils/concurrent
+    utils/file_wrap
+    utils/find_cite
+    utils/general_utils
+    utils/graph_utils
+    utils/logger_utils
+    utils/mpi
+    utils/name_maps
+    utils/om
+    utils/options_dictionary
+    utils/record_util
+    utils/scaffold
+    utils/shell_proc
+    utils/testing_utils
+    utils/units
+    utils/variable_table
+    utils/webview

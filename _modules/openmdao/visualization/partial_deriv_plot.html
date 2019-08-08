@@ -1,0 +1,228 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.visualization.partial_deriv_plot &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.visualization.partial_deriv_plot</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Visualization of data functions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="partial_deriv_plot"><a class="viewcode-back" href="../../../features/core_features/working_with_derivatives/partial_derivative_viz.html#openmdao.visualization.partial_deriv_plot.partial_deriv_plot">[docs]</a><span class="k">def</span> <span class="nf">partial_deriv_plot</span><span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">,</span> <span class="n">check_partials_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac_method</span><span class="o">=</span><span class="s1">&#39;J_fwd&#39;</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+                       <span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visually examine the computed and finite differenced Jacobians.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    of : string</span>
+<span class="sd">        Variable whose derivatives will be computed.</span>
+<span class="sd">    wrt : string</span>
+<span class="sd">        Variable with respect to which the derivatives will be computed.</span>
+<span class="sd">    check_partials_data : dict of dicts of dicts</span>
+<span class="sd">        First key:</span>
+<span class="sd">            is the component name;</span>
+<span class="sd">        Second key:</span>
+<span class="sd">            is the (output, input) tuple of strings;</span>
+<span class="sd">        Third key:</span>
+<span class="sd">            is one of [&#39;rel error&#39;, &#39;abs error&#39;, &#39;magnitude&#39;, &#39;J_fd&#39;, &#39;J_fwd&#39;, &#39;J_rev&#39;];</span>
+<span class="sd">        For &#39;rel error&#39;, &#39;abs error&#39;, &#39;magnitude&#39; the value is: A tuple containing norms for</span>
+<span class="sd">            forward - fd, adjoint - fd, forward - adjoint.</span>
+<span class="sd">        For &#39;J_fd&#39;, &#39;J_fwd&#39;, &#39;J_rev&#39; the value is: A numpy array representing the computed</span>
+<span class="sd">            Jacobian for the three different methods of computation.</span>
+<span class="sd">    title : string (Optional)</span>
+<span class="sd">        Title for the plot</span>
+<span class="sd">        If None, use the values of the arguments &quot;of&quot; and &quot;wrt&quot;</span>
+<span class="sd">    jac_method : string (Optional)</span>
+<span class="sd">        Method of computating Jacobian</span>
+<span class="sd">        Is one of [&#39;J_fwd&#39;, &#39;J_rev&#39;]. Optional, default is &#39;J_fwd&#39;.</span>
+<span class="sd">    tol : float (Optional)</span>
+<span class="sd">        The tolerance, below which the two numbers are considered the same for</span>
+<span class="sd">        plotting purposes.</span>
+<span class="sd">    binary : bool (Optional)</span>
+<span class="sd">        If true, the plot will only show the presence of a non-zero derivative, not the value.</span>
+<span class="sd">        Otherwise, plot the value. Default is true.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If one of the Jacobians is not available.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    matplotlib.figure.Figure</span>
+<span class="sd">        The top level container for all the plot elements in the plot.</span>
+<span class="sd">    array of matplotlib.axes.Axes objects</span>
+<span class="sd">        An array of Axes objects, one for each of the three subplots created.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get the first item in the dict, which will be the model</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">check_partials_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">model_jacs</span> <span class="o">=</span> <span class="n">check_partials_data</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+    <span class="n">model_jac</span> <span class="o">=</span> <span class="n">model_jacs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="c1"># get finite difference arrays</span>
+    <span class="k">if</span> <span class="s1">&#39;J_fd&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_jac</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Jacobian &quot;</span><span class="si">{}</span><span class="s1">&quot; not found.&#39;</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;J_fd&#39;</span><span class="p">))</span>
+    <span class="n">fd_full</span> <span class="o">=</span> <span class="n">model_jac</span><span class="p">[</span><span class="s1">&#39;J_fd&#39;</span><span class="p">]</span>
+    <span class="n">fd_full_flat</span> <span class="o">=</span> <span class="n">fd_full</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># for getting max min later</span>
+    <span class="k">if</span> <span class="n">binary</span><span class="p">:</span>
+        <span class="n">fd_binary</span> <span class="o">=</span> <span class="n">fd_full</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">fd_binary</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">fd_binary</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c1"># get computed arrays</span>
+    <span class="k">if</span> <span class="n">jac_method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_jac</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Jacobian &quot;</span><span class="si">{}</span><span class="s1">&quot; not found.&#39;</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jac_method</span><span class="p">))</span>
+    <span class="n">computed_full</span> <span class="o">=</span> <span class="n">model_jac</span><span class="p">[</span><span class="n">jac_method</span><span class="p">]</span>
+    <span class="n">computed_full_flat</span> <span class="o">=</span> <span class="n">computed_full</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># for getting max min later</span>
+    <span class="k">if</span> <span class="n">binary</span><span class="p">:</span>
+        <span class="n">computed_binary</span> <span class="o">=</span> <span class="n">computed_full</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">computed_binary</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">computed_binary</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c1"># get plotting scales</span>
+    <span class="n">stacked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">fd_full_flat</span><span class="p">,</span> <span class="n">computed_full_flat</span><span class="p">))</span>
+    <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">stacked</span><span class="p">)</span>
+    <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">stacked</span><span class="p">)</span>
+
+    <span class="c1"># basics of plot</span>
+    <span class="c1"># Cannot do this sooner because of import and matplotlib</span>
+    <span class="c1">#  backend issues when testing</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+    <span class="n">BINARY_CMP</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span>
+    <span class="n">NON_BINARY_CMP</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">RdBu</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+
+    <span class="c1"># plot Jacobians</span>
+    <span class="k">if</span> <span class="n">binary</span><span class="p">:</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">fd_binary</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">BINARY_CMP</span><span class="p">)</span>
+        <span class="n">im_computed</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">computed_binary</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">BINARY_CMP</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">fd_full</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">NON_BINARY_CMP</span><span class="p">)</span>
+        <span class="n">im_computed</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">computed_full</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+                                   <span class="n">cmap</span><span class="o">=</span><span class="n">NON_BINARY_CMP</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Approximated Jacobian&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;User-Defined Jacobian&#39;</span><span class="p">)</span>
+    <span class="c1"># Legend</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_computed</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+    <span class="c1"># plot difference between computed and finite differenced</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">computed_full</span><span class="o">.</span><span class="n">real</span> <span class="o">-</span> <span class="n">fd_full</span><span class="o">.</span><span class="n">real</span>
+    <span class="n">diff_flat</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">diff_flat</span><span class="p">)</span>
+    <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">diff_flat</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">vmax</span> <span class="o">-</span> <span class="n">vmin</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>  <span class="c1"># Do not want range to be too small</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">tol</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">tol</span>
+    <span class="n">im_diff</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">NON_BINARY_CMP</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_diff</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">aspect</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Difference&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

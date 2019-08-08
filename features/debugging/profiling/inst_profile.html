@@ -1,0 +1,292 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Instance-based Profiling &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Memory Profiling" href="inst_mem_profile.html" />
+    <link rel="prev" title="Profiling and Tracing" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="inst_mem_profile.html" title="Memory Profiling"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Profiling and Tracing"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Debugging</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Profiling and Tracing</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="instance-based-profiling">
+<span id="instbasedprofile"></span><h1>Instance-based Profiling<a class="headerlink" href="#instance-based-profiling" title="Permalink to this headline">¶</a></h1>
+<p>Python has several good profilers available for general python
+code, and instance-based profiling is not meant to replace general profiling.
+However, because the OpenMDAO profiler lets you view the profiled functions grouped
+by the specific <code class="code docutils literal notranslate"><span class="pre">Problem</span></code>, <code class="code docutils literal notranslate"><span class="pre">System</span></code>, <code class="code docutils literal notranslate"><span class="pre">Group</span></code>, <code class="code docutils literal notranslate"><span class="pre">Driver</span></code>, or <code class="code docutils literal notranslate"><span class="pre">Solver</span></code> that called them, it
+can provide insight into which parts of your model are more expensive, even when
+different parts of your model use many of the same underlying functions.</p>
+<p>Instance-based profiling by default will record information for all calls to any of the main
+OpenMDAO classes or their descendants, for example, <code class="code docutils literal notranslate"><span class="pre">System</span></code>, <code class="code docutils literal notranslate"><span class="pre">Problem</span></code>, <code class="code docutils literal notranslate"><span class="pre">Solver</span></code>,
+<code class="code docutils literal notranslate"><span class="pre">Driver</span></code>, <code class="code docutils literal notranslate"><span class="pre">Matrix</span></code> and <code class="code docutils literal notranslate"><span class="pre">Jacobian</span></code>.</p>
+<p>The simplest way to use instance-based profiling is via the command line using the <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof</span></code>
+command.  For example:</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openmdao</span> <span class="n">iprof</span> <span class="o">&lt;</span><span class="n">your_python_script_here</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>This will collect the profiling data, start a web server, and pop up an icicle viewer
+in a web browser.</p>
+<p>Generally it’s best to just use all of the defaults, but if necessary you can change the
+server port number using the <cite>-p</cite> option, or change the title of the displayed page
+using the <cite>-t</cite> option, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openmdao</span> <span class="n">iprof</span> <span class="o">&lt;</span><span class="n">your_python_script_here</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">p</span> <span class="mi">8801</span> <span class="o">-</span><span class="n">t</span> <span class="s2">&quot;Instance Profile for propulsor.py&quot;</span>
+</pre></div>
+</div>
+<p>You should then see something like this:</p>
+<div class="figure align-center" id="id1">
+<img alt="An example of a profile icicle viewer" src="../../../_images/profile_icicle.png" />
+<p class="caption"><span class="caption-text">An example of a profile icicle viewer.</span></p>
+</div>
+<p>In the viewer, hovering over a box will show the
+function pathname, the local and total elapsed time for that function, and the
+local and total number of calls for that function.  Clicking on a box will
+collapse the view so that that box’s function will become the top box
+and only functions called by that function will be visible.  The top
+box before any box has been collapsed is called <cite>$total</cite> and does not represent a
+real function. Instead, it shows the total time that profiling was
+active. If there are gaps below a parent block, i.e. its child blocks don’t cover the entire
+space below the parent, that gap represents the time exclusive to the parent or time
+taken up by functions called by the parent that are not being profiled.</p>
+<p>There is a <em>Reset</em> button that will take you back to the top level of the profile after
+you have clicked down into a sub-call.</p>
+<p>Documentation of options for all commands described here can be obtained by running the
+command followed by the <cite>-h</cite> option.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao iprof -h
+</pre></div>
+</div>
+
+    <div class="cell border-box-sizing code_cell rendered">
+       <div class="output_area"><pre>usage: openmdao iprof [-h] [-p PORT] [--no_browser] [-t TITLE] [-g METHODS]
+                      [-m MAXCALLS]
+                      file [file ...]
+
+positional arguments:
+  file                  Raw profile data files or a python file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PORT, --port PORT  port used for web server
+  --no_browser          Don&#x27;t pop up a browser to view the data.
+  -t TITLE, --title TITLE
+                        Title to be displayed above profiling view.
+  -g METHODS, --group METHODS
+                        Determines which group of methods will be tracked.
+                        Current options are: [&#x27;coloring&#x27;, &#x27;dataflow&#x27;,
+                        &#x27;driver&#x27;, &#x27;jac&#x27;, &#x27;linear&#x27;, &#x27;mpi&#x27;, &#x27;openmdao&#x27;,
+                        &#x27;openmdao_all&#x27;, &#x27;setup&#x27;, &#x27;solver&#x27;, &#x27;transfer&#x27;] and
+                        &quot;openmdao&quot; is the default
+  -m MAXCALLS, --maxcalls MAXCALLS
+                        Maximum number of calls displayed at one time.
+                        Default=15000.
+</pre></div>
+    </div><p>If you just want to see the timing totals for each method, you can call <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof_totals</span></code> instead
+of <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof</span></code>.  For example:</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openmdao</span> <span class="n">iprof_totals</span> <span class="o">&lt;</span><span class="n">your_python_script_here</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p><code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof_totals</span></code> will write tabular output to the terminal containing total
+runtime and total number of calls for each profiled function.  For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Total     Total           Function
+Calls     Time (s)    %   Name
+     1    0.000000   0.00 des_vars.&lt;System.initialize&gt;
+     1    0.000000   0.00 &lt;Solver#3._declare_options&gt;
+     1    0.000000   0.00 &lt;Solver#6._declare_options&gt;
+     1    0.000000   0.00 &lt;Solver#7._declare_options&gt;
+     1    0.000000   0.00 &lt;Solver#9._declare_options&gt;
+     1    0.000000   0.00 &lt;Solver#15._declare_options&gt;
+     1    0.000000   0.00 design.fc.ambient.&lt;System.initialize&gt;
+     1    0.000000   0.00 &lt;Solver#16._declare_options&gt;
+     1    0.000000   0.00 design.fc.conv.&lt;System.initialize&gt;
+     1    0.000000   0.00 &lt;Solver#20._declare_options&gt;
+     1    0.000000   0.00 &lt;Solver#21._declare_options&gt;
+     1    0.000000   0.00 &lt;Solver#25._declare_options&gt;
+     1    0.000000   0.00 design.fc.ambient.readAtmTable.&lt;System.initialize&gt;
+   ...
+     5    1.690505   8.06 &lt;NonlinearRunOnce#5.solve&gt;
+     5    1.694799   8.08 design.fc.conv.fs.exit_static.&lt;Group._solve_nonlinear&gt;
+     5    1.885014   8.99 &lt;NonlinearRunOnce#6.solve&gt;
+     5    1.892510   9.02 design.fc.conv.fs.&lt;Group._solve_nonlinear&gt;
+     1    1.934901   9.23 .&lt;System._setup_scaling&gt;
+     1    2.053042   9.79 design.fan.&lt;Group._setup_vars&gt;
+     5    2.549496  12.16 &lt;NewtonSolver#2._iter_execute&gt;
+     2    2.609760  12.44 &lt;Solver#22._run_iterator&gt;
+     2    2.609783  12.44 &lt;NonlinearSolver#2.solve&gt;
+     2    2.613209  12.46 design.fc.conv.&lt;Group._solve_nonlinear&gt;
+     2    2.615414  12.47 &lt;NonlinearRunOnce#7.solve&gt;
+     2    2.619340  12.49 design.fc.&lt;Group._solve_nonlinear&gt;
+     1    3.133403  14.94 design.nozz.&lt;Group._setup_vars&gt;
+     2    7.319256  34.90 &lt;NewtonSolver#1._iter_execute&gt;
+     1    7.608798  36.28 &lt;Solver#13._run_iterator&gt;
+     1    7.608808  36.28 &lt;NonlinearSolver#1.solve&gt;
+     1    7.617416  36.32 design.&lt;Group._solve_nonlinear&gt;
+     1    7.617761  36.32 &lt;NonlinearRunOnce#32.solve&gt;
+     1    7.627209  36.37 .&lt;Group._solve_nonlinear&gt;
+     1    7.627431  36.37 .&lt;System.run_solve_nonlinear&gt;
+     1    7.627438  36.37 &lt;Problem#1.run_model&gt;
+     1    7.818091  37.28 design.&lt;Group._setup_vars&gt;
+     1    7.863608  37.49 .&lt;Group._setup_vars&gt;
+     1   12.812045  61.09 .&lt;System._setup&gt;
+     1   12.826367  61.16 &lt;Problem#1.setup&gt;
+     1   20.973087 100.00 $total
+</pre></div>
+</div>
+<p>Note that the totals are sorted with the largest values at the end so that when
+running <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof_totals</span></code> in a terminal the most important functions will show up without having to
+scroll to the top of the output, which can be lengthy. Also note that the function names are a
+combination of the OpenMDAO pathname (when available) plus the function name qualified by the owning
+class, or the class name followed by an instance identifier, plus the function name.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Running either <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof</span></code> or <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof_totals</span></code> will generate by default a file called <cite>iprof.0</cite> in your
+current directory.  Either script can be run directly on the <cite>iprof.0</cite> file and will generate the
+same outputs as running your python script.</p>
+</div>
+<p>If you want more control over the profiling process, you can import <code class="code docutils literal notranslate"><span class="pre">openmdao.devtools.iprofile</span></code> and manually
+call <cite>setup()</cite>, <cite>start()</cite> and <cite>stop()</cite>.  For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">openmdao.devtools</span> <span class="kn">import</span> <span class="n">iprofile</span>
+
+<span class="c1"># we&#39;ll just use defaults here, but we could change the methods to profile in the call to setup()</span>
+<span class="n">iprofile</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">iprofile</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<span class="c1"># define my model and run it...</span>
+
+<span class="n">iprofile</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+<span class="c1"># do some other stuff that I don&#39;t want to profile...</span>
+</pre></div>
+</div>
+<p>After your script is finished running, you should see a new file called
+<cite>iprof.0</cite> in your current directory.  If you happen
+to have activated profiling for an MPI run, then you’ll have a copy of that
+file for each MPI process, so <cite>iprof.0</cite>, <cite>iprof.1</cite>, etc.  As mentioned earlier, you can
+run either <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof</span></code> or <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">iprof_totals</span></code> directly on the <code class="code docutils literal notranslate"><span class="pre">iprof.*</span></code> data file(s).</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">The timing numbers obtained from instance-based profiling will not be exact due to overhead
+introduced by the python function that collects timing data.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If your script contains any <cite>quit()</cite> or <cite>exit()</cite> calls, it will cause the profiling to fail
+because the profiling performs certain necessary operations in a function registered with
+<cite>atexit</cite>.  This function will not execute if a <cite>quit()</cite> or <cite>exit()</cite> is encountered.</p>
+</div>
+<div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/Tutorials.html#tutorials"><span class="std std-ref">Tutorials</span></a>, <a class="reference internal" href="../../../tags/Profiling.html#profiling"><span class="std std-ref">Profiling</span></a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="inst_mem_profile.html" title="Memory Profiling"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Profiling and Tracing"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Debugging</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Profiling and Tracing</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

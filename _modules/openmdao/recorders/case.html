@@ -1,0 +1,1026 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.recorders.case &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.recorders.case</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A Case class.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.recorders.sqlite_recorder</span> <span class="k">import</span> <span class="n">blob_to_array</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.record_util</span> <span class="k">import</span> <span class="n">json_to_np_array</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.variable_table</span> <span class="k">import</span> <span class="n">write_var_table</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.units</span> <span class="k">import</span> <span class="n">get_conversion</span>
+
+<span class="n">_DEFAULT_OUT_STREAM</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+<span class="n">_AMBIGOUS_PROM_NAME</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Case"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.Case">[docs]</a><span class="k">class</span> <span class="nc">Case</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Case wraps the data from a single iteration of a recording to make it more easily accessible.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : str</span>
+<span class="sd">        The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The unique identifier for this case.</span>
+<span class="sd">    parent : str</span>
+<span class="sd">        The iteration coordinate of the parent case for this iteration if any, else None.</span>
+<span class="sd">    counter : int</span>
+<span class="sd">        The unique sequential index of this case in the recording.</span>
+<span class="sd">    timestamp : float</span>
+<span class="sd">        Time of execution of the case.</span>
+<span class="sd">    success : str</span>
+<span class="sd">        Success flag for the case.</span>
+<span class="sd">    msg : str</span>
+<span class="sd">        Message associated with the case.</span>
+<span class="sd">    outputs : PromAbsDict</span>
+<span class="sd">        Map of outputs to values recorded.</span>
+<span class="sd">    inputs : PromAbsDict or None</span>
+<span class="sd">        Map of inputs to values recorded, None if not recorded.</span>
+<span class="sd">    residuals : PromAbsDict or None</span>
+<span class="sd">        Map of outputs to residuals recorded, None if not recorded.</span>
+<span class="sd">    jacobian : PromAbsDict or None</span>
+<span class="sd">        Map of (output, input) to derivatives recorded, None if not recorded.</span>
+<span class="sd">    parent : str</span>
+<span class="sd">        The full unique identifier for the parent this iteration.</span>
+<span class="sd">    abs_err : float or None</span>
+<span class="sd">        Absolute tolerance (None if not recorded).</span>
+<span class="sd">    rel_err : float or None</span>
+<span class="sd">        Relative tolerance (None if not recorded).</span>
+<span class="sd">    _prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping promoted names of all variables to absolute names.</span>
+<span class="sd">    _abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping absolute names of all variables to promoted names.</span>
+<span class="sd">    _abs2meta : dict</span>
+<span class="sd">        Dictionary mapping absolute names of all variables to variable metadata.</span>
+<span class="sd">    _voi_meta : dict</span>
+<span class="sd">        Dictionary mapping absolute names of variables of interest to variable metadata.</span>
+<span class="sd">    _format_version : int</span>
+<span class="sd">        A version number specifying the format of array data, if not numpy arrays.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Case.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.Case.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : str</span>
+<span class="sd">            The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">        data : dict-like</span>
+<span class="sd">            Dictionary of data for a case</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names of all variables to absolute names.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names of all variables to promoted names.</span>
+<span class="sd">        abs2meta : dict</span>
+<span class="sd">            Dictionary mapping absolute names of all variables to variable metadata.</span>
+<span class="sd">        voi_meta : dict</span>
+<span class="sd">            Dictionary mapping absolute names of variables of interest to variable metadata.</span>
+<span class="sd">        data_format : int</span>
+<span class="sd">            A version number specifying the format of array data, if not numpy arrays.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">source</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">=</span> <span class="n">data_format</span>
+
+        <span class="k">if</span> <span class="s1">&#39;iteration_coordinate&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;iteration_coordinate&#39;</span><span class="p">]</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="s1">&#39;case_name&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;case_name&#39;</span><span class="p">]</span>  <span class="c1"># problem cases</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">success</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span>
+
+        <span class="c1"># for a solver case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abs_err</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;abs_err&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;abs_err&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rel_err</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;abs_err&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;rel_err&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># rename solver keys</span>
+        <span class="k">if</span> <span class="s1">&#39;solver_inputs&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">data</span><span class="p">))</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;solver_inputs&#39;</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;solver_output&#39;</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;residuals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;solver_residuals&#39;</span><span class="p">)</span>
+
+        <span class="c1"># default properties to None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jacobian</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="s1">&#39;inputs&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">data_format</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">json_to_np_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">],</span> <span class="n">abs2meta</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">data_format</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">blob_to_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                    <span class="n">inputs</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;outputs&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">data_format</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">outputs</span> <span class="o">=</span> <span class="n">json_to_np_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">],</span> <span class="n">abs2meta</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">outputs</span> <span class="o">=</span> <span class="n">blob_to_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">outputs</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                    <span class="n">outputs</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outputs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;residuals&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">data_format</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">residuals</span> <span class="o">=</span> <span class="n">json_to_np_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;residuals&#39;</span><span class="p">],</span> <span class="n">abs2meta</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">data_format</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">residuals</span> <span class="o">=</span> <span class="n">blob_to_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;residuals&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">residuals</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                    <span class="n">residuals</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">residuals</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;residuals&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">residuals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="n">residuals</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;jacobian&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">data_format</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">jacobian</span> <span class="o">=</span> <span class="n">blob_to_array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;jacobian&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">jacobian</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">jacobian</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                    <span class="n">jacobian</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">jacobian</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;jacobian&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">jacobian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">jacobian</span> <span class="o">=</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="n">jacobian</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># save var name &amp; meta dict references for use by self._get_variables_of_type()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">prom2abs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">abs2prom</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="n">abs2meta</span>
+
+        <span class="c1"># save VOI dict reference for use by self._scale()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span> <span class="o">=</span> <span class="n">voi_meta</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">iteration_coordinate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deprecate the &#39;iteration_coordinate&#39; attribute.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The unique identifier for this case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;&#39;iteration_coordinate&#39; has been deprecated. Use &#39;name&#39; instead.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get string representation of the case.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            String representation of the case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">)])</span>
+
+<div class="viewcode-block" id="Case.__getitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.Case.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get an output/input variable.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Promoted or relative variable name in the root system&#39;s namespace.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or ndarray or any python object</span>
+<span class="sd">            the requested output/input variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Variable name &quot;</span><span class="si">%s</span><span class="s1">&quot; not found.&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Case.get_val"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.get_val">[docs]</a>    <span class="k">def</span> <span class="nf">get_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get an output/input variable.</span>
+
+<span class="sd">        Function is used if you want to specify display units.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Promoted or relative variable name in the root system&#39;s namespace.</span>
+<span class="sd">        units : str, optional</span>
+<span class="sd">            Units to convert to before upon return.</span>
+<span class="sd">        indices : int or list of ints or tuple of ints or int ndarray or Iterable or None, optional</span>
+<span class="sd">            Indices or slice to return.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or ndarray</span>
+<span class="sd">            The requested output/input variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">units</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_units</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_units</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">base_units</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Can&#39;t express variable &#39;</span><span class="si">{}</span><span class="s2">&#39; with units of &#39;None&#39; in units of &#39;</span><span class="si">{}</span><span class="s2">&#39;.&quot;</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">units</span><span class="p">))</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">scale</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">get_conversion</span><span class="p">(</span><span class="n">base_units</span><span class="p">,</span> <span class="n">units</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Can&#39;t express variable &#39;</span><span class="si">{}</span><span class="s2">&#39; with units of &#39;</span><span class="si">{}</span><span class="s2">&#39; in units of &#39;</span><span class="si">{}</span><span class="s2">&#39;.&quot;</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">base_units</span><span class="p">,</span> <span class="n">units</span><span class="p">))</span>
+
+            <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span>
+
+        <span class="k">return</span> <span class="n">val</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_units</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the units for a variable name.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Promoted or relative variable name in the root system&#39;s namespace.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Unit string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+
+        <span class="n">proms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">proms</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]:</span>
+            <span class="n">abs_name</span> <span class="o">=</span> <span class="n">proms</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">meta</span><span class="p">[</span><span class="n">abs_name</span><span class="p">][</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">proms</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">proms</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># The promoted name maps to multiple absolute names, require absolute name.</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Can&#39;t get units for the promoted name &#39;</span><span class="si">%s</span><span class="s2">&#39; because it refers to &quot;</span> <span class="o">+</span> \
+                      <span class="s2">&quot;multiple inputs: </span><span class="si">%s</span><span class="s2">. Access the units using an absolute path name.&quot;</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">proms</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">])))</span>
+
+            <span class="n">abs_name</span> <span class="o">=</span> <span class="n">proms</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">meta</span><span class="p">[</span><span class="n">abs_name</span><span class="p">][</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Variable name &quot;</span><span class="si">{}</span><span class="s1">&quot; not found.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Case.get_design_vars"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.get_design_vars">[docs]</a>    <span class="k">def</span> <span class="nf">get_design_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the values of the design variables, as seen by the driver, for this case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scaled : bool</span>
+<span class="sd">            The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">        use_indices : bool</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PromAbsDict</span>
+<span class="sd">            Map of variables to their values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variables_of_type</span><span class="p">(</span><span class="s1">&#39;desvar&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_voi_meta</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">scaled</span><span class="p">,</span> <span class="n">use_indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">vals</span></div>
+
+<div class="viewcode-block" id="Case.get_objectives"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.get_objectives">[docs]</a>    <span class="k">def</span> <span class="nf">get_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the values of the objectives, as seen by the driver, for this case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scaled : bool</span>
+<span class="sd">            The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">        use_indices : bool</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PromAbsDict</span>
+<span class="sd">            Map of variables to their values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variables_of_type</span><span class="p">(</span><span class="s1">&#39;objective&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_voi_meta</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">scaled</span><span class="p">,</span> <span class="n">use_indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">vals</span></div>
+
+<div class="viewcode-block" id="Case.get_constraints"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.get_constraints">[docs]</a>    <span class="k">def</span> <span class="nf">get_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the values of the constraints, as seen by the driver, for this case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scaled : bool</span>
+<span class="sd">            The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">        use_indices : bool</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PromAbsDict</span>
+<span class="sd">            Map of variables to their values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variables_of_type</span><span class="p">(</span><span class="s1">&#39;constraint&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_voi_meta</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">scaled</span><span class="p">,</span> <span class="n">use_indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">vals</span></div>
+
+<div class="viewcode-block" id="Case.get_responses"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.get_responses">[docs]</a>    <span class="k">def</span> <span class="nf">get_responses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the values of the responses, as seen by the driver, for this case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scaled : bool</span>
+<span class="sd">            The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">        use_indices : bool</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PromAbsDict</span>
+<span class="sd">            Map of variables to their values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variables_of_type</span><span class="p">(</span><span class="s1">&#39;response&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_voi_meta</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">scaled</span><span class="p">,</span> <span class="n">use_indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">vals</span></div>
+
+<div class="viewcode-block" id="Case.list_inputs"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.list_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">list_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">prom_name</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">units</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">shape</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">hierarchical</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">print_arrays</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">out_stream</span><span class="o">=</span><span class="n">_DEFAULT_OUT_STREAM</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return and optionally log a list of input names and other optional information.</span>
+
+<span class="sd">        Also optionally logs the information to a user defined output stream.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        values : bool, optional</span>
+<span class="sd">            When True, display/return input values. Default is True.</span>
+<span class="sd">        prom_name : bool, optional</span>
+<span class="sd">            When True, display/return the promoted name of the variable.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        units : bool, optional</span>
+<span class="sd">            When True, display/return units. Default is False.</span>
+<span class="sd">        shape : bool, optional</span>
+<span class="sd">            When True, display/return the shape of the value. Default is False.</span>
+<span class="sd">        hierarchical : bool, optional</span>
+<span class="sd">            When True, human readable output shows variables in hierarchical format.</span>
+<span class="sd">        print_arrays : bool, optional</span>
+<span class="sd">            When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.</span>
+<span class="sd">            The norm is surrounded by vertical bars to indicate that it is a norm.</span>
+<span class="sd">            When True, also display full values of the ndarray below the row. Format is affected</span>
+<span class="sd">            by the values set with numpy.set_printoptions</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        out_stream : file-like object</span>
+<span class="sd">            Where to send human readable output. Default is sys.stdout.</span>
+<span class="sd">            Set to None to suppress.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of input names and other optional information about those inputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span>
+        <span class="n">inp_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">abs_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">absolute_names</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">abs_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inp_vars</span><span class="p">:</span>
+                    <span class="n">inp_vars</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]}</span>
+
+        <span class="k">if</span> <span class="n">inp_vars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inp_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">inp_vars</span><span class="p">:</span>
+                <span class="n">var_meta</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
+                    <span class="n">var_meta</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inp_vars</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">prom_name</span><span class="p">:</span>
+                    <span class="n">var_meta</span><span class="p">[</span><span class="s1">&#39;prom_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">var_name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">units</span><span class="p">:</span>
+                    <span class="n">var_meta</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">shape</span><span class="p">:</span>
+                    <span class="n">var_meta</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inp_vars</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">var_name</span><span class="p">,</span> <span class="n">var_meta</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">out_stream</span> <span class="o">==</span> <span class="n">_DEFAULT_OUT_STREAM</span><span class="p">:</span>
+            <span class="n">out_stream</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+
+        <span class="k">if</span> <span class="n">out_stream</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inp_vars</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">out_stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;WARNING: Inputs not recorded. Make sure your recording &#39;</span> <span class="o">+</span>
+                                 <span class="s1">&#39;settings have record_inputs set to True</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_table</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">hierarchical</span><span class="p">,</span> <span class="n">print_arrays</span><span class="p">,</span> <span class="n">out_stream</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inputs</span></div>
+
+<div class="viewcode-block" id="Case.list_outputs"><a class="viewcode-back" href="../../../features/recording/reading_data.html#openmdao.recorders.case.Case.list_outputs">[docs]</a>    <span class="k">def</span> <span class="nf">list_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">explicit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">implicit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">prom_name</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">residuals</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">residuals_tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">units</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">shape</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">hierarchical</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">print_arrays</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">out_stream</span><span class="o">=</span><span class="n">_DEFAULT_OUT_STREAM</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return and optionally log a list of output names and other optional information.</span>
+
+<span class="sd">        Also optionally logs the information to a user defined output stream.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        explicit : bool, optional</span>
+<span class="sd">            include outputs from explicit components. Default is True.</span>
+<span class="sd">        implicit : bool, optional</span>
+<span class="sd">            include outputs from implicit components. Default is True.</span>
+<span class="sd">        values : bool, optional</span>
+<span class="sd">            When True, display/return output values. Default is True.</span>
+<span class="sd">        prom_name : bool, optional</span>
+<span class="sd">            When True, display/return the promoted name of the variable.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        residuals : bool, optional</span>
+<span class="sd">            When True, display/return residual values. Default is False.</span>
+<span class="sd">        residuals_tol : float, optional</span>
+<span class="sd">            If set, limits the output of list_outputs to only variables where</span>
+<span class="sd">            the norm of the resids array is greater than the given &#39;residuals_tol&#39;.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        units : bool, optional</span>
+<span class="sd">            When True, display/return units. Default is False.</span>
+<span class="sd">        shape : bool, optional</span>
+<span class="sd">            When True, display/return the shape of the value. Default is False.</span>
+<span class="sd">        bounds : bool, optional</span>
+<span class="sd">            When True, display/return bounds (lower and upper). Default is False.</span>
+<span class="sd">        scaling : bool, optional</span>
+<span class="sd">            When True, display/return scaling (ref, ref0, and res_ref). Default is False.</span>
+<span class="sd">        hierarchical : bool, optional</span>
+<span class="sd">            When True, human readable output shows variables in hierarchical format.</span>
+<span class="sd">        print_arrays : bool, optional</span>
+<span class="sd">            When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.</span>
+<span class="sd">            The norm is surrounded by vertical bars to indicate that it is a norm.</span>
+<span class="sd">            When True, also display full values of the ndarray below the row. Format  is affected</span>
+<span class="sd">            by the values set with numpy.set_printoptions</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        out_stream : file-like</span>
+<span class="sd">            Where to send human readable output. Default is sys.stdout.</span>
+<span class="sd">            Set to None to suppress.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of output names and other optional information about those outputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span>
+        <span class="n">expl_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">impl_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">out_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">abs_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">absolute_names</span><span class="p">():</span>
+            <span class="n">out_vars</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="ow">and</span> <span class="n">abs_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">absolute_names</span><span class="p">():</span>
+                <span class="n">out_vars</span><span class="p">[</span><span class="n">abs_name</span><span class="p">][</span><span class="s1">&#39;residuals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out_vars</span><span class="p">[</span><span class="n">abs_name</span><span class="p">][</span><span class="s1">&#39;residuals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Not Recorded&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">out_vars</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">residuals_tol</span> <span class="ow">and</span> \
+                   <span class="n">out_vars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;residuals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s1">&#39;Not Recorded&#39;</span> <span class="ow">and</span> \
+                   <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">out_vars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;residuals&#39;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">residuals_tol</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">outs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_vars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">prom_name</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;prom_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">residuals</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;resids&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_vars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;residuals&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">units</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">shape</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_vars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                <span class="k">if</span> <span class="n">bounds</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">scaling</span><span class="p">:</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;ref&#39;</span><span class="p">]</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;ref0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;ref0&#39;</span><span class="p">]</span>
+                    <span class="n">outs</span><span class="p">[</span><span class="s1">&#39;res_ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;res_ref&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;explicit&#39;</span><span class="p">]:</span>
+                    <span class="n">expl_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">outs</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">impl_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">outs</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">out_stream</span> <span class="o">==</span> <span class="n">_DEFAULT_OUT_STREAM</span><span class="p">:</span>
+            <span class="n">out_stream</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+
+        <span class="k">if</span> <span class="n">out_stream</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_vars</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">out_stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;WARNING: Outputs not recorded. Make sure your recording &#39;</span> <span class="o">+</span>
+                                 <span class="s1">&#39;settings have record_outputs set to True</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">explicit</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_write_table</span><span class="p">(</span><span class="s1">&#39;explicit&#39;</span><span class="p">,</span> <span class="n">expl_outputs</span><span class="p">,</span> <span class="n">hierarchical</span><span class="p">,</span> <span class="n">print_arrays</span><span class="p">,</span> <span class="n">out_stream</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">implicit</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_write_table</span><span class="p">(</span><span class="s1">&#39;implicit&#39;</span><span class="p">,</span> <span class="n">impl_outputs</span><span class="p">,</span> <span class="n">hierarchical</span><span class="p">,</span> <span class="n">print_arrays</span><span class="p">,</span> <span class="n">out_stream</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">explicit</span> <span class="ow">and</span> <span class="n">implicit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">expl_outputs</span> <span class="o">+</span> <span class="n">impl_outputs</span>
+        <span class="k">elif</span> <span class="n">explicit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">expl_outputs</span>
+        <span class="k">elif</span> <span class="n">implicit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">impl_outputs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;You have excluded both Explicit and Implicit components.&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_write_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">,</span> <span class="n">var_data</span><span class="p">,</span> <span class="n">hierarchical</span><span class="p">,</span> <span class="n">print_arrays</span><span class="p">,</span> <span class="n">out_stream</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write table of variable names, values, residuals, and metadata to out_stream.</span>
+
+<span class="sd">        The output values could actually represent input variables.</span>
+<span class="sd">        In this context, outputs refers to the data that is being logged to an output stream.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var_type : &#39;input&#39;, &#39;explicit&#39; or &#39;implicit&#39;</span>
+<span class="sd">            Indicates type of variables, input or explicit/implicit output.</span>
+<span class="sd">        var_data : list</span>
+<span class="sd">            List of (name, dict of vals and metadata) tuples.</span>
+<span class="sd">        hierarchical : bool</span>
+<span class="sd">            When True, human readable output shows variables in hierarchical format.</span>
+<span class="sd">        print_arrays : bool</span>
+<span class="sd">            When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.</span>
+<span class="sd">            The norm is surrounded by vertical bars to indicate that it is a norm.</span>
+<span class="sd">            When True, also display full values of the ndarray below the row. Format  is affected</span>
+<span class="sd">            by the values set with numpy.set_printoptions</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        out_stream : file-like object</span>
+<span class="sd">            Where to send human readable output.</span>
+<span class="sd">            Set to None to suppress.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">out_stream</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Make a dict of outputs. Makes it easier to work with in this method</span>
+        <span class="n">var_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">var_data</span><span class="p">:</span>
+            <span class="n">var_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span>
+
+        <span class="n">write_var_table</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">var_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">var_type</span><span class="p">,</span> <span class="n">var_dict</span><span class="p">,</span>
+                        <span class="n">hierarchical</span><span class="p">,</span> <span class="n">print_arrays</span><span class="p">,</span> <span class="n">out_stream</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_variables_of_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the variables of a given type and their values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var_type : str</span>
+<span class="sd">            String indicating which value for &#39;type&#39; should be accepted for a variable</span>
+<span class="sd">            to be included in the returned map.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PromAbsDict</span>
+<span class="sd">            Map of variables to their values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PromAbsDict</span><span class="p">({},</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">)</span>
+
+        <span class="n">ret_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">absolute_names</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">var_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]:</span>
+                <span class="n">ret_vars</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="n">ret_vars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_apply_voi_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Scale the values array and apply indices from _voi_meta per the arguments.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vals : PromAbsDict</span>
+<span class="sd">            Map of variables to their values.</span>
+<span class="sd">        scaled : bool</span>
+<span class="sd">            The unique id of the system/solver/driver/problem that did the recording.</span>
+<span class="sd">        use_indices : bool</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PromAbsDict</span>
+<span class="sd">            Map of variables to their scaled values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">vals</span><span class="o">.</span><span class="n">absolute_names</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span><span class="p">:</span>
+                <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                    <span class="c1"># physical to scaled</span>
+                    <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;adder&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">+</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;adder&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;scaler&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">*</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;scaler&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">use_indices</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="n">vals</span></div>
+
+
+<div class="viewcode-block" id="PromAbsDict"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.PromAbsDict">[docs]</a><span class="k">class</span> <span class="nc">PromAbsDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dictionary that enables accessing values via absolute or promoted variable names.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _values : array or dict</span>
+<span class="sd">        Array or dict of values accessible via absolute variable name.</span>
+<span class="sd">    _keys : array</span>
+<span class="sd">        Absolute variable names that map to the values in the _values array.</span>
+<span class="sd">    _prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">    _abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">    _is_output : bool</span>
+<span class="sd">        True if this should map using output variable names, False for input variable names.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PromAbsDict.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.PromAbsDict.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        values : array or dict</span>
+<span class="sd">            Numpy structured array or dictionary of values.</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">        output : bool</span>
+<span class="sd">            True if this should map using output variable names, False for input variable names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_output</span> <span class="o">=</span> <span class="n">output</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">prom2abs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">abs2prom</span>
+
+        <span class="k">if</span> <span class="n">output</span><span class="p">:</span>
+            <span class="n">prom2abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+            <span class="n">abs2prom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prom2abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+            <span class="n">abs2prom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># dict of values, keyed on either absolute or promoted names</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                    <span class="c1"># derivative keys can be either (of, wrt) or &#39;of,wrt&#39;</span>
+                    <span class="n">abs_keys</span><span class="p">,</span> <span class="n">prom_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deriv_keys</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="n">abs_keys</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">,</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">abs2prom</span><span class="p">:</span>
+                        <span class="c1"># key is absolute name</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                        <span class="n">prom_key</span> <span class="o">=</span> <span class="n">abs2prom</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                        <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">,</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">prom2abs</span><span class="p">:</span>
+                        <span class="c1"># key is promoted name</span>
+                        <span class="k">for</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="n">prom2abs</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                        <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># numpy structured array, which will always use absolute names</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="n">values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">names</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">abs2prom</span><span class="p">:</span>
+                    <span class="n">prom_key</span> <span class="o">=</span> <span class="n">abs2prom</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">prom_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                        <span class="c1"># We already set a value for this promoted name, which means</span>
+                        <span class="c1"># it is an input that maps to multiple absolute names. Set the</span>
+                        <span class="c1"># value to AMBIGOUS and require access via absolute name.</span>
+                        <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">,</span> <span class="n">_AMBIGOUS_PROM_NAME</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">,</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                    <span class="c1"># derivative keys will be a string in the form of &#39;of,wrt&#39;</span>
+                    <span class="n">abs_keys</span><span class="p">,</span> <span class="n">prom_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deriv_keys</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">,</span> <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get string representation of the dictionary.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            String representation of the dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_deriv_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the absolute and promoted name versions of the provided derivative key.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : tuple or string</span>
+<span class="sd">            derivative key as either (of, wrt) or &#39;of,wrt&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of tuples:</span>
+<span class="sd">            list of (of, wrt) mapping the provided key to absolute names.</span>
+<span class="sd">        tuple :</span>
+<span class="sd">            (of, wrt) mapping the provided key to promoted names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prom2abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="n">abs2prom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+
+        <span class="c1"># derivative could be tuple or string, using absolute or promoted names</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[( )]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+
+        <span class="c1"># if promoted, will map to all connected absolute names</span>
+        <span class="n">abs_of</span> <span class="o">=</span> <span class="p">[</span><span class="n">of</span><span class="p">]</span> <span class="k">if</span> <span class="n">of</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="k">else</span> <span class="n">prom2abs</span><span class="p">[</span><span class="n">of</span><span class="p">]</span>
+        <span class="n">abs_wrt</span> <span class="o">=</span> <span class="p">[</span><span class="n">wrt</span><span class="p">]</span> <span class="k">if</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="k">else</span> <span class="n">prom2abs</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span>
+        <span class="n">abs_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">,</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">abs_of</span><span class="p">,</span> <span class="n">abs_wrt</span><span class="p">)]</span>
+
+        <span class="n">prom_of</span> <span class="o">=</span> <span class="n">of</span> <span class="k">if</span> <span class="n">of</span> <span class="ow">in</span> <span class="n">prom2abs</span> <span class="k">else</span> <span class="n">abs2prom</span><span class="p">[</span><span class="n">of</span><span class="p">]</span>
+        <span class="n">prom_wrt</span> <span class="o">=</span> <span class="n">wrt</span> <span class="k">if</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">prom2abs</span> <span class="k">else</span> <span class="n">abs2prom</span><span class="p">[</span><span class="n">wrt</span><span class="p">]</span>
+        <span class="n">prom_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">prom_of</span><span class="p">,</span> <span class="n">prom_wrt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">abs_keys</span><span class="p">,</span> <span class="n">prom_key</span>
+
+<div class="viewcode-block" id="PromAbsDict.__getitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.PromAbsDict.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use the variable name to get the corresponding value.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : string</span>
+<span class="sd">            Absolute or promoted variable name.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        array :</span>
+<span class="sd">            An array entry value that corresponds to the given variable name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="c1"># absolute name</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="c1"># promoted name</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="n">_AMBIGOUS_PROM_NAME</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;The promoted name &#39;</span><span class="si">%s</span><span class="s2">&#39; is invalid because it refers to multiple &quot;</span> <span class="o">+</span> \
+                      <span class="s2">&quot;inputs: </span><span class="si">%s</span><span class="s2">. Access the value using an absolute path name or the &quot;</span> <span class="o">+</span> \
+                      <span class="s2">&quot;connected output variable instead.&quot;</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">val</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+            <span class="c1"># derivative keys can be either (of, wrt) or &#39;of,wrt&#39;</span>
+            <span class="n">abs_keys</span><span class="p">,</span> <span class="n">prom_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deriv_keys</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Variable name &quot;</span><span class="si">%s</span><span class="s1">&quot; not found.&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PromAbsDict.__setitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.PromAbsDict.__setitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value for the given key, which may use absolute or promoted names.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : string</span>
+<span class="sd">            Absolute or promoted variable name.</span>
+<span class="sd">        value : any</span>
+<span class="sd">            value for variable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_output</span><span class="p">:</span>
+            <span class="n">prom2abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+            <span class="n">abs2prom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prom2abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+            <span class="n">abs2prom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+            <span class="c1"># derivative keys can be either (of, wrt) or &#39;of,wrt&#39;</span>
+            <span class="n">abs_keys</span><span class="p">,</span> <span class="n">prom_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deriv_keys</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="n">abs_keys</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+            <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">prom_key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="c1"># absolute name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># promoted name, propagate to all connected absolute names</span>
+            <span class="k">for</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="n">prom2abs</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">PromAbsDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PromAbsDict.absolute_names"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/case.html#openmdao.recorders.case.PromAbsDict.absolute_names">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Yield absolute names for variables contained in this dictionary.</span>
+
+<span class="sd">        Similar to keys() but with absolute variable names instead of promoted names.</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        str</span>
+<span class="sd">            absolute names for variables contained in this dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="c1"># return derivative keys as tuples instead of strings</span>
+                <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[( )]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">key</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

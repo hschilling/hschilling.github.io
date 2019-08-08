@@ -1,0 +1,7 @@
+.. _Outputs: 
+
+=========================
+Outputs
+=========================
+  .. toctree::
+     ../features/core_features/defining_components/scaling.rst

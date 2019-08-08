@@ -1,0 +1,8 @@
+openmdao.proc_allocators
+------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    proc_allocators/default_allocator
+    proc_allocators/proc_allocator

@@ -1,0 +1,264 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.test_suite.scripts.circuit_analysis &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.test_suite.scripts.circuit_analysis</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="k">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.assert_utils</span> <span class="k">import</span> <span class="n">assert_rel_error</span>
+
+
+<div class="viewcode-block" id="Resistor"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Resistor">[docs]</a><span class="k">class</span> <span class="nc">Resistor</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes current across a resistor using Ohm&#39;s law.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Resistor.initialize"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Resistor.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Resistance in Ohms&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Resistor.setup"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Resistor.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Resistor.compute"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Resistor.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">deltaV</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_in&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_out&#39;</span><span class="p">]</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">deltaV</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="Diode"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Diode">[docs]</a><span class="k">class</span> <span class="nc">Diode</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes current across a diode using the Shockley diode equation.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Diode.initialize"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Diode.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;Is&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Saturation current in Amps&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;Vt&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=.</span><span class="mi">025875</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Thermal voltage in Volts&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Diode.setup"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Diode.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_in&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Diode.compute"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Diode.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">deltaV</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_in&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;V_out&#39;</span><span class="p">]</span>
+        <span class="n">Is</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;Is&#39;</span><span class="p">]</span>
+        <span class="n">Vt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;Vt&#39;</span><span class="p">]</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Is</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">deltaV</span> <span class="o">/</span> <span class="n">Vt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes voltage residual across a node based on incoming and outgoing current.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Node.initialize"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Node.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;n_in&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;number of connections with + assumed in&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;n_out&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;number of current connections + assumed out&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.setup"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Node.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_in&#39;</span><span class="p">]):</span>
+            <span class="n">i_name</span> <span class="o">=</span> <span class="s1">&#39;I_in:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">i_name</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_out&#39;</span><span class="p">]):</span>
+            <span class="n">i_name</span> <span class="o">=</span> <span class="s1">&#39;I_out:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">i_name</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+
+        <span class="c1">#note: we don&#39;t declare any partials wrt `V` here,</span>
+        <span class="c1">#      because the residual doesn&#39;t directly depend on it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;I*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.apply_nonlinear"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Node.apply_nonlinear">[docs]</a>    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">for</span> <span class="n">i_conn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_in&#39;</span><span class="p">]):</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;I_in:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_conn</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">i_conn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;n_out&#39;</span><span class="p">]):</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;I_out:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_conn</span><span class="p">)]</span></div></div>
+
+
+<span class="c1"># note: This is defined twice in the file. Once so you can import it, and once inside a test that gets included in the docs.</span>
+<div class="viewcode-block" id="Circuit"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Circuit">[docs]</a><span class="k">class</span> <span class="nc">Circuit</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Circuit.setup"><a class="viewcode-back" href="../../../../_srcdocs/packages/test_suite.scripts/circuit_analysis.html#openmdao.test_suite.scripts.circuit_analysis.Circuit.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;n1&#39;</span><span class="p">,</span> <span class="n">Node</span><span class="p">(</span><span class="n">n_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_out</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;I_in:0&#39;</span><span class="p">,</span> <span class="s1">&#39;I_in&#39;</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;n2&#39;</span><span class="p">,</span> <span class="n">Node</span><span class="p">())</span>  <span class="c1"># leaving defaults</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;R1&#39;</span><span class="p">,</span> <span class="n">Resistor</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="mf">100.</span><span class="p">),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="s1">&#39;Vg&#39;</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;R2&#39;</span><span class="p">,</span> <span class="n">Resistor</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="mf">10000.</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;D1&#39;</span><span class="p">,</span> <span class="n">Diode</span><span class="p">(),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;V_out&#39;</span><span class="p">,</span> <span class="s1">&#39;Vg&#39;</span><span class="p">)])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;n1.V&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;R1.V_in&#39;</span><span class="p">,</span> <span class="s1">&#39;R2.V_in&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;R1.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n1.I_out:0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;R2.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n1.I_out:1&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;n2.V&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;R2.V_out&#39;</span><span class="p">,</span> <span class="s1">&#39;D1.V_in&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;R2.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n2.I_in:0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;D1.I&#39;</span><span class="p">,</span> <span class="s1">&#39;n2.I_out:0&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="k">as</span> <span class="nn">om</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+
+    <span class="c1"># replacing the fixed current source with a BalanceComp to represent a fixed Voltage source</span>
+    <span class="c1"># model.add_subsystem(&#39;source&#39;, IndepVarComp(&#39;I&#39;, 0.1, units=&#39;A&#39;))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;batt&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+    <span class="n">bal</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;batt_balance&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">BalanceComp</span><span class="p">())</span>
+    <span class="n">bal</span><span class="o">.</span><span class="n">add_balance</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">eq_units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;batt_deltaV&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;dV = V1 - V2&#39;</span><span class="p">,</span> <span class="n">V1</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;V&#39;</span><span class="p">},</span>
+                                                   <span class="n">V2</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;V&#39;</span><span class="p">},</span> <span class="n">dV</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;V&#39;</span><span class="p">}))</span>
+
+    <span class="c1"># current into the circuit is now the output state from the batt_balance comp</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;batt_balance.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;circuit.Vg&#39;</span><span class="p">,</span><span class="s1">&#39;batt_deltaV.V2&#39;</span><span class="p">])</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">,</span> <span class="s1">&#39;batt_deltaV.V1&#39;</span><span class="p">)</span>
+
+    <span class="c1"># set the lhs and rhs for the battery residual</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;batt.V&#39;</span><span class="p">,</span> <span class="s1">&#39;batt_balance.rhs:I&#39;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;batt_deltaV.dV&#39;</span><span class="p">,</span> <span class="s1">&#39;batt_balance.lhs:I&#39;</span><span class="p">)</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+    <span class="c1">###################</span>
+    <span class="c1"># Solver Setup</span>
+    <span class="c1">###################</span>
+
+    <span class="c1"># change the circuit solver to RunOnce because we&#39;re</span>
+    <span class="c1"># going to converge at the top level of the model with newton instead</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearRunOnce</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">LinearRunOnce</span><span class="p">()</span>
+
+    <span class="c1"># Put Newton at the top so it can also converge the new BalanceComp residual</span>
+    <span class="n">newton</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+    <span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="n">newton</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ArmijoGoldsteinLS</span><span class="p">()</span>
+    <span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">newton</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="c1"># set initial guesses from the current source problem</span>
+    <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">9.8</span>
+    <span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">.</span><span class="mi">7</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

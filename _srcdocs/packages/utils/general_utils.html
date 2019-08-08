@@ -1,0 +1,780 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>general_utils.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="graph_utils.py" href="graph_utils.html" />
+    <link rel="prev" title="find_cite.py" href="find_cite.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="graph_utils.html" title="graph_utils.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="find_cite.html" title="find_cite.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.general_utils">
+<span id="general-utils-py"></span><span id="openmdao-utils-general-utils-py"></span><span id="index-0"></span><h1>general_utils.py<a class="headerlink" href="#module-openmdao.utils.general_utils" title="Permalink to this headline">¶</a></h1>
+<p>Some miscellaneous utility functions.</p>
+<dl class="class">
+<dt id="openmdao.utils.general_utils.ContainsAll">
+<em class="property">class </em><code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">ContainsAll</code><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#ContainsAll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.ContainsAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A fake dictionary that always reports __contains__(name) to be True.</p>
+<dl class="method">
+<dt id="openmdao.utils.general_utils.ContainsAll.__contains__">
+<code class="descname">__contains__</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#ContainsAll.__contains__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.ContainsAll.__contains__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return if the named object is contained.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of the object being looked up.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">Always returns True.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.utils.general_utils.ContainsAll.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.general_utils.ContainsAll.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.all_ancestors">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">all_ancestors</code><span class="sig-paren">(</span><em>pathname</em>, <em>delim='.'</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#all_ancestors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.all_ancestors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a generator of pathnames of the starting object and all of its parents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>pathname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Pathname of starting object.</p>
+</dd>
+<dt><strong>delim</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Delimiter used to split the name</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.convert_user_defined_tags_to_set">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">convert_user_defined_tags_to_set</code><span class="sig-paren">(</span><em>tags</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#convert_user_defined_tags_to_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.convert_user_defined_tags_to_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert user defined tag which could be None, str, or list to a set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None, str, or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>set</strong></dt>
+<dd><p class="first last">True if the var should be filtered and therefore not listed.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.determine_adder_scaler">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">determine_adder_scaler</code><span class="sig-paren">(</span><em>ref0</em>, <em>ref</em>, <em>adder</em>, <em>scaler</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#determine_adder_scaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.determine_adder_scaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine proper values of adder and scaler based on user arguments.</p>
+<p>Adder and Scaler are used internally because the transformation is
+slightly more efficient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value. Adder
+is first in precedence.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to multiply the model value to get the scaled value. Scaler
+is second in precedence.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>tuple</strong></dt>
+<dd><p class="first last">adder and scaler, properly formatted and based on ref/ref0 if provided.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ValueError</strong></dt>
+<dd><p class="first last">If both ref/ref0 and adder/scaler were provided.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.do_nothing_context">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">do_nothing_context</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#do_nothing_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.do_nothing_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do nothing.</p>
+<p>Useful when you have a block of code that only requires a context manager sometimes,
+and you don’t want to repeat the context managed block.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>contextmanager</strong></dt>
+<dd><p class="first last">A do nothing context manager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.ensure_compatible">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">ensure_compatible</code><span class="sig-paren">(</span><em>name</em>, <em>value</em>, <em>shape=None</em>, <em>indices=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#ensure_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.ensure_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make value compatible with the specified shape or the shape of indices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the value.</p>
+</dd>
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or list or tuple or ndarray or Iterable</span></dt>
+<dd><p class="first last">The value of a variable.</p>
+</dd>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or tuple or list or None</span></dt>
+<dd><p class="first last">The expected or desired shape of the value.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or list of ints or tuple of ints or int ndarray or None</span></dt>
+<dd><p class="first last">The indices of a source variable, used to determine shape if shape is None.
+If shape is not None, the shape of the indices must match shape.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">The value in a shape compatible with the specified shape and/or indices.</p>
+</dd>
+<dt><strong>tuple</strong></dt>
+<dd><p class="first last">The resulting shape of the value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ValueError</strong></dt>
+<dd><p class="first last">If value cannot be made to conform to shape or if shape and indices
+are incompatible.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.filter_var_based_on_tags">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">filter_var_based_on_tags</code><span class="sig-paren">(</span><em>filtering_tags</em>, <em>var_metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#filter_var_based_on_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.filter_var_based_on_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the tags to filter on, and the metadata of the var, determine if it should be filtered.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>filtering_tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed. Only inputs with the
+given tags will be listed.</p>
+</dd>
+<dt><strong>var_metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dict of metadata about the var.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">True if the var should be filtered and therefore not listed.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.find_matches">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">find_matches</code><span class="sig-paren">(</span><em>pattern</em>, <em>var_list</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#find_matches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.find_matches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of variable names that match given pattern.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>pattern</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">String pattern</p>
+</dd>
+<dt><strong>var_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str</span></dt>
+<dd><p class="first last">List of variable names to search for pattern.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">Variable names that match pattern.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.format_as_float_or_array">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">format_as_float_or_array</code><span class="sig-paren">(</span><em>name</em>, <em>values</em>, <em>val_if_none=0.0</em>, <em>flatten=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#format_as_float_or_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.format_as_float_or_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format array option values.</p>
+<p>Checks that the given array values are either None, float, or an iterable
+of numeric values. On output all interables of numeric values are
+converted to a flat np.ndarray. If values is scalar, it is converted
+to float.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The path of the variable relative to the current system.</p>
+</dd>
+<dt><strong>values</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or numpy ndarray or Iterable</span></dt>
+<dd><p class="first last">Values of the array option to be formatted to the expected form.</p>
+</dd>
+<dt><strong>val_if_none</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or numpy ndarray</span></dt>
+<dd><p class="first last">The default value for the option if values is None.</p>
+</dd>
+<dt><strong>flatten</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to flatten any ndarray return.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>float or np.ndarray</strong></dt>
+<dd><p class="first last">Values transformed to the expected form.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ValueError</strong></dt>
+<dd><p class="first last">If values is Iterable but cannot be converted to a numpy ndarray</p>
+</dd>
+<dt><strong>TypeError</strong></dt>
+<dd><p class="first last">If values is scalar, not None, and not a Number.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.json_load_byteified">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">json_load_byteified</code><span class="sig-paren">(</span><em>file_handle</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#json_load_byteified"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.json_load_byteified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from a JSON file, converting unicode to bytes if Python version is 2.x.</p>
+<p>Intended for use only with Python 2.x, behaves the same as json.load() under Python 3.x.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_handle</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file</span></dt>
+<dd><p class="first last">file containing the data to be converted</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>data item or structure</strong></dt>
+<dd><p class="first last">data item or structure with unicode converted to bytes</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.json_loads_byteified">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">json_loads_byteified</code><span class="sig-paren">(</span><em>json_str</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#json_loads_byteified"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.json_loads_byteified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from a JSON string, converting unicode to bytes if Python version is 2.x.</p>
+<p>Intended for use only with Python 2.x, behaves the same as json.loads() under Python 3.x.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>json_str</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">text string containing json encoded data</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>data item or structure</strong></dt>
+<dd><p class="first last">data item or structure with unicode converted to bytes</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.make_serializable">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">make_serializable</code><span class="sig-paren">(</span><em>o</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#make_serializable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.make_serializable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively convert numpy types to native types for JSON serialization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>o</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">the object to be converted</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>object</strong></dt>
+<dd><p class="first last">The converted object.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.pad_name">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">pad_name</code><span class="sig-paren">(</span><em>name</em>, <em>pad_num=10</em>, <em>quotes=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#pad_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.pad_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pad a string so that they all line up when stacked.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The string to pad.</p>
+</dd>
+<dt><strong>pad_num</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The number of total spaces the string should take up.</p>
+</dd>
+<dt><strong>quotes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If name should be quoted.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Padded string</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.printoptions">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">printoptions</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#printoptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.printoptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Context manager for setting numpy print options.</p>
+<p>Set print options for the scope of the <cite>with</cite> block, and restore the old
+options at the end. See <cite>numpy.set_printoptions</cite> for the full description of
+available options. If any invalid options are specified, they will be ignored.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*args</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">Variable-length argument list.</p>
+</dd>
+<dt><strong>**kwds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Arbitrary keyword arguments.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_printoptions</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">get_printoptions</span></code></p>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">]))</span> <span class="o">/</span> <span class="mi">3</span>
+<span class="go">[0.67]</span>
+<span class="go">The `as`-clause of the `with`-statement gives the current print options:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">as</span> <span class="n">opts</span><span class="p">:</span>
+<span class="gp">... </span>     <span class="n">assert_equal</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">get_printoptions</span><span class="p">())</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.general_utils.reset_warning_registry">
+<em class="property">class </em><code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">reset_warning_registry</code><span class="sig-paren">(</span><em>pattern=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#reset_warning_registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.reset_warning_registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Context manager which archives &amp; clears warning registry for duration of context.</p>
+<p>From <a class="reference external" href="https://bugs.python.org/file40031/reset_warning_registry.py">https://bugs.python.org/file40031/reset_warning_registry.py</a></p>
+<dl class="method">
+<dt id="openmdao.utils.general_utils.reset_warning_registry.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>pattern=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#reset_warning_registry.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.reset_warning_registry.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>pattern</strong> <span class="classifier-delimiter">:</span> <span class="classifier">regex pattern</span></dt>
+<dd><p class="first last">Causes manager to only reset modules whose names match pattern. defaults to <code class="docutils literal notranslate"><span class="pre">&quot;.*&quot;</span></code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.run_driver">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">run_driver</code><span class="sig-paren">(</span><em>prob</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#run_driver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.run_driver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call <cite>run_driver</cite> on problem and capture output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>prob</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Problem</span></dt>
+<dd><p class="first last">an instance of Problem</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>boolean</strong></dt>
+<dd><p class="first last">Failure flag; True if failed to converge, False is successful.</p>
+</dd>
+<dt><strong>string</strong></dt>
+<dd><p class="first last">output from calling <cite>run_driver</cite> on the Problem, captured from stdout</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.run_model">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">run_model</code><span class="sig-paren">(</span><em>prob</em>, <em>ignore_exception=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#run_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.run_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call <cite>run_model</cite> on problem and capture output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>prob</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Problem</span></dt>
+<dd><p class="first last">an instance of Problem</p>
+</dd>
+<dt><strong>ignore_exception</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to ignore an exception of any kind.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>string</strong></dt>
+<dd><p class="first last">output from calling <cite>run_model</cite> on the Problem, captured from stdout</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.set_pyoptsparse_opt">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">set_pyoptsparse_opt</code><span class="sig-paren">(</span><em>optname</em>, <em>fallback=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#set_pyoptsparse_opt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.set_pyoptsparse_opt" title="Permalink to this definition">¶</a></dt>
+<dd><p>For testing, sets the pyoptsparse optimizer using the given optimizer name.</p>
+<p>This may be modified based on the value of OPENMDAO_FORCE_PYOPTSPARSE_OPT.
+This can be used on systems that have SNOPT installed to force them to use
+SLSQP in order to mimic our test machines on travis and appveyor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>optname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of pyoptsparse optimizer that is requested by the test.</p>
+</dd>
+<dt><strong>fallback</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, fall back to SLSQP if optname can’t be found</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>object</strong></dt>
+<dd><p class="first last">Pyoptsparse optimizer instance.</p>
+</dd>
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Pyoptsparse optimizer string</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.simple_warning">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">simple_warning</code><span class="sig-paren">(</span><em>msg</em>, <em>category=&lt;class 'UserWarning'&gt;</em>, <em>stacklevel=2</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#simple_warning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.simple_warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display a simple warning message without the annoying extra line showing the warning call.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>msg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The warning message.</p>
+</dd>
+<dt><strong>category</strong> <span class="classifier-delimiter">:</span> <span class="classifier">class</span></dt>
+<dd><p class="first last">The warning class.</p>
+</dd>
+<dt><strong>stacklevel</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of levels up the stack to identify as the warning location.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.str2valid_python_name">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">str2valid_python_name</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#str2valid_python_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.str2valid_python_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Translate a given string into a valid python variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>s</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The string to be translated.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">The valid python name string.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.general_utils.warn_deprecation">
+<code class="descclassname">openmdao.utils.general_utils.</code><code class="descname">warn_deprecation</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/general_utils.html#warn_deprecation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.general_utils.warn_deprecation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise a warning and prints a deprecation message to stdout.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>msg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Message that will be printed to stdout.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="graph_utils.html" title="graph_utils.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="find_cite.html" title="find_cite.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

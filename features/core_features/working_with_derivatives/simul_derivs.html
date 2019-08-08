@@ -1,0 +1,366 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Simultaneous Total Derivative Coloring For Separable Problems &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Parallel Coloring for Multipoint or Fan-Out Problems" href="parallel_derivs.html" />
+    <link rel="prev" title="Computing Sparsity of Total Derivatives" href="sparse_totals.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parallel_derivs.html" title="Parallel Coloring for Multipoint or Fan-Out Problems"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sparse_totals.html" title="Computing Sparsity of Total Derivatives"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="simultaneous-total-derivative-coloring-for-separable-problems">
+<span id="feature-simul-coloring"></span><h1>Simultaneous Total Derivative Coloring For Separable Problems<a class="headerlink" href="#simultaneous-total-derivative-coloring-for-separable-problems" title="Permalink to this headline">¶</a></h1>
+<p>When OpenMDAO solves for total derivatives, it loops over either design variables in ‘fwd’ mode
+or responses in ‘rev’ mode.  For each of those variables, it performs a linear solve for each
+member of that variable, so for a scalar variable there would be only a single linear solve, and
+there would be <em>N</em> solves for an array variable of size <em>N</em>.</p>
+<p>Certain problems have a special kind of sparsity structure in the total derivative Jacobian that
+allows OpenMDAO to solve for multiple derivatives simultaneously. This can result in far fewer
+linear solves and much-improved performance. These problems are said to have separable variables.
+The concept of separability is explained in the <a class="reference internal" href="../../../theory_manual/total_derivs/separable.html#theory-separable-variables"><span class="std std-ref">Theory Manual</span></a>.</p>
+<p>Simultaneous derivative coloring in OpenMDAO can be performed either statically or dynamically.</p>
+<p>When mode is set to ‘fwd’ or ‘rev’, a unidirectional coloring algorithm is used to group columns
+or rows, respectively, for simultaneous derivative calculation.  The algorithm used in this case
+is the greedy algorithm with ordering by incidence degree found in
+T. F. Coleman and J. J. More, <em>Estimation of sparse Jacobian matrices and graph coloring
+problems</em>, SIAM J. Numer. Anal., 20 (1983), pp. 187–209.</p>
+<p>When using simultaneous derivatives, setting <cite>mode=’auto’</cite> will indicate that bidirectional coloring
+should be used.  Bidirectional coloring can significantly decrease the number of linear solves needed
+to generate the total Jacobian relative to coloring only in fwd or rev mode.</p>
+<p>For more information on the bidirectional coloring algorithm, see
+T. F. Coleman and A. Verma, <em>The efficient computation of sparse Jacobian matrices using automatic
+differentiation</em>, SIAM J. Sci. Comput., 19 (1998), pp. 1210–1233.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Bidirectional coloring is a new feature and should be considered <em>experimental</em> at this
+point.</p>
+</div>
+<p>The OpenMDAO algorithms use the sparsity patterns for the partial derivatives given by the
+<a class="reference internal" href="sparse_partials.html#feature-sparse-partials"><span class="std std-ref">declare_partials</span></a> calls from all of the components in your model.
+So you should <a class="reference internal" href="sparse_partials.html#feature-sparse-partials"><span class="std std-ref">specify the sparsity of the partial derivatives</span></a>
+of your components in order to make it possible to find a better automatic coloring.</p>
+<div class="section" id="dynamic-coloring">
+<h2>Dynamic Coloring<a class="headerlink" href="#dynamic-coloring" title="Permalink to this headline">¶</a></h2>
+<p>Dynamic coloring computes the derivative colors at runtime, shortly after the driver begins the
+optimization.  This has the advantage of simplicity and robustness to changes in the model, but
+adds the cost of the coloring computation to the run time of the optimization.  Generally, however,
+this cost will be small relative to the cost of the full optimization unless your total jacobian
+is very large.</p>
+<p>Activating dynamic coloring is simple.  Just call the <cite>declare_coloring</cite> function on the driver.
+For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">declare_coloring</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If you want to change the number of <cite>compute_totals</cite> calls that the coloring algorithm uses to
+compute the jacobian sparsity (default is 3), the tolerance used to determine nonzeros
+(default is 1e-15), or the number of orders to use for the tolerance sweep (default is 15),
+you can pass the <cite>num_full_jacs</cite>, <cite>tol</cite>, and <cite>orders</cite> args. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">declare_coloring</span><span class="p">(</span><span class="n">num_full_jacs</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-20</span><span class="p">,</span> <span class="n">orders</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to set a specific tolerance and skip the tolerance sweep, you can set
+<code class="code docutils literal notranslate"><span class="pre">orders=None</span></code>.  This can be useful if you have a very noisy jacobian that contains lots
+of small numbers and the tolerance sweep is unable to pick a tolerance.  You can set the
+tolerance to a small enough value that you’re sure that you’re not missing any entries that
+should be treated as nonzero.  Here’s an example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">declare_coloring</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-35</span><span class="p">,</span> <span class="n">orders</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Whenever a dynamic coloring is computed, the coloring is written to a file called
+<em>total_coloring.pkl</em> for later ‘static’ use.  The file will be written in a directory specified
+in <code class="code docutils literal notranslate"><span class="pre">problem.options['coloring_dir']</span></code>. If no value is set into
+<code class="code docutils literal notranslate"><span class="pre">problem.options['coloring_dir']</span></code> then the <em>coloring_files</em> directory under the current working
+directory at the time the problem is instantiated will be used.</p>
+<p>You can see a more complete example of setting up an optimization with
+simultaneous derivatives in the
+<a class="reference internal" href="../../../examples/simul_deriv_example/simul_deriv_example.html#simul-deriv-example"><span class="std std-ref">Simple Optimization using Simultaneous Derivatives</span></a> example.</p>
+</div>
+<div class="section" id="static-coloring">
+<span id="feature-automatic-coloring"></span><h2>Static Coloring<a class="headerlink" href="#static-coloring" title="Permalink to this headline">¶</a></h2>
+<p>To get rid of the runtime cost of computing the coloring, you can precompute it and tell the
+driver to use its precomputed coloring by calling the <code class="code docutils literal notranslate"><span class="pre">use_fixed_coloring</span></code> method on the
+driver.  Note that this call should be made <em>after</em> calling <code class="code docutils literal notranslate"><span class="pre">declare_coloring</span></code>.</p>
+<dl class="method">
+<dt>
+<code class="descclassname">Driver.</code><code class="descname">use_fixed_coloring</code><span class="sig-paren">(</span><em>coloring=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/core/driver.html#Driver.use_fixed_coloring"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Tell the driver to use a precomputed coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">A coloring filename.  If no arg is passed, filename will be determined
+automatically.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>You don’t need to tell <code class="code docutils literal notranslate"><span class="pre">use_fixed_coloring</span></code> the name of the coloring file to use,
+because it uses a fixed name, <cite>total_coloring.pkl</cite>, and knows what directory to look in based on
+the directory specified in <code class="code docutils literal notranslate"><span class="pre">problem.options['coloring_dir']</span></code>.  However, you <em>can</em> pass
+the name of a coloring file to <code class="code docutils literal notranslate"><span class="pre">use_fixed_coloring</span></code> if you want to use a specific coloring
+file that doesn’t follow the standard naming convention.</p>
+<p>While using a precomputed coloring has the advantage of removing the runtime cost of computing
+the coloring, it should be used with care, because any changes in the model, design variables, or
+responses can make the existing coloring invalid.  If <em>any</em> configuration changes have been
+made to the optimization, it’s recommended to regenerate the coloring before re-running the optimization.</p>
+<p>The total coloring can be regenerated and written to the <cite>total_coloring.pkl</cite> file in
+a directory determined by the value of <code class="code docutils literal notranslate"><span class="pre">problem.options['coloring_files']</span></code> using the
+following command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_coloring &lt;your_script_name&gt;
+</pre></div>
+</div>
+<p>Note that if you have passed a coloring filename into <code class="code docutils literal notranslate"><span class="pre">use_fixed_coloring</span></code> instead of
+letting the framework determine the filename automatically, the framework will not update
+the contents of the coloring file even if you run <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">total_coloring</span></code> from the
+command line.</p>
+<p>The total_coloring command also generates summary information that can sometimes be useful.
+The tolerance that was actually used to determine if an entry in the total jacobian is
+considered to be non-zerois displayed, along with the number of zero entries found in this
+case, and how many times that number of zero entries occurred when sweeping over different tolerances
+between +- a number of orders of magnitude around the given tolerance.  If no tolerance is given, the default
+is 1e-15.  If the number of occurrences is only 1, an exception will be raised, and you should
+increase the number of total derivative computations that the algorithm uses to compute the
+sparsity pattern.  You can do that with the <em>-n</em> option.  The following, for example, will
+perform the total derivative computation <em>5</em> times.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_coloring &lt;your_script_name&gt; -n 5
+</pre></div>
+</div>
+<p>Note that when multiple total jacobian computations are performed, we take the absolute values
+of each jacobian and add them together, then divide by number of jacobians computed, resulting
+in the average of absolute values of each entry.</p>
+<p>If repeating the total derivative computation multiple times doesn’t work, try changing the
+tolerance using the <em>-t</em> option as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_coloring &lt;your_script_name&gt; -n 5 -t 1e-10
+</pre></div>
+</div>
+<p>Be careful when setting the tolerance, however, because if you make it too large then you may be
+zeroing out Jacobian entries that should not be ignored and your optimization may not converge.</p>
+<p>If you want to examine the sparsity structure of your total jacobian, you can use the <em>-j</em>
+option as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_coloring &lt;your_script_name&gt; -j
+</pre></div>
+</div>
+<p>which will display a visualization of the sparsity
+structure with rows and columns labelled with the response and design variable names, respectively.
+See the figure <a class="reference internal" href="#fig-coloring-view"><span class="std std-ref">here</span></a>.</p>
+<p>A text-based view is also available using the <cite>–jtext</cite> arg.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_coloring &lt;your_script_name&gt; --jtext
+</pre></div>
+</div>
+<p>will display something like the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>....................f 0  circle.area
+f.........f.........f 1  r_con.g
+.f.........f........f 2  r_con.g
+..f.........f.......f 3  r_con.g
+...f.........f......f 4  r_con.g
+....f.........f.....f 5  r_con.g
+.....f.........f....f 6  r_con.g
+......f.........f...f 7  r_con.g
+.......f.........f..f 8  r_con.g
+........f.........f.f 9  r_con.g
+.........f.........ff 10  r_con.g
+f.........f.......... 11  theta_con.g
+..f.........f........ 12  theta_con.g
+....f.........f...... 13  theta_con.g
+......f.........f.... 14  theta_con.g
+........f.........f.. 15  theta_con.g
+ff........ff......... 16  delta_theta_con.g
+..ff........ff....... 17  delta_theta_con.g
+....ff........ff..... 18  delta_theta_con.g
+......ff........ff... 19  delta_theta_con.g
+........ff........ff. 20  delta_theta_con.g
+f.................... 21  l_conx.g
+|indeps.x
+          |indeps.y
+                    |indeps.r
+</pre></div>
+</div>
+<p>Note that the design variables are displayed along the bottom of the matrix, with a pipe symbol (|)
+that lines up with the starting column for that variable.  Also, an ‘f’ indicates a nonzero value
+that is colored in ‘fwd’ mode, while an ‘r’ indicates a nonzero value colored in ‘rev’ mode.  A
+‘.’ indicates a zero value.</p>
+<p>The coloring file will be written in pickle format to the standard location and will be loaded
+using the <em>use_fixed_coloring</em> function like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">use_fixed_coloring</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note that there are two ways to generate files that can be loaded using <cite>use_fixed_coloring</cite>.
+You can either run the <cite>openmdao total_coloring</cite> command line tool, or you can just run your
+model, and as long as you’ve called <cite>declare_coloring</cite> on your driver, it will automatically
+generate a coloring file that you can ‘lock in’ at some later point by adding a call to
+<cite>use_fixed_coloring</cite>, after you’re done making changes to your model.</p>
+<p>If you have a coloring file that was generated earlier and you want to view its statistics,
+you can use the <cite>openmdao view_coloring</cite> command to generate a small report.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao view_coloring &lt;your_coloring_file&gt; -m
+</pre></div>
+</div>
+<p>will show metadata associated with the creation of the coloring along with a short summary.
+For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Coloring metadata:
+{&#39;orders&#39;: 20, &#39;num_full_jacs&#39;: 3, &#39;tol&#39;: 1e-15}
+
+Jacobian shape: (22, 21)  (13.42% nonzero)
+
+FWD solves: 5   REV solves: 0
+
+Total colors vs. total size: 5 vs 21  (76.2% improvement)
+
+Time to compute sparsity: 0.024192 sec.
+Time to compute coloring: 0.001076 sec.
+</pre></div>
+</div>
+<p>Adding a <cite>-j</cite> arg will pop up an interactive plot showing the coloring of the jacobian. Forward
+colors will be colored blue/green and reverse colors will be colored red/yellow.  Clicking on
+a particular cell of the jacobian will display the location, the color number, the coloring direction,
+and the particular ‘of’ and ‘wrt’ variables for that particular sub-jacobian.  Note that this
+viewer requires the installation of matplotlib. See the figure below.</p>
+<div class="figure align-center" id="fig-coloring-view">
+<a class="reference internal image-reference" href="../../../_images/coloring_viewer.png"><img alt="Coloring viewer example" src="../../../_images/coloring_viewer.png" style="width: 500px;" /></a>
+</div>
+<p>If matplotlib is not available, a text-based version of the jacobian can be printed using the
+<cite>–jtext</cite> arg.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Your coloring file(s) will be found in the standard directory
+<cite>problem.options[‘coloring_dir’]</cite>.  That directory may contain a total coloring
+file, <cite>total_coloring.pkl</cite>, in additon to files containing partial derivative colorings for
+particular component classes or instances, as well as semi-total derivative coloring files
+for particular groups.</p>
+</div>
+<p>If you run <em>openmdao total_coloring</em> and it turns out there is no simultaneous total coloring
+available, or that you don’t gain very much by coloring, don’t be surprised.  Not all total
+Jacobians are sparse enough to benefit signficantly from simultaneous derivatives.</p>
+<div class="section" id="checking-that-it-works">
+<h3>Checking that it works<a class="headerlink" href="#checking-that-it-works" title="Permalink to this headline">¶</a></h3>
+<p>After activating simultaneous derivatives, you should check your total
+derivatives using the <a class="reference internal" href="check_total_derivatives.html#check-total-derivatives"><span class="std std-ref">check_totals</span></a> function.
+The algorithm that we use still has a small chance of
+computing an incorrect coloring due to the possibility that the total Jacobian being analyzed
+by the algorithm contained one or more zero values that are only incidentally zero.
+Using <code class="code docutils literal notranslate"><span class="pre">check_totals</span></code> is the way to be sure that something hasn’t
+gone wrong.</p>
+<p>If you used the automatic coloring algorithm, and you find that <code class="code docutils literal notranslate"><span class="pre">check_totals</span></code>
+is reporting incorrect total derivatives, then you should try using the <em>-n</em> and <em>-t</em> options
+mentioned earlier until you get the correct total derivatives.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parallel_derivs.html" title="Parallel Coloring for Multipoint or Fan-Out Problems"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sparse_totals.html" title="Computing Sparsity of Total Derivatives"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+openmdao.recorders
+------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    recorders/base_case_reader
+    recorders/case
+    recorders/case_reader
+    recorders/case_recorder
+    recorders/recording_iteration_stack
+    recorders/recording_manager
+    recorders/sqlite_reader
+    recorders/sqlite_recorder

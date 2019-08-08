@@ -1,0 +1,11 @@
+openmdao.solvers.nonlinear
+--------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    solvers.nonlinear/broyden
+    solvers.nonlinear/newton
+    solvers.nonlinear/nonlinear_block_gs
+    solvers.nonlinear/nonlinear_block_jac
+    solvers.nonlinear/nonlinear_runonce

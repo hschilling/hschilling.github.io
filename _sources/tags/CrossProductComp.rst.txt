@@ -1,0 +1,7 @@
+.. _CrossProductComp: 
+
+=========================
+CrossProductComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/cross_product_comp.rst

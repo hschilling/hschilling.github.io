@@ -1,0 +1,223 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Recording and Reading Data &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Advanced User Guide" href="../advanced_guide/index.html" />
+    <link rel="prev" title="Visualizing The Structure of Your Model" href="make_n2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../advanced_guide/index.html" title="Advanced User Guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="make_n2.html" title="Visualizing The Structure of Your Model"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="recording-and-reading-data">
+<span id="basic-recording"></span><h1>Recording and Reading Data<a class="headerlink" href="#recording-and-reading-data" title="Permalink to this headline">¶</a></h1>
+<p>One of the most useful features in OpenMDAO is <a class="reference internal" href="../features/recording/index.html#case-recording"><span class="std std-ref">Case Recording</span></a>.
+With case recording you can record variables and their values over the course of an optimization
+and store the information in a local database file.  The data can then be read back later using
+a case reader.</p>
+<p>This can be used for debugging, plotting/visualization, and even starting a new optimization
+where an old one left off.</p>
+<div class="section" id="creating-and-attaching-a-recorder">
+<h2>Creating and Attaching a Recorder<a class="headerlink" href="#creating-and-attaching-a-recorder" title="Permalink to this headline">¶</a></h2>
+<p>In the following example we add a recorder to the <a class="reference internal" href="sellar.html#sellar"><span class="std std-ref">Sellar</span></a> Problem:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar_feature</span> <span class="kn">import</span> <span class="n">SellarMDA</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c1"># create our Sellar problem</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarMDA</span><span class="p">())</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+                          <span class="n">upper</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">(</span><span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="c1"># create a case recorder</span>
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="s1">&#39;cases.sql&#39;</span><span class="p">)</span>
+
+<span class="c1"># add the recorder to the driver so driver iterations will be recorded</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+
+<span class="c1"># add the recorder to the problem so we can manually save a case</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+
+<span class="c1"># perform setup and run the problem</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+
+<span class="c1"># record the final state of the problem</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">(</span><span class="s1">&#39;final&#39;</span><span class="p">)</span>
+
+<span class="c1"># clean up and shut down</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note that cases haved been saved to a database file named <cite>cases.sql</cite>.</p>
+</div>
+<div class="section" id="creating-a-case-reader-and-reading-data">
+<h2>Creating a Case Reader and Reading Data<a class="headerlink" href="#creating-a-case-reader-and-reading-data" title="Permalink to this headline">¶</a></h2>
+<p>After the optimization has been run, we can read the data from the file using a case reader:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="c1"># open database of previously saved cases</span>
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="c1"># get a list of cases that were recorded by the driver</span>
+<span class="n">driver_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">driver_cases</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>11</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get the first driver case and inspect the variables of interest</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">driver_cases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">objectives</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_objectives</span><span class="p">()</span>
+<span class="n">design_vars</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()</span>
+<span class="n">constraints</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">objectives</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[28.58830817]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">design_vars</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;z&#x27;: array([5., 2.]), &#x27;x&#x27;: array([1.])}</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;con2&#x27;: array([-11.94151185]), &#x27;con1&#x27;: array([-22.42830237])}</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get a list of cases that we manually recorded</span>
+<span class="k">print</span><span class="p">(</span><span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;problem&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;final&#x27;]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get the final case and inspect the variables of interest</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="s1">&#39;final&#39;</span><span class="p">)</span>
+
+<span class="n">objectives</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_objectives</span><span class="p">()</span>
+<span class="n">design_vars</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()</span>
+<span class="n">constraints</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">objectives</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[3.18339411]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">design_vars</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;z&#x27;: array([1.97763893, 0.        ]), &#x27;x&#x27;: array([0.])}</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;con2&#x27;: array([-20.24472214]), &#x27;con1&#x27;: array([-1.63976894e-07])}</pre></div></div></div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../advanced_guide/index.html" title="Advanced User Guide"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="make_n2.html" title="Visualizing The Structure of Your Model"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

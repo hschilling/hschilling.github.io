@@ -1,0 +1,16 @@
+.. index:: surrogate_model.py
+
+.. _openmdao.surrogate_models.surrogate_model.py:
+
+surrogate_model.py
+------------------
+
+.. automodule:: openmdao.surrogate_models.surrogate_model
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

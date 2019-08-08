@@ -1,0 +1,7 @@
+openmdao.solvers.linesearch
+---------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    solvers.linesearch/backtracking

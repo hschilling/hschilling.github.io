@@ -1,0 +1,571 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Changing Check Settings for FD or CS &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Checking Partial Derivatives on a Subset of a Model" href="check_partials_subset.html" />
+    <link rel="prev" title="Checking Partial Derivatives with Finite Difference" href="basic_check_partials.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="check_partials_subset.html" title="Checking Partial Derivatives on a Subset of a Model"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic_check_partials.html" title="Checking Partial Derivatives with Finite Difference"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="changing-check-settings-for-fd-or-cs">
+<span id="feature-check-partials-settings"></span><h1>Changing Check Settings for FD or CS<a class="headerlink" href="#changing-check-settings-for-fd-or-cs" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="changing-settings-for-inputs-on-a-specific-component">
+<h2>Changing Settings for Inputs on a Specific Component<a class="headerlink" href="#changing-settings-for-inputs-on-a-specific-component" title="Permalink to this headline">¶</a></h2>
+<p>You can change the settings for the approximation schemes that will be used to compare with your component’s derivatives by
+calling the <code class="code docutils literal notranslate"><span class="pre">set_check_partial_options</span></code> method.</p>
+<dl class="method">
+<dt>
+<code class="descclassname">Component.</code><code class="descname">set_check_partial_options</code><span class="sig-paren">(</span><em>wrt</em>, <em>method='fd'</em>, <em>form=None</em>, <em>step=None</em>, <em>step_calc=None</em>, <em>directional=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/core/component.html#Component.set_check_partial_options"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Set options that will be used for checking partial derivatives.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name or names of the variables that derivatives are taken with respect to.
+This can contain the name of any input or output variable.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method for check: “fd” for finite difference, “cs” for complex step.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Finite difference form for check, can be “forward”, “central”, or “backward”. Leave
+undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for finite difference check. Leave undeclared to keep unchanged from previous
+or default value.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Type of step calculation for check, can be “abs” for absolute (default) or “rel” for
+relative.  Leave undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>directional</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to perform a single directional derivative for each vector variable in the
+pattern named in wrt.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if you want to use <cite>method=”cs”</cite>, then you must also pass <cite>force_alloc_complex=True</cite> to setup.
+See the example below.</p>
+</div>
+<p>This allows custom tailoring of the approximation settings on a variable basis.</p>
+<div class="section" id="usage-examples">
+<h3>Usage Examples<a class="headerlink" href="#usage-examples" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.tests.test_check_derivs</span> <span class="kn">import</span> <span class="n">ParaboloidTricky</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid_mat_vec</span> <span class="kn">import</span> <span class="n">ParaboloidMatVec</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">comp</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ParaboloidTricky</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp2&#39;</span><span class="p">,</span> <span class="n">ParaboloidMatVec</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;comp.f_xy&#39;</span><span class="p">,</span> <span class="s1">&#39;comp2.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">comp</span><span class="o">.</span><span class="n">set_check_partial_options</span><span class="p">(</span><span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>----------------------------------
+Component: ParaboloidTricky &#x27;comp&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | n/a        | 6.0000e-07 | 1.5964e-13 | n/a        | n/a        | 2.6607e-07 | n/a        | n/a       
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 8.0000e-07 | 2.9146e-13 | n/a        | n/a        | 3.6433e-07 | n/a        | n/a       
+-----------------------------------
+Component: ParaboloidMatVec &#x27;comp2&#x27;
+-----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 3.8000e+01 | 3.8000e+01 | 3.8000e+01 | 1.0747e-06 | 1.0747e-06 | 0.0000e+00 | 2.8282e-08 | 2.8282e-08 | 0.0000e+00 &gt;ABS_TOL
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0000e+01 | 1.0212e-06 | 1.0212e-06 | 0.0000e+00 | 3.4039e-08 | 3.4039e-08 | 0.0000e+00 &gt;ABS_TOL
+
+#################################################################
+Sub Jacobian with Largest Relative Error: ParaboloidTricky &#x27;comp&#x27;
+#################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 8.0000e-07 | 2.9146e-13 | n/a        | n/a        | 3.6433e-07 | n/a        | n/a</pre></div></div><p>Here, we show how to set the method. In this case, we use complex step on TrickyParaboloid because the finite difference is
+less accurate.</p>
+<hr class="docutils" />
+<p><strong>Note</strong>: You need to set <cite>force_alloc_complex</cite> to True during setup to utilize complex step during a check.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.tests.test_check_derivs</span> <span class="kn">import</span> <span class="n">ParaboloidTricky</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid_mat_vec</span> <span class="kn">import</span> <span class="n">ParaboloidMatVec</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">comp</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ParaboloidTricky</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp2&#39;</span><span class="p">,</span> <span class="n">ParaboloidMatVec</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;comp.f_xy&#39;</span><span class="p">,</span> <span class="s1">&#39;comp2.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">comp</span><span class="o">.</span><span class="n">set_check_partial_options</span><span class="p">(</span><span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;cs&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">force_alloc_complex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>----------------------------------
+Component: ParaboloidTricky &#x27;comp&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | n/a        | 6.0000e-07 | 0.0000e+00 | n/a        | n/a        | 0.0000e+00 | n/a        | n/a       
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 8.0000e-07 | 2.1176e-22 | n/a        | n/a        | 2.6470e-16 | n/a        | n/a       
+-----------------------------------
+Component: ParaboloidMatVec &#x27;comp2&#x27;
+-----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 3.8000e+01 | 3.8000e+01 | 3.8000e+01 | 1.0747e-06 | 1.0747e-06 | 0.0000e+00 | 2.8282e-08 | 2.8282e-08 | 0.0000e+00 &gt;ABS_TOL
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0000e+01 | 1.0212e-06 | 1.0212e-06 | 0.0000e+00 | 3.4039e-08 | 3.4039e-08 | 0.0000e+00 &gt;ABS_TOL
+
+##################################################################
+Sub Jacobian with Largest Relative Error: ParaboloidMatVec &#x27;comp2&#x27;
+##################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0000e+01 | 1.0212e-06 | 1.0212e-06 | 0.0000e+00 | 3.4039e-08 | 3.4039e-08 | 0.0000e+00</pre></div></div></div>
+<div class="section" id="directional-derivatives">
+<h3>Directional Derivatives<a class="headerlink" href="#directional-derivatives" title="Permalink to this headline">¶</a></h3>
+<p>You can also specify that an input or set of inputs be checked using a directional derivative. For vector inputs, this means
+that, instead of calculating the derivative with respect to each element of the array, we calculate the derivative with respect to a linear
+combination of all array indices. For finite difference and complex step, the step value is applied simultaneously to all elements of
+the vector.  This is a much quicker check because it only requires a single execution of the component for the variable rather than one
+for each element of the array.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.array_comp</span> <span class="kn">import</span> <span class="n">ArrayComp</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+<span class="n">mycomp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;mycomp&#39;</span><span class="p">,</span> <span class="n">ArrayComp</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>-----------------------------
+Component: ArrayComp &#x27;mycomp&#x27;
+-----------------------------
+  mycomp: &#x27;y1&#x27; wrt &#x27;bb&#x27;
+    Forward Magnitude : 1.640884e+01
+         Fd Magnitude : 1.640884e+01 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 0.000000e+00
+
+    Relative Error (Jfor  - Jfd) : 0.000000e+00
+
+    Raw Forward Derivative (Jfor)
+[[ 1.   6.  -1.   1. ]
+ [ 3.   2.5  0.   4. ]
+ [-2.   2.   8.  -5. ]
+ [ 7.   4.   1.   6. ]]
+
+    Raw FD Derivative (Jfd)
+[[ 1.   6.  -1.   1. ]
+ [ 3.   2.5  0.   4. ]
+ [-2.   2.   8.  -5. ]
+ [ 7.   4.   1.   6. ]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  mycomp: &#x27;y1&#x27; wrt (d)&#x27;x1&#x27;
+    Forward Magnitude : 1.978004e+01
+         Fd Magnitude : 1.978004e+01 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 1.986027e-15
+
+    Relative Error (Jfor  - Jfd) : 1.004056e-16
+
+    Directional Forward Derivative (Jfor)
+[[ 9. ]
+ [14.5]
+ [ 8. ]
+ [ 6. ]]
+
+    Directional FD Derivative (Jfd)
+[[ 9. ]
+ [14.5]
+ [ 8. ]
+ [ 6. ]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  mycomp: &#x27;y1&#x27; wrt (d)&#x27;x2&#x27;
+    Forward Magnitude : 6.527413e+01
+         Fd Magnitude : 6.527413e+01 (fd:forward)
+    Absolute Error (Jfor  - Jfd) : 0.000000e+00
+
+    Relative Error (Jfor  - Jfd) : 0.000000e+00
+
+    Directional Forward Derivative (Jfor)
+[[29.7 ]
+ [47.85]
+ [26.4 ]
+ [19.8 ]]
+
+    Directional FD Derivative (Jfd)
+[[29.7 ]
+ [47.85]
+ [26.4 ]
+ [19.8 ]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</pre></div></div></div>
+</div>
+<div class="section" id="changing-global-settings-for-whole-model">
+<h2>Changing Global Settings For Whole Model<a class="headerlink" href="#changing-global-settings-for-whole-model" title="Permalink to this headline">¶</a></h2>
+<p>You can change the settings globally for all approximations used for all components. This is done by passing in a value
+for any of the following arguments:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="92%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>method</td>
+<td>Method for check: “fd” for finite difference, “cs” for complex step.</td>
+</tr>
+<tr class="row-odd"><td>form</td>
+<td>Finite difference form for check, can be “forward”, “central”, or backward.</td>
+</tr>
+<tr class="row-even"><td>step</td>
+<td>Step size for finite difference check.</td>
+</tr>
+<tr class="row-odd"><td>step_calc</td>
+<td>Type of step calculation for check, can be “abs” for absolute (default) or “rel” for relative.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">the global check options take precedence over the ones defined on a component.</p>
+</div>
+<div class="section" id="id1">
+<h3>Usage Examples<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.tests.test_check_derivs</span> <span class="kn">import</span> <span class="n">ParaboloidTricky</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid_mat_vec</span> <span class="kn">import</span> <span class="n">ParaboloidMatVec</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ParaboloidTricky</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp2&#39;</span><span class="p">,</span> <span class="n">ParaboloidMatVec</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;comp.f_xy&#39;</span><span class="p">,</span> <span class="s1">&#39;comp2.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>----------------------------------
+Component: ParaboloidTricky &#x27;comp&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | n/a        | 6.0000e-07 | 1.5964e-13 | n/a        | n/a        | 2.6607e-07 | n/a        | n/a       
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 8.0000e-07 | 2.9146e-13 | n/a        | n/a        | 3.6433e-07 | n/a        | n/a       
+-----------------------------------
+Component: ParaboloidMatVec &#x27;comp2&#x27;
+-----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 3.8000e+01 | 3.8000e+01 | 3.8010e+01 | 1.0000e-02 | 1.0000e-02 | 0.0000e+00 | 2.6309e-04 | 2.6309e-04 | 0.0000e+00 &gt;ABS_TOL &gt;REL_TOL
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0010e+01 | 1.0000e-02 | 1.0000e-02 | 0.0000e+00 | 3.3322e-04 | 3.3322e-04 | 0.0000e+00 &gt;ABS_TOL &gt;REL_TOL
+
+##################################################################
+Sub Jacobian with Largest Relative Error: ParaboloidMatVec &#x27;comp2&#x27;
+##################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0010e+01 | 1.0000e-02 | 1.0000e-02 | 0.0000e+00 | 3.3322e-04 | 3.3322e-04 | 0.0000e+00</pre></div></div><hr class="docutils" />
+<p><strong>Note</strong>: You need to set <code class="code docutils literal notranslate"><span class="pre">force_alloc_complex</span></code> to True during setup to utilize complex step during a check.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.tests.test_check_derivs</span> <span class="kn">import</span> <span class="n">ParaboloidTricky</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid_mat_vec</span> <span class="kn">import</span> <span class="n">ParaboloidMatVec</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ParaboloidTricky</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp2&#39;</span><span class="p">,</span> <span class="n">ParaboloidMatVec</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;comp.f_xy&#39;</span><span class="p">,</span> <span class="s1">&#39;comp2.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">force_alloc_complex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;cs&#39;</span><span class="p">,</span> <span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>----------------------------------
+Component: ParaboloidTricky &#x27;comp&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | n/a        | 6.0000e-07 | 0.0000e+00 | n/a        | n/a        | 0.0000e+00 | n/a        | n/a       
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 8.0000e-07 | 2.1176e-22 | n/a        | n/a        | 2.6470e-16 | n/a        | n/a       
+-----------------------------------
+Component: ParaboloidMatVec &#x27;comp2&#x27;
+-----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 3.8000e+01 | 3.8000e+01 | 3.8000e+01 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0000e+01 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00 | 0.0000e+00
+
+#################################################################
+Sub Jacobian with Largest Relative Error: ParaboloidTricky &#x27;comp&#x27;
+#################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 8.0000e-07 | 2.1176e-22 | n/a        | n/a        | 2.6470e-16 | n/a        | n/a</pre></div></div><hr class="docutils" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.tests.test_check_derivs</span> <span class="kn">import</span> <span class="n">ParaboloidTricky</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid_mat_vec</span> <span class="kn">import</span> <span class="n">ParaboloidMatVec</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ParaboloidTricky</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp2&#39;</span><span class="p">,</span> <span class="n">ParaboloidMatVec</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;comp.f_xy&#39;</span><span class="p">,</span> <span class="s1">&#39;comp2.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">form</span><span class="o">=</span><span class="s1">&#39;central&#39;</span><span class="p">,</span> <span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>----------------------------------
+Component: ParaboloidTricky &#x27;comp&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | n/a        | 6.0041e-07 | 4.0872e-10 | n/a        | n/a        | 6.8074e-04 | n/a        | n/a        &gt;REL_TOL
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 7.9936e-07 | 6.3955e-10 | n/a        | n/a        | 8.0008e-04 | n/a        | n/a        &gt;REL_TOL
+-----------------------------------
+Component: ParaboloidMatVec &#x27;comp2&#x27;
+-----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 3.8000e+01 | 3.8000e+01 | 3.8000e+01 | 5.1532e-08 | 5.1532e-08 | 0.0000e+00 | 1.3561e-09 | 1.3561e-09 | 0.0000e+00
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 3.0000e+01 | 3.0000e+01 | 3.0000e+01 | 2.6415e-08 | 2.6415e-08 | 0.0000e+00 | 8.8051e-10 | 8.8051e-10 | 0.0000e+00
+
+#################################################################
+Sub Jacobian with Largest Relative Error: ParaboloidTricky &#x27;comp&#x27;
+#################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | rev mag.   | check mag. | a(fwd-chk) | a(rev-chk) | a(fwd-rev) | r(fwd-chk) | r(rev-chk) | r(fwd-rev)
+------------------------------------------------------------------------------------------------------------------------------------------------
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | n/a        | 7.9936e-07 | 6.3955e-10 | n/a        | n/a        | 8.0008e-04 | n/a        | n/a</pre></div></div><hr class="docutils" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.tests.test_check_derivs</span> <span class="kn">import</span> <span class="n">ParaboloidTricky</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">ParaboloidTricky</span><span class="p">())</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;p2.y&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">step_calc</span><span class="o">=</span><span class="s1">&#39;rel&#39;</span><span class="p">,</span> <span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>----------------------------------
+Component: ParaboloidTricky &#x27;comp&#x27;
+----------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | 6.0159e-07 | 1.5930e-09 | 2.6479e-03 &gt;REL_TOL
+&#x27;f_xy&#x27;     wrt &#x27;y&#x27;          | 8.0000e-07 | 8.0007e-07 | 7.0990e-11 | 8.8730e-05 &gt;REL_TOL
+
+#################################################################
+Sub Jacobian with Largest Relative Error: ParaboloidTricky &#x27;comp&#x27;
+#################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+&#x27;f_xy&#x27;     wrt &#x27;x&#x27;          | 6.0000e-07 | 6.0159e-07 | 1.5930e-09 | 2.6479e-03</pre></div></div></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="check_partials_subset.html" title="Checking Partial Derivatives on a Subset of a Model"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic_check_partials.html" title="Checking Partial Derivatives with Finite Difference"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

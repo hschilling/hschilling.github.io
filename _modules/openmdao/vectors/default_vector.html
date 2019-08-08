@@ -1,0 +1,628 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.vectors.default_vector &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.vectors.default_vector</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the default Vector class.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">zip</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.vectors.vector</span> <span class="k">import</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">INT_DTYPE</span>
+<span class="kn">from</span> <span class="nn">openmdao.vectors.default_transfer</span> <span class="k">import</span> <span class="n">DefaultTransfer</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span><span class="p">,</span> <span class="n">multi_proc_exception_check</span>
+
+
+<div class="viewcode-block" id="DefaultVector"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector">[docs]</a><span class="k">class</span> <span class="nc">DefaultVector</span><span class="p">(</span><span class="n">Vector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Default NumPy vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">TRANSFER</span> <span class="o">=</span> <span class="n">DefaultTransfer</span>
+
+    <span class="k">def</span> <span class="nf">_create_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allocate data array.</span>
+
+<span class="sd">        This happens only in the top level system.  Child systems use views of the array</span>
+<span class="sd">        we allocate here.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            zeros array of correct size to hold all of this vector&#39;s variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ncol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ncol</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">_typ</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">_iproc</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">ncol</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">ncol</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_update_root_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resize the root data if necesary (i.e., due to reconfiguration).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">type_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ</span>
+        <span class="n">vec_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+        <span class="n">root_vec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root_vector</span>
+
+        <span class="n">sys_offset</span><span class="p">,</span> <span class="n">size_after_sys</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_ext_sizes</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]</span>
+        <span class="n">sys_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="n">type_</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">_iproc</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">old_sizes_total</span> <span class="o">=</span> <span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span><span class="p">[:</span><span class="n">sys_offset</span><span class="p">],</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sys_size</span><span class="p">),</span>
+            <span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">old_sizes_total</span> <span class="o">-</span> <span class="n">size_after_sys</span><span class="p">:],</span>
+        <span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alloc_complex</span> <span class="ow">and</span> <span class="n">root_vec</span><span class="o">.</span><span class="n">_cplx_data</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">root_vec</span><span class="o">.</span><span class="n">_cplx_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+
+        <span class="n">root_vec</span><span class="o">.</span><span class="n">_initialize_views</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_extract_root_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract views of arrays from root_vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            zeros array of correct size.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">type_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ</span>
+        <span class="n">iproc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iproc</span>
+        <span class="n">root_vec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root_vector</span>
+
+        <span class="n">cplx_data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">scaling</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_scaling</span><span class="p">:</span>
+            <span class="n">scaling</span><span class="p">[</span><span class="s1">&#39;phys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">scaling</span><span class="p">[</span><span class="s1">&#39;norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]</span>
+        <span class="n">ind1</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_ext_sizes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="n">type_</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ind2</span> <span class="o">=</span> <span class="n">ind1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:])</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">root_vec</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">]</span>
+
+        <span class="c1"># Extract view for complex storage too.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alloc_complex</span><span class="p">:</span>
+            <span class="n">cplx_data</span> <span class="o">=</span> <span class="n">root_vec</span><span class="o">.</span><span class="n">_cplx_data</span><span class="p">[</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_scaling</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">typ</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;phys&#39;</span><span class="p">,</span> <span class="s1">&#39;norm&#39;</span><span class="p">):</span>
+                <span class="n">root_scale</span> <span class="o">=</span> <span class="n">root_vec</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span>
+                <span class="n">rs0</span> <span class="o">=</span> <span class="n">root_scale</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">rs0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">scaling</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rs0</span><span class="p">,</span> <span class="n">root_scale</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">scaling</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rs0</span><span class="p">[</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">],</span> <span class="n">root_scale</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">cplx_data</span><span class="p">,</span> <span class="n">scaling</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_vector</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Internally allocate data array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        root_vector : Vector or None</span>
+<span class="sd">            the root&#39;s vector instance or None, if we are at the root.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">root_vector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># we&#39;re the root</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_data</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_scaling</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">==</span> <span class="s1">&#39;nonlinear&#39;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;phys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">==</span> <span class="s1">&#39;linear&#39;</span><span class="p">:</span>
+                    <span class="c1"># reuse the nonlinear scaling vecs since they&#39;re the same as ours</span>
+                    <span class="n">nlvec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_root_vecs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_kind</span><span class="p">][</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;phys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">nlvec</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;phys&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">nlvec</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;norm&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;phys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span><span class="p">[</span><span class="s1">&#39;norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+
+            <span class="c1"># Allocate imaginary for complex step</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alloc_complex</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_root_data</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_views</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Internally assemble views onto the vectors.</span>
+
+<span class="sd">        Sets the following attributes:</span>
+<span class="sd">        _views</span>
+<span class="sd">        _views_flat</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">type_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span>
+        <span class="n">iproc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iproc</span>
+        <span class="n">ncol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ncol</span>
+
+        <span class="n">do_scaling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_scaling</span>
+        <span class="k">if</span> <span class="n">do_scaling</span><span class="p">:</span>
+            <span class="n">factors</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_scale_factors</span>
+            <span class="n">scaling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scaling</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_views</span> <span class="o">=</span> <span class="n">views</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_views_flat</span> <span class="o">=</span> <span class="n">views_flat</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">alloc_complex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alloc_complex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_views</span> <span class="o">=</span> <span class="n">cplx_views</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_views_flat</span> <span class="o">=</span> <span class="n">cplx_views_flat</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">allprocs_abs2idx_t</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2idx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">]</span>
+        <span class="n">sizes_t</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]</span>
+        <span class="n">offs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_get_var_offsets</span><span class="p">()[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">offs</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">offs</span> <span class="o">=</span> <span class="n">offs</span><span class="p">[</span><span class="n">iproc</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="c1"># turn global offset into local offset</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">offs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">offs</span> <span class="o">-=</span> <span class="n">start</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">offs</span> <span class="o">=</span> <span class="n">offs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">offsets_t</span> <span class="o">=</span> <span class="n">offs</span>
+
+        <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2meta</span>
+        <span class="k">for</span> <span class="n">abs_name</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_relevant_names</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">allprocs_abs2idx_t</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span>
+
+            <span class="n">ind1</span> <span class="o">=</span> <span class="n">offsets_t</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">ind2</span> <span class="o">=</span> <span class="n">ind1</span> <span class="o">+</span> <span class="n">sizes_t</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">abs_name</span><span class="p">][</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">ncol</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">,)</span>
+                <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">ncol</span><span class="p">])</span>
+
+            <span class="n">views_flat</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">shape</span> <span class="o">!=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+            <span class="n">views</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+            <span class="k">if</span> <span class="n">alloc_complex</span><span class="p">:</span>
+                <span class="n">cplx_views_flat</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_data</span><span class="p">[</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">shape</span> <span class="o">!=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+                <span class="n">cplx_views</span><span class="p">[</span><span class="n">abs_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+            <span class="k">if</span> <span class="n">do_scaling</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">scaleto</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;phys&#39;</span><span class="p">,</span> <span class="s1">&#39;norm&#39;</span><span class="p">):</span>
+                    <span class="n">scale0</span><span class="p">,</span> <span class="n">scale1</span> <span class="o">=</span> <span class="n">factors</span><span class="p">[</span><span class="n">abs_name</span><span class="p">][</span><span class="n">kind</span><span class="p">,</span> <span class="n">scaleto</span><span class="p">]</span>
+                    <span class="n">vec</span> <span class="o">=</span> <span class="n">scaling</span><span class="p">[</span><span class="n">scaleto</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">]</span> <span class="o">=</span> <span class="n">scale0</span>
+                    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind1</span><span class="p">:</span><span class="n">ind2</span><span class="p">]</span> <span class="o">=</span> <span class="n">scale1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">views</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clone_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        For each item in _data, replace it with a copy of the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_under_complex_step</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cplx_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform in-place vector addition.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vec : &lt;Vector&gt;</span>
+<span class="sd">            vector to add to self.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        &lt;Vector&gt;</span>
+<span class="sd">            self + vec</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">vec</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__isub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform in-place vector substraction.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vec : &lt;Vector&gt;</span>
+<span class="sd">            vector to subtract from self.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        &lt;Vector&gt;</span>
+<span class="sd">            self - vec</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">-=</span> <span class="n">vec</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__imul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform in-place scalar multiplication.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        val : int or float</span>
+<span class="sd">            scalar to multiply self.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        &lt;Vector&gt;</span>
+<span class="sd">            self * val</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">*=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="DefaultVector.add_scal_vec"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector.add_scal_vec">[docs]</a>    <span class="k">def</span> <span class="nf">add_scal_vec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">vec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform in-place addition of a vector times a scalar.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        val : int or float</span>
+<span class="sd">            scalar.</span>
+<span class="sd">        vec : &lt;Vector&gt;</span>
+<span class="sd">            this vector times val is added to self.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">val</span> <span class="o">*</span> <span class="n">vec</span><span class="o">.</span><span class="n">_data</span></div>
+
+<div class="viewcode-block" id="DefaultVector.set_vec"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector.set_vec">[docs]</a>    <span class="k">def</span> <span class="nf">set_vec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value of this vector to that of the incoming vector.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vec : &lt;Vector&gt;</span>
+<span class="sd">            the vector whose values self is set to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">vec</span><span class="o">.</span><span class="n">_data</span></div>
+
+<div class="viewcode-block" id="DefaultVector.set_const"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector.set_const">[docs]</a>    <span class="k">def</span> <span class="nf">set_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value of this vector to a constant scalar value.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        val : int or float</span>
+<span class="sd">            scalar to set self to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">val</span></div>
+
+<div class="viewcode-block" id="DefaultVector.dot"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector.dot">[docs]</a>    <span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the dot product of the real parts of the current vec and the incoming vec.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vec : &lt;Vector&gt;</span>
+<span class="sd">            The incoming vector being dotted with self.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            The computed dot product value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">vec</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DefaultVector.get_norm"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector.get_norm">[docs]</a>    <span class="k">def</span> <span class="nf">get_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the norm of this vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            norm of this vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DefaultVector.get_slice_dict"><a class="viewcode-back" href="../../../_srcdocs/packages/vectors/default_vector.html#openmdao.vectors.default_vector.DefaultVector.get_slice_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_slice_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a dict of var names mapped to their slice in the local data array.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Mapping of var name to slice.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">slices</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_var_relevant_names</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">_typ</span><span class="p">]:</span>
+                <span class="n">end</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+                <span class="n">slices</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_slices</span> <span class="o">=</span> <span class="n">slices</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slices</span></div>
+
+    <span class="k">def</span> <span class="nf">_enforce_bounds_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enforce lower/upper bounds, backtracking the entire vector together.</span>
+
+<span class="sd">        This method modifies both self (u) and step (du) in-place.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        du : &lt;Vector&gt;</span>
+<span class="sd">            Newton step; the backtracking is applied to this vector in-place.</span>
+<span class="sd">        alpha : float</span>
+<span class="sd">            step size.</span>
+<span class="sd">        lower_bounds : &lt;Vector&gt;</span>
+<span class="sd">            Lower bounds vector.</span>
+<span class="sd">        upper_bounds : &lt;Vector&gt;</span>
+<span class="sd">            Upper bounds vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="c1"># The assumption is that alpha * du has been added to self (i.e., u)</span>
+        <span class="c1"># just prior to this method being called. We are currently in the</span>
+        <span class="c1"># initialization of a line search, and we&#39;re trying to ensure that</span>
+        <span class="c1"># the u does not violate bounds in the first iteration. If it does,</span>
+        <span class="c1"># we modify the du vector directly.</span>
+
+        <span class="c1"># This is the required change in step size, relative to the du vector.</span>
+        <span class="n">d_alpha</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Find the largest amount a bound is violated</span>
+        <span class="c1"># where positive means a bound is violated - i.e. the required d_alpha.</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">du</span><span class="o">.</span><span class="n">_data</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">abs_du_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">du</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+            <span class="n">u_mask</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+            <span class="c1"># Check lower bound</span>
+            <span class="n">max_d_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">((</span><span class="n">lower_bounds</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">-</span> <span class="n">u_mask</span><span class="p">)</span> <span class="o">/</span> <span class="n">abs_du_mask</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">max_d_alpha</span> <span class="o">&gt;</span> <span class="n">d_alpha</span><span class="p">:</span>
+                <span class="n">d_alpha</span> <span class="o">=</span> <span class="n">max_d_alpha</span>
+
+            <span class="c1"># Check upper bound</span>
+            <span class="n">max_d_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">((</span><span class="n">u_mask</span> <span class="o">-</span> <span class="n">upper_bounds</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="o">/</span> <span class="n">abs_du_mask</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">max_d_alpha</span> <span class="o">&gt;</span> <span class="n">d_alpha</span><span class="p">:</span>
+                <span class="n">d_alpha</span> <span class="o">=</span> <span class="n">max_d_alpha</span>
+
+        <span class="k">if</span> <span class="n">d_alpha</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># d_alpha will not be negative because it was initialized to be 0</span>
+            <span class="c1"># and we&#39;ve only done max operations.</span>
+            <span class="c1"># d_alpha will not be greater than alpha because the assumption is that</span>
+            <span class="c1"># the original point was valid - i.e., no bounds were violated.</span>
+            <span class="c1"># Therefore 0 &lt;= d_alpha &lt;= alpha.</span>
+
+            <span class="c1"># We first update u to reflect the required change to du.</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">add_scal_vec</span><span class="p">(</span><span class="o">-</span><span class="n">d_alpha</span><span class="p">,</span> <span class="n">du</span><span class="p">)</span>
+
+            <span class="c1"># At this point, we normalize d_alpha by alpha to figure out the relative</span>
+            <span class="c1"># amount that the du vector has to be reduced, then apply the reduction.</span>
+            <span class="n">du</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">d_alpha</span> <span class="o">/</span> <span class="n">alpha</span>
+
+    <span class="k">def</span> <span class="nf">_enforce_bounds_scalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enforce lower/upper bounds on each scalar separately, then backtrack as a vector.</span>
+
+<span class="sd">        This method modifies both self (u) and step (du) in-place.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        du : &lt;Vector&gt;</span>
+<span class="sd">            Newton step; the backtracking is applied to this vector in-place.</span>
+<span class="sd">        alpha : float</span>
+<span class="sd">            step size.</span>
+<span class="sd">        lower_bounds : &lt;Vector&gt;</span>
+<span class="sd">            Lower bounds vector.</span>
+<span class="sd">        upper_bounds : &lt;Vector&gt;</span>
+<span class="sd">            Upper bounds vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="c1"># The assumption is that alpha * step has been added to this vector</span>
+        <span class="c1"># just prior to this method being called. We are currently in the</span>
+        <span class="c1"># initialization of a line search, and we&#39;re trying to ensure that</span>
+        <span class="c1"># the initial step does not violate bounds. If it does, we modify</span>
+        <span class="c1"># the step vector directly.</span>
+
+        <span class="c1"># enforce bounds on step in-place.</span>
+        <span class="n">u_data</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">_data</span>
+
+        <span class="c1"># If u &gt; lower, we&#39;re just adding zero. Otherwise, we&#39;re adding</span>
+        <span class="c1"># the step required to get up to the lower bound.</span>
+        <span class="c1"># For du, we normalize by alpha since du eventually gets</span>
+        <span class="c1"># multiplied by alpha.</span>
+        <span class="n">change_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">u_data</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">-</span> <span class="n">u_data</span>
+
+        <span class="c1"># If u &lt; upper, we&#39;re just adding zero. Otherwise, we&#39;re adding</span>
+        <span class="c1"># the step required to get down to the upper bound, but normalized</span>
+        <span class="c1"># by alpha since du eventually gets multiplied by alpha.</span>
+        <span class="n">change_upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">u_data</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">-</span> <span class="n">u_data</span>
+
+        <span class="n">change</span> <span class="o">=</span> <span class="n">change_lower</span> <span class="o">+</span> <span class="n">change_upper</span>
+
+        <span class="n">u_data</span> <span class="o">+=</span> <span class="n">change</span>
+        <span class="n">du</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">change</span> <span class="o">/</span> <span class="n">alpha</span>
+
+    <span class="k">def</span> <span class="nf">_enforce_bounds_wall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enforce lower/upper bounds on each scalar separately, then backtrack along the wall.</span>
+
+<span class="sd">        This method modifies both self (u) and step (du) in-place.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        du : &lt;Vector&gt;</span>
+<span class="sd">            Newton step; the backtracking is applied to this vector in-place.</span>
+<span class="sd">        alpha : float</span>
+<span class="sd">            step size.</span>
+<span class="sd">        lower_bounds : &lt;Vector&gt;</span>
+<span class="sd">            Lower bounds vector.</span>
+<span class="sd">        upper_bounds : &lt;Vector&gt;</span>
+<span class="sd">            Upper bounds vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="c1"># The assumption is that alpha * step has been added to this vector</span>
+        <span class="c1"># just prior to this method being called. We are currently in the</span>
+        <span class="c1"># initialization of a line search, and we&#39;re trying to ensure that</span>
+        <span class="c1"># the initial step does not violate bounds. If it does, we modify</span>
+        <span class="c1"># the step vector directly.</span>
+
+        <span class="c1"># enforce bounds on step in-place.</span>
+        <span class="n">u_data</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">_data</span>
+        <span class="n">du_data</span> <span class="o">=</span> <span class="n">du</span><span class="o">.</span><span class="n">_data</span>
+
+        <span class="c1"># If u &gt; lower, we&#39;re just adding zero. Otherwise, we&#39;re adding</span>
+        <span class="c1"># the step required to get up to the lower bound.</span>
+        <span class="c1"># For du, we normalize by alpha since du eventually gets</span>
+        <span class="c1"># multiplied by alpha.</span>
+        <span class="n">change_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">u_data</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">-</span> <span class="n">u_data</span>
+
+        <span class="c1"># If u &lt; upper, we&#39;re just adding zero. Otherwise, we&#39;re adding</span>
+        <span class="c1"># the step required to get down to the upper bound, but normalized</span>
+        <span class="c1"># by alpha since du eventually gets multiplied by alpha.</span>
+        <span class="n">change_upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">u_data</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">-</span> <span class="n">u_data</span>
+
+        <span class="n">change</span> <span class="o">=</span> <span class="n">change_lower</span> <span class="o">+</span> <span class="n">change_upper</span>
+
+        <span class="n">u_data</span> <span class="o">+=</span> <span class="n">change</span>
+        <span class="n">du_data</span> <span class="o">+=</span> <span class="n">change</span> <span class="o">/</span> <span class="n">alpha</span>
+
+        <span class="c1"># Now we ensure that we will backtrack along the wall during the</span>
+        <span class="c1"># line search by setting the entries of du at the bounds to zero.</span>
+        <span class="n">changed_either</span> <span class="o">=</span> <span class="n">change</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">du_data</span><span class="p">[</span><span class="n">changed_either</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return state as a dict.</span>
+
+<span class="sd">        For pickling vectors in case recording, we want to get rid of</span>
+<span class="sd">        the system contained within Vectors, because MPI Comm objects cannot</span>
+<span class="sd">        be pickled using Python3&#39;s pickle module.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            state minus system member.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;_system&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

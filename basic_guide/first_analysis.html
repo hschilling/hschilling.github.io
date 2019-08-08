@@ -1,0 +1,306 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Paraboloid - A Single-Discipline Model &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Optimization of Paraboloid" href="first_optimization.html" />
+    <link rel="prev" title="How OpenMDAO Represents Variables" href="component_types.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="first_optimization.html" title="Optimization of Paraboloid"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="component_types.html" title="How OpenMDAO Represents Variables"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p id="tutorial-paraboloid-analysis">In the previous tutorial, we discussed the three basic kinds of Components in the OpenMDAO framework.
+This tutorial focuses on using one of those, <a class="reference internal" href="../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponent</span></a>, to build a simple analysis of a paraboloid function.
+We’ll explain the basic structure of a run file, show you how to set inputs, run the model, and check the output files.</p>
+<div class="section" id="paraboloid-a-single-discipline-model">
+<h1>Paraboloid - A Single-Discipline Model<a class="headerlink" href="#paraboloid-a-single-discipline-model" title="Permalink to this headline">¶</a></h1>
+<p>Consider a paraboloid, defined by the explicit function</p>
+<div class="math notranslate nohighlight">
+\[f(x,y) = (x-3.0)^2 + x \times y + (y+4.0)^2 - 3.0 ,\]</div>
+<p>where <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(y\)</span> are the inputs to the function.
+The minimum of this function is located at</p>
+<div class="math notranslate nohighlight">
+\[x = \frac{20}{3} \quad , \quad y = -\frac{22}{3} .\]</div>
+<p>Here is a complete script that defines this equation as a component and then executes it with different input values,
+printing the results to the console when it’s done.
+Take a look at the full run script first, then we’ll break it down part by part to explain what each one does.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Demonstration of a model using the Paraboloid component.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+
+<span class="k">class</span> <span class="nc">Paraboloid</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluates the equation f(x,y) = (x-3)^2 + xy + (y+4)^2 - 3.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;f_xy&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="c1"># Finite difference all partials.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        f(x,y) = (x-3)^2 + xy + (y+4)^2 - 3</span>
+
+<span class="sd">        Minimum at: x = 6.6667; y = -7.3333</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;f_xy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">3.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">+</span><span class="mf">4.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">3.0</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+    <span class="n">ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+    <span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+    <span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;des_vars&#39;</span><span class="p">,</span> <span class="n">ivc</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;parab_comp&#39;</span><span class="p">,</span> <span class="n">Paraboloid</span><span class="p">())</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;des_vars.x&#39;</span><span class="p">,</span> <span class="s1">&#39;parab_comp.x&#39;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;des_vars.y&#39;</span><span class="p">,</span> <span class="s1">&#39;parab_comp.y&#39;</span><span class="p">)</span>
+
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;parab_comp.f_xy&#39;</span><span class="p">])</span>
+
+    <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;des_vars.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span>
+    <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;des_vars.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;parab_comp.f_xy&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Next, let’s break this script down and understand each section:</p>
+<div class="section" id="preamble">
+<h2>Preamble<a class="headerlink" href="#preamble" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="k">as</span> <span class="nn">om</span>
+</pre></div>
+</div>
+<p>At the top of any script you’ll see these lines (or lines very similar to these) which import needed classes and functions.
+On the first import line, the <cite>print_function</cite> is used so that the code in the script will work in either Python 2 or 3.
+If you want to know whats going on with the division operator, check out this <a class="reference external" href="https://www.python.org/dev/peps/pep-0238/">detailed explanation</a>.</p>
+<p>The second import line make availabe the most common OpenMDAO classes that are needed to build and run a model.
+The <cite>openmdao.api</cite> module contains the class <cite>ExplicitComponent</cite> that we need to define the Paraboloid model. This
+can be accessed via “om.ExplicitComponent” when we need it. As you progress to more complex models, you will learn about
+more classes available in <cite>openmdao.api</cite>,but for now we only need this one to define our paraboloid component.</p>
+</div>
+<div class="section" id="defining-a-component">
+<h2>Defining a Component<a class="headerlink" href="#defining-a-component" title="Permalink to this headline">¶</a></h2>
+<p>The component is the basic building block of a model.
+You will always define components as a subclass of either <a class="reference internal" href="../_srcdocs/packages/core/explicitcomponent.html#openmdao-core-explicitcomponent-py"><span class="std std-ref">ExplicitComponent</span></a>
+or <a class="reference internal" href="../_srcdocs/packages/core/implicitcomponent.html#openmdao-core-implicitcomponent-py"><span class="std std-ref">ImplicitComponent</span></a>.
+Since our simple paraboloid function is explicit, we’ll use the <a class="reference internal" href="../_srcdocs/packages/core/explicitcomponent.html#openmdao-core-explicitcomponent-py"><span class="std std-ref">ExplicitComponent</span></a>.
+You see two methods defined:</p>
+<blockquote>
+<div><ul class="simple">
+<li><cite>setup</cite>: define all your inputs and outputs here, and declare derivatives</li>
+<li><cite>compute</cite>: calculation of all output values for the given inputs</li>
+</ul>
+</div></blockquote>
+<p>In the <cite>setup</cite> method you define the inputs and outputs of the component,
+and in this case you also ask OpenMDAO to approximate all the partial derivatives (derivatives of outputs with respect to inputs)
+using the <a class="reference external" href="https://en.wikipedia.org/wiki/Finite_difference_method">finite difference method</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">One of OpenMDAO’s most unique features is its support for analytic derivatives.
+Providing analytic partial derivatives from your components can result in much more efficient optimizations.
+We’ll get to using analytic derivatives in later tutorials.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Paraboloid</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluates the equation f(x,y) = (x-3)^2 + xy + (y+4)^2 - 3.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;f_xy&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="c1"># Finite difference all partials.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        f(x,y) = (x-3)^2 + xy + (y+4)^2 - 3</span>
+
+<span class="sd">        Minimum at: x = 6.6667; y = -7.3333</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;f_xy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">3.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">+</span><span class="mf">4.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">3.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-run-script">
+<h2>The Run Script<a class="headerlink" href="#the-run-script" title="Permalink to this headline">¶</a></h2>
+<p>In this example we’ve set up the run script at the bottom of the file.
+The start of the run script is denoted by the following statement:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">'__main__':</span></code></p>
+<p>All OpenMDAO models are built up from a hierarchy of <a class="reference internal" href="../_srcdocs/packages/core/group.html#openmdao-core-group-py"><span class="std std-ref">Group</span></a> instances that organize the components.
+In this example, the hierarchy is very simple, consisting of a single root group that holds two components.
+The first component is an <a class="reference internal" href="../_srcdocs/packages/core/indepvarcomp.html#openmdao-core-indepvarcomp-py"><span class="std std-ref">IndepVarComp</span></a> instance.
+This is a special component that OpenMDAO provides for you to specify the independent variables in your problem.
+The second component is an instance of the <cite>Paraboloid</cite> class that we just defined.</p>
+<p>As part of the model hierarchy, you will also define any connections to move data between components in the relevant group.
+Here, we connect the independent variables to the inputs on the paraboloid component.</p>
+<p>Once the model hierarchy is defined,
+we pass it to the constructor of the <a class="reference internal" href="../_srcdocs/packages/core/problem.html#openmdao-core-problem-py"><span class="std std-ref">Problem</span></a> class.
+Then we call the <cite>setup()</cite> method on that problem, which tells the framework to do some initial work to get the data structures in place for execution.
+In this case, we call <cite>run_model()</cite> to actually perform the computation. Later, we’ll see how to explicitly set drivers and will be calling <cite>run_driver()</cite> instead.</p>
+<p>Here we called run_model twice.
+The first time <cite>x</cite> and <cite>y</cite> have the initial values of 3.0 and -4.0 respectively.
+The second time we changed those values and then re-ran.
+There are a few details to note here.
+First, notice the way we printed the outputs via <code class="code docutils literal notranslate"><span class="pre">prob['parab_comp.f_xy']</span></code> and similarly how we set the new values for <cite>x</cite> and <cite>y</cite>.
+You can both get and set values using the problem, which works with dimensional values in the units of the source variable.
+In this case, there are no units on the source (i.e. <cite>des_vars.x</cite>).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Detailed information on <a class="reference internal" href="../features/core_features/defining_components/units.html#units"><span class="std std-ref">units</span></a> and <a class="reference internal" href="../features/core_features/defining_components/scaling.html#scale-outputs-and-resids"><span class="std std-ref">scaling</span></a> can be found in the feature documentation.</p>
+</div>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+    <span class="n">ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+    <span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+    <span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;des_vars&#39;</span><span class="p">,</span> <span class="n">ivc</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;parab_comp&#39;</span><span class="p">,</span> <span class="n">Paraboloid</span><span class="p">())</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;des_vars.x&#39;</span><span class="p">,</span> <span class="s1">&#39;parab_comp.x&#39;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;des_vars.y&#39;</span><span class="p">,</span> <span class="s1">&#39;parab_comp.y&#39;</span><span class="p">)</span>
+
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;parab_comp.f_xy&#39;</span><span class="p">])</span>
+
+    <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;des_vars.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span>
+    <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;des_vars.y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;parab_comp.f_xy&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="first_optimization.html" title="Optimization of Paraboloid"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="component_types.html" title="How OpenMDAO Represents Variables"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

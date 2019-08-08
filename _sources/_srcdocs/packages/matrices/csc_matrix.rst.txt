@@ -1,0 +1,16 @@
+.. index:: csc_matrix.py
+
+.. _openmdao.matrices.csc_matrix.py:
+
+csc_matrix.py
+-------------
+
+.. automodule:: openmdao.matrices.csc_matrix
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

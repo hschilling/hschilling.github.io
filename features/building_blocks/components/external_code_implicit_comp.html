@@ -1,0 +1,375 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ExternalCodeImplicitComp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="LinearSystemComp" href="linearsystem_comp.html" />
+    <link rel="prev" title="ExternalCodeComp" href="external_code_comp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="linearsystem_comp.html" title="LinearSystemComp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="external_code_comp.html" title="ExternalCodeComp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="externalcodeimplicitcomp">
+<span id="externalcodeimplicitcomp-feature"></span><span id="index-0"></span><h1>ExternalCodeImplicitComp<a class="headerlink" href="#externalcodeimplicitcomp" title="Permalink to this headline">¶</a></h1>
+<p><cite>ExternalCodeImplicitComp</cite> is very similar to <cite>ExternalCodeComp</cite> in that it runs an external program in a subprocess on your
+operating system. But it treats the <cite>Component</cite> as an <cite>ImplicitComponent</cite> rather than an <cite>ExplicitComponent</cite>. See
+<a class="reference internal" href="external_code_comp.html#externalcodecomp-feature"><span class="std std-ref">ExternalCodeComp</span></a> for basic information about how <cite>ExternalCodeComp</cite> works.</p>
+<p><cite>ExternalCodeImplicitComp</cite> has most of the same options as <cite>ExternalCodeComp</cite>, but there is one major difference.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="4%" />
+<col width="9%" />
+<col width="8%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>allowed_return_codes</td>
+<td>[0]</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>List of return codes that are considered successful.</td>
+</tr>
+<tr class="row-odd"><td>assembled_jac_type</td>
+<td>csc</td>
+<td>[‘csc’, ‘dense’]</td>
+<td>N/A</td>
+<td>Linear solver(s) in this group, if using an assembled jacobian, will use this type.</td>
+</tr>
+<tr class="row-even"><td>command_apply</td>
+<td>[]</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>command to be executed for apply_nonlinear</td>
+</tr>
+<tr class="row-odd"><td>command_solve</td>
+<td>[]</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>command to be executed for solve_nonlinear</td>
+</tr>
+<tr class="row-even"><td>distributed</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>True if the component has variables that are distributed across multiple processes.</td>
+</tr>
+<tr class="row-odd"><td>env_vars</td>
+<td>{}</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Environment variables required by the command.</td>
+</tr>
+<tr class="row-even"><td>external_input_files</td>
+<td>[]</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>List of input files that must exist before execution, otherwise an Exception is raised.</td>
+</tr>
+<tr class="row-odd"><td>external_output_files</td>
+<td>[]</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>List of output files that must exist after execution, otherwise an Exception is raised.</td>
+</tr>
+<tr class="row-even"><td>fail_hard</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>If True, external code errors raise a ‘hard’ exception (RuntimeError), otherwise errors raise a ‘soft’ exception (AnalysisError).</td>
+</tr>
+<tr class="row-odd"><td>poll_delay</td>
+<td>0.0</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Delay between polling for command completion. A value of zero will use an internally computed default.</td>
+</tr>
+<tr class="row-even"><td>timeout</td>
+<td>0.0</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Maximum time to wait for command completion. A value of zero implies an infinite wait.</td>
+</tr>
+</tbody>
+</table>
+<p>When using an <cite>ExternalCodeImplicitComp</cite>, you have the option to define two external programs rather than one. The
+first of these is “command_apply”, which is the command that you want to run to evaluate the residuals. You should
+always specify a value for this option. The second is “command_solve”, which is the command that you want to run
+to let the external program solve its own states. This is optional, but you should specify it if your code can
+solve itself, and if you want it to do so (for example, while using a Newton solver with “solve_subsystems” turned
+on in a higher-level <cite>Group</cite>.)</p>
+<div class="section" id="externalcodeimplicitcomp-example">
+<h2>ExternalCodeImplicitComp Example<a class="headerlink" href="#externalcodeimplicitcomp-example" title="Permalink to this headline">¶</a></h2>
+<p>Here is a simple example of the use of an <cite>ExternalCodeImplicitComp</cite> Component. The external code in the example
+is a Python script that evaluates the output and residual for the implicit relationship between the area ratio and
+mach number in an isentropic flow. We use the same external code for both “command_apply” and “command_solve”, but
+in each case we pass it different flags.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1">#</span>
+<span class="c1"># usage: extcode_mach.py input_filename output_filename</span>
+<span class="c1">#</span>
+<span class="c1"># Evaluates the output and residual for the implicit relationship</span>
+<span class="c1">#     between the area ratio and mach number.</span>
+<span class="c1">#</span>
+<span class="c1"># Read the value of `area_ratio` from input file</span>
+<span class="c1"># and writes the values or residuals of `mach` to output file depending on what is requested.</span>
+<span class="c1"># What is requested is given by the first line in the file read. It can be either &#39;residuals&#39; or</span>
+<span class="c1"># &#39;outputs&#39;.</span>
+
+<span class="k">def</span> <span class="nf">area_ratio_explicit</span><span class="p">(</span><span class="n">mach</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Explicit isentropic relationship between area ratio and Mach number&quot;&quot;&quot;</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="mf">1.4</span>
+    <span class="n">gamma_p_1</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">gamma_m_1</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">exponent</span> <span class="o">=</span> <span class="n">gamma_p_1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">gamma_m_1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">gamma_p_1</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="n">exponent</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">gamma_m_1</span> <span class="o">/</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">mach</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="n">exponent</span><span class="p">)</span> <span class="o">/</span> <span class="n">mach</span>
+
+<span class="k">def</span> <span class="nf">mach_residual</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">area_ratio_target</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If area_ratio is known, then finding Mach is an implicit relationship&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">area_ratio_target</span> <span class="o">-</span> <span class="n">area_ratio_explicit</span><span class="p">(</span><span class="n">mach</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">mach_solve</span><span class="p">(</span><span class="n">area_ratio</span><span class="p">,</span> <span class="n">super_sonic</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Solve for mach, given area ratio&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">super_sonic</span><span class="p">:</span>
+        <span class="n">initial_guess</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">initial_guess</span> <span class="o">=</span> <span class="o">.</span><span class="mi">1</span>
+    <span class="n">mach</span> <span class="o">=</span> <span class="n">fsolve</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">mach_residual</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">initial_guess</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">area_ratio</span><span class="p">,))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">mach</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">sys</span>
+    <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">fsolve</span>
+
+    <span class="n">input_filename</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">output_filename</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">input_file</span><span class="p">:</span>
+        <span class="n">output_or_resids</span> <span class="o">=</span> <span class="n">input_file</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">area_ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">input_file</span><span class="o">.</span><span class="n">readline</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">output_or_resids</span> <span class="o">==</span> <span class="s1">&#39;residuals&#39;</span><span class="p">:</span>
+            <span class="n">mach</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">input_file</span><span class="o">.</span><span class="n">readline</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># outputs</span>
+            <span class="n">super_sonic</span> <span class="o">=</span> <span class="p">(</span><span class="n">input_file</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_or_resids</span> <span class="o">==</span> <span class="s1">&#39;outputs&#39;</span><span class="p">:</span>
+        <span class="n">mach_output</span> <span class="o">=</span> <span class="n">mach_solve</span><span class="p">(</span><span class="n">area_ratio</span><span class="p">,</span> <span class="n">super_sonic</span><span class="o">=</span><span class="n">super_sonic</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+            <span class="n">output_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.16f</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">mach_output</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">output_or_resids</span> <span class="o">==</span> <span class="s1">&#39;residuals&#39;</span><span class="p">:</span>
+        <span class="n">mach_resid</span> <span class="o">=</span> <span class="n">mach_residual</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">area_ratio</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+            <span class="n">output_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.16f</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">mach_resid</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following model makes use of this external code.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="k">class</span> <span class="nc">MachExternalCodeComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExternalCodeImplicitComp</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;super_sonic&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;mach&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;mach&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_file</span> <span class="o">=</span> <span class="s1">&#39;mach_input.dat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span> <span class="o">=</span> <span class="s1">&#39;mach_output.dat&#39;</span>
+
+        <span class="c1"># providing these are optional; the component will verify that any input</span>
+        <span class="c1"># files exist before execution and that the output files exist after.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;external_input_files&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;external_output_files&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;command_apply&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="s1">&#39;extcode_mach.py&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;command_solve&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="s1">&#39;extcode_mach.py&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">input_file</span><span class="p">:</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;residuals</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;mach&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># the parent apply_nonlinear function actually runs the external code</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MachExternalCodeComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">apply_nonlinear</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">)</span>
+
+        <span class="c1"># parse the output file from the external code and set the value of mach</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+            <span class="n">mach</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">output_file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;mach&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mach</span>
+
+    <span class="k">def</span> <span class="nf">solve_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">input_file</span><span class="p">:</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;outputs</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;super_sonic&#39;</span><span class="p">]))</span>
+        <span class="c1"># the parent apply_nonlinear function actually runs the external code</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MachExternalCodeComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">solve_nonlinear</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+
+        <span class="c1"># parse the output file from the external code and set the value of mach</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+            <span class="n">mach</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">output_file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;mach&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mach</span>
+
+<span class="n">group</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+<span class="n">group</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ar&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
+<span class="n">mach_comp</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">MachExternalCodeComp</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">group</span><span class="p">)</span>
+<span class="n">group</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+<span class="n">group</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">group</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">group</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">group</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">area_ratio</span> <span class="o">=</span> <span class="mf">1.3</span>
+<span class="n">super_sonic</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">area_ratio</span>
+<span class="n">mach_comp</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;super_sonic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">super_sonic</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;mach&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.52196203]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">area_ratio</span> <span class="o">=</span> <span class="mf">1.3</span>
+<span class="n">super_sonic</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;area_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">area_ratio</span>
+<span class="n">mach_comp</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;super_sonic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">super_sonic</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;mach&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.65884779]</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/ExternalCodeImplicitComp.html#externalcodeimplicitcomp"><span class="std std-ref">ExternalCodeImplicitComp</span></a>, <a class="reference internal" href="../../../tags/ExternalCodeComp.html#externalcodecomp"><span class="std std-ref">ExternalCodeComp</span></a>, <a class="reference internal" href="../../../tags/FileWrapping.html#filewrapping"><span class="std std-ref">FileWrapping</span></a>, <a class="reference internal" href="../../../tags/Component.html#component"><span class="std std-ref">Component</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="linearsystem_comp.html" title="LinearSystemComp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="external_code_comp.html" title="ExternalCodeComp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

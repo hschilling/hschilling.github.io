@@ -1,0 +1,242 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Computing Sparsity of Total Derivatives &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Simultaneous Total Derivative Coloring For Separable Problems" href="simul_derivs.html" />
+    <link rel="prev" title="In-Memory Assembly of Jacobians" href="assembled_jacobian.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="simul_derivs.html" title="Simultaneous Total Derivative Coloring For Separable Problems"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="assembled_jacobian.html" title="In-Memory Assembly of Jacobians"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="computing-sparsity-of-total-derivatives">
+<span id="sparse-totals"></span><h1>Computing Sparsity of Total Derivatives<a class="headerlink" href="#computing-sparsity-of-total-derivatives" title="Permalink to this headline">¶</a></h1>
+<p>If your total derivative jacobian is sparse, certain optimizers, e.g., the SNOPT optimizer
+in <a class="reference internal" href="../../building_blocks/drivers/pyoptsparse_driver.html#feature-pyoptsparse"><span class="std std-ref">pyOptSparseDriver</span></a>, can take advantage of this to improve the
+performance of computing total derivatives.</p>
+<p>Computing the sparsity of the jacobian can be performed either statically or dynamically.</p>
+<div class="section" id="dynamic-determination-of-sparsity">
+<h2>Dynamic Determination of Sparsity<a class="headerlink" href="#dynamic-determination-of-sparsity" title="Permalink to this headline">¶</a></h2>
+<p>Sparsity can be computed at runtime, shortly after the driver begins the optimization.
+This has the advantage of simplicity and robustness to changes in the model, but adds
+the cost of the sparsity computation to the run time of the optimization.  For a typical
+optimization, however, this cost will be small.  Activating dynamic sparsity detection
+is simple.  Just set the <cite>dynamic_derivs_sparsity</cite> option on the driver.  For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dynamic_derivs_sparsity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>If you want to change the number of compute_totals calls that the algorithm uses to
+compute the jacobian sparsity (default is 3), you can set the <cite>dynamic_derivs_repeats</cite>
+option. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dynamic_derivs_repeats&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>Whenever a dynamic sparsity is computed, the sparsity is written to a file called
+<em>total_sparsity.json</em> for later inspection or static use.</p>
+</div>
+<div class="section" id="static-determination-of-sparsity">
+<h2>Static Determination of Sparsity<a class="headerlink" href="#static-determination-of-sparsity" title="Permalink to this headline">¶</a></h2>
+<p>To get rid of the runtime cost of computing the sparsity, you can precompute it using the
+<code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">total_sparsity</span></code> command line tool.  The sparsity dictionary will be displayed on
+the terminal and can be cut-and-pasted into your python script, or you can specify an output
+file on the command line and the sparsity dictionary will be written in JSON format to the
+specified file.  The name of that file can then be passed into the <cite>set_total_jac_sparsity</cite>
+method of the driver.  Here’s an example of writing the sparsity information to the terminal:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_sparsity circle_opt.py
+</pre></div>
+</div>
+
+    <div class="cell border-box-sizing code_cell rendered">
+       <div class="output_area"><pre>Full total jacobian was computed 3 times, taking 0.020434 seconds.
+Total jacobian shape: (22, 21) 
+
+{
+&quot;circle.area&quot;: {
+   &quot;indeps.r&quot;: [[0], [0], [1, 1]],
+   &quot;indeps.x&quot;: [[], [], [1, 10]],
+   &quot;indeps.y&quot;: [[], [], [1, 10]]
+},
+&quot;delta_theta_con.g&quot;: {
+   &quot;indeps.r&quot;: [[], [], [5, 1]],
+   &quot;indeps.x&quot;: [[0 0 1 1 2 2 3 3 4 4], [0 1 2 3 4 5 6 7 8 9], [5, 10]],
+   &quot;indeps.y&quot;: [[0 0 1 1 2 2 3 3 4 4], [0 1 2 3 4 5 6 7 8 9], [5, 10]]
+},
+&quot;l_conx.g&quot;: {
+   &quot;indeps.r&quot;: [[], [], [1, 1]],
+   &quot;indeps.x&quot;: [[0], [0], [1, 10]],
+   &quot;indeps.y&quot;: [[], [], [1, 10]]
+},
+&quot;r_con.g&quot;: {
+   &quot;indeps.r&quot;: [[0 1 2 3 4 5 6 7 8 9], [0 0 0 0 0 0 0 0 0 0], [10, 1]],
+   &quot;indeps.x&quot;: [[0 1 2 3 4 5 6 7 8 9], [0 1 2 3 4 5 6 7 8 9], [10, 10]],
+   &quot;indeps.y&quot;: [[0 1 2 3 4 5 6 7 8 9], [0 1 2 3 4 5 6 7 8 9], [10, 10]]
+},
+&quot;theta_con.g&quot;: {
+   &quot;indeps.r&quot;: [[], [], [5, 1]],
+   &quot;indeps.x&quot;: [[0 1 2 3 4], [0 2 4 6 8], [5, 10]],
+   &quot;indeps.y&quot;: [[0 1 2 3 4], [0 2 4 6 8], [5, 10]]
+}
+}
+</pre></div>
+    </div><p>Here’s what the code would look like if we cut-and-pasted the output of the
+<code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">total_sparsity</span></code> command and passed it into <code class="code docutils literal notranslate"><span class="pre">set_total_jac_sparsity</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sparsity</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;circle.area&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;indeps.r&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.x&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.y&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]]</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;delta_theta_con.g&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;indeps.r&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.x&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.y&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">]]</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;l_conx.g&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;indeps.r&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.x&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.y&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]]</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;r_con.g&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;indeps.r&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.x&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.y&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]]</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;theta_con.g&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;indeps.r&quot;</span><span class="p">:</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.x&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">]],</span>
+        <span class="s2">&quot;indeps.y&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">]]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># we would specify total jacobian sparsity by calling this on our driver</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">set_total_jac_sparsity</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here’s how to write the sparsity information to a file instead.  In this case the file is called
+<cite>total_sparsity.json</cite>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao total_sparsity circle_opt.py -o total_sparsity.json
+</pre></div>
+</div>
+<p>and we would specify the sparsity in our python script as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># we would specify total jacobian sparsity by calling this on our driver</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">set_total_jac_sparsity</span><span class="p">(</span><span class="s1">&#39;total_sparsity.json&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The above code assumes that we’re running our script in the same directory where we put the json file.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="simul_derivs.html" title="Simultaneous Total Derivative Coloring For Separable Problems"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="assembled_jacobian.html" title="In-Memory Assembly of Jacobians"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

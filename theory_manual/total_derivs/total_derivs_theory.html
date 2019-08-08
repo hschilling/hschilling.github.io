@@ -1,0 +1,264 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>How Total Derivatives are Computed &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Setting Up a Model for Efficient Linear Solves" href="setup_linear_solvers.html" />
+    <link rel="prev" title="Scaling Variables in OpenMDAO" href="../scaling.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="setup_linear_solvers.html" title="Setting Up a Model for Efficient Linear Solves"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../scaling.html" title="Scaling Variables in OpenMDAO"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="how-total-derivatives-are-computed">
+<span id="theory-total-derivatives"></span><h1>How Total Derivatives are Computed<a class="headerlink" href="#how-total-derivatives-are-computed" title="Permalink to this headline">¶</a></h1>
+<p>This is a comprehensive document that explains the various techniques that can be used to compute total derivatives, along with each technique’s strengths and weaknesses.
+The goal of this document is to help you understand how the underlying methods work, and when they are appropriate to apply to your model.
+It is designed to be read in the order it’s presented, with later sections assuming understanding of earlier ones.</p>
+<div class="section" id="partial-vs-total-derivatives">
+<h2>Partial vs. Total Derivatives<a class="headerlink" href="#partial-vs-total-derivatives" title="Permalink to this headline">¶</a></h2>
+<p>Before diving into how OpenMDAO solves for total derivatives, it is important that we clearly define a pair of key terms.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Partial Derivative: Derivatives of the outputs or residuals of a single component with respect to that component’s inputs.</li>
+<li>Total Derivative: Derivative of an objective or constraint with respect to design variables.</li>
+</ul>
+</div></blockquote>
+<p>If you are numerically approximating the total derivatives, using finite-difference or complex-step, then you do not need to worry about partial derivatives.
+However, analytic-derivative methods achieve better accuracy and lower computational cost by leveraging partial derivatives to compute total derivatives.</p>
+</div>
+<div class="section" id="numerical-approximation-for-total-derivatives">
+<h2>Numerical Approximation for Total Derivatives<a class="headerlink" href="#numerical-approximation-for-total-derivatives" title="Permalink to this headline">¶</a></h2>
+<p>Numerical approximation of total derivatives involves treating the overall model as a single function and approximating its total derivatives by examining the change in outputs as inputs are varied.
+These methods involve taking successive steps in each design variable and then computing derivatives based on changes to the output value.
+Generally speaking each design variable must be examined separately, meaning that the computational cost of these approaches scale linearly with the increasing size of the design space.
+The primary attraction the numerical approach is that it is relatively simple to implement since no knowledge of the internal workings of the model you are trying to differentiate is required.</p>
+<p>The most common numerical approach is to use first-order finite differences to compute the approximations:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d f}{d x} = \frac{f(x+\Delta x) - f(x)}{\Delta x} + \mathcal{O}(\Delta x)\]</div>
+<p>While this approach is the simplest possible method, it is also the least accurate.
+The error of the approximation scales linearly with the step size, <span class="math notranslate nohighlight">\(\Delta x\)</span>, which encourages the use of very small values for the step size.
+However, for very small <span class="math notranslate nohighlight">\(\Delta x\)</span>, two challenges arise.
+First, subtractive cancellation, a problem with floating point arithmetic in computers, fundamentally limits the accuracy of the method for very small steps.
+Second, if the model includes nonlinear solvers, then noise in the nonlinear convergence for very small steps also introduces error.</p>
+<p>To achieve better accuracy, the <a class="reference external" href="http://mdolab.engin.umich.edu/content/complex-step-derivative-approximation-0">complex-step</a> method can be used:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d f}{d x} = \frac{\text{Im}[f(x+ i h)]}{h} + \mathcal{O}(h^2)\]</div>
+<p>This offers second-order convergence with the size of the step in the complex plane <span class="math notranslate nohighlight">\(h\)</span>, but more importantly, avoids the issue with subtractive cancellation so that <span class="math notranslate nohighlight">\(h\)</span> can be chosen to be arbitrarily small, and then essentially-perfect accuracy can be achieved.
+The improved accuracy does come at the expense of greater computational cost and implementation complexity, however.
+In most cases, changes are required to the underlying model, including any nonlinear solvers, to handle the complex arithmetic which is roughly 2.5 times more expensive than basic real arithmetic.</p>
+</div>
+<div class="section" id="basic-approach-for-analytic-total-derivatives">
+<h2>Basic Approach for Analytic Total Derivatives<a class="headerlink" href="#basic-approach-for-analytic-total-derivatives" title="Permalink to this headline">¶</a></h2>
+<p>While the numerical approach to computing total derivatives is conceptually simpler, analytic approaches are more accurate and less computationally expensive.
+The analytic approaches all follow a two-step recipe for computing total derivatives.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Directly compute the partial derivatives for each component.</li>
+<li>Solve a linear system to compute the total derivatives.</li>
+</ol>
+</div></blockquote>
+<p>Partial derivatives are simpler and less costly to compute directly, as compared to total derivatives, because in the context of OpenMDAO they only involve a single component and never require re-converging of the nonlinear analysis.
+OpenMDAO offers several different ways to compute partial derivatives,
+but for now we’ll assume that the partials are simply known quantities and focus on how to execute step two of the process above.</p>
+<p>Consider a function <span class="math notranslate nohighlight">\(f=F(x,y)\)</span> where <span class="math notranslate nohighlight">\(x\)</span> is a design variable vector of length <span class="math notranslate nohighlight">\(n\)</span> and <span class="math notranslate nohighlight">\(y\)</span> is an implicit variable vector of length <span class="math notranslate nohighlight">\(m\)</span>.
+Any evaluation of <span class="math notranslate nohighlight">\(F\)</span> must include the convergence of the nonlinear system <span class="math notranslate nohighlight">\(R(x,y)=0\)</span>.
+We can expand the total derivative as follows:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d f}{d x} = \frac{\partial F}{\partial x} + \frac{\partial F}{\partial y}\frac{d y}{d x}\]</div>
+<p><span class="math notranslate nohighlight">\(\partial F/\partial x\)</span> and <span class="math notranslate nohighlight">\(\partial F/\partial y\)</span> are partial-derivative terms, which we have assumed are known quantities.
+We need a way to compute <span class="math notranslate nohighlight">\(d y/d x\)</span>, which represents the change in the converged values of <span class="math notranslate nohighlight">\(y\)</span> for a change in <span class="math notranslate nohighlight">\(x\)</span>.
+There are two methods available to compute this term: direct or adjoint.</p>
+<div class="section" id="direct-method">
+<h3>Direct Method<a class="headerlink" href="#direct-method" title="Permalink to this headline">¶</a></h3>
+<p>The direct method can be derived by recognizing that is always the case that <span class="math notranslate nohighlight">\(R(x,y)=0\)</span> when the model is converged, and differentiating <span class="math notranslate nohighlight">\(R\)</span> with respect to <span class="math notranslate nohighlight">\(x\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d R}{d x} = \frac{\partial R}{\partial x} + \frac{\partial R}{\partial y}\frac{d y}{d x} = 0\]</div>
+<p>Then re-arrange the terms to get:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\frac{\partial R}{\partial y}\frac{d y}{d x} =  - \frac{\partial R}{\partial x},\\\overbrace{\frac{d y}{d x}}^{m \times n} =  \underbrace{-\left[\frac{\partial R}{\partial y}\right]^{-1}}_{m \times m} \overbrace{\frac{\partial R}{\partial x}}^{m \times n}.\end{aligned}\end{align} \]</div>
+<p>Hence, <span class="math notranslate nohighlight">\(d y/d x\)</span> can be computed by solving the above matrix equation consisting of only partial derivatives.
+Noting that <span class="math notranslate nohighlight">\(\partial R/\partial x\)</span> and <span class="math notranslate nohighlight">\(d y/d x\)</span> are both matrices of size <span class="math notranslate nohighlight">\(m \times n\)</span>, we see that the direct method requires us to solve <span class="math notranslate nohighlight">\(n\)</span> linear systems in order to compute all columns of <span class="math notranslate nohighlight">\(d y/d x\)</span>.
+Noting that <span class="math notranslate nohighlight">\(n\)</span> is the length of the design vector, <span class="math notranslate nohighlight">\(x\)</span>, we see that the compute cost of the direct method scales linearly with the number of design variables.</p>
+</div>
+<div class="section" id="adjoint-method">
+<h3>Adjoint Method<a class="headerlink" href="#adjoint-method" title="Permalink to this headline">¶</a></h3>
+<p>The adjoint approach is derived by first substituting the expression for <span class="math notranslate nohighlight">\(d y/ d x\)</span> back into the original equation for <span class="math notranslate nohighlight">\(d f/d x\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[\frac{d f}{d x} = \frac{\partial F}{\partial x} - \underbrace{\overbrace{\frac{\partial F}{\partial y}}^{1 \times m} \overbrace{\left[\frac{\partial R}{\partial y}\right]^{-1}}^{m \times m}}_{ \psi^T }\frac{\partial R}{\partial x}.\]</div>
+<p>By grouping <span class="math notranslate nohighlight">\(\partial f/\partial y\)</span> and <span class="math notranslate nohighlight">\(\left[\partial R / \partial y \right]^{-1}\)</span> into a single term we get a <span class="math notranslate nohighlight">\((1 \times m)\)</span> row vector.
+This row vector, denoted as <span class="math notranslate nohighlight">\(\psi^T\)</span>, is called the adjoint vector.
+As long as <span class="math notranslate nohighlight">\(\psi\)</span> can be computed efficiently, then the total derivative can be computable as:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d f}{d x} = \frac{\partial F}{\partial x} - \psi^T \frac{\partial R}{\partial x}.\]</div>
+<p>Through a bit of manipulation, we find that <span class="math notranslate nohighlight">\(\psi\)</span> can be solved for via the linear system</p>
+<div class="math notranslate nohighlight">
+\[\underbrace{\left[ \frac{\partial R}{\partial y}  \right]^T}_{m \times m} \overbrace{\psi}^{m \times 1} =  \underbrace{\frac{\partial f}{\partial y}^T}_{m \times 1}.\]</div>
+<p>This gives us <span class="math notranslate nohighlight">\(\psi\)</span> for the cost of a single linear solve.
+For a problem with more than one output, you would perform one linear solve and compute one adjoint vector for each output.
+For example, if you have one objective and two constraints, then you would perform three linear solves to compute all the total derivatives you needed.</p>
+<p>The compute cost of the adjoint method scales linearly with the number objectives and constraints you have, but is independent of the number of design variables in your problem.</p>
+</div>
+</div>
+<div class="section" id="unified-derivatives-equations">
+<h2>Unified Derivatives Equations<a class="headerlink" href="#unified-derivatives-equations" title="Permalink to this headline">¶</a></h2>
+<p>The analytic equations (direct or adjoint) above can be combined with the chain rule to compute total derivatives for any arbitrary model.
+This would achieve the goal of computing total derivatives, knowing only partial derivatives.
+The only problem is that each new model, composed of different combinations of components connected in different ways, would require you to re-derive a new combination of chain-rule and direct or forward solves to get the totals you need.</p>
+<p>To simplify this process, OpenMDAO provides functionality that automatically handles all of that work for you, so that you never actually need to assemble linear systems by hand or propagate derivatives with the chain rule.
+In order to understand how it automates the task for an arbitrary model, read on!</p>
+<p>OpenMDAO relies on a generalization of the various analytic methods for computing total derivatives called the <a class="reference external" href="http://mdolab.engin.umich.edu/content/computational-architecture-coupling-heterogeneous-numerical-models-and-computing-coupled">MAUD architecture</a>., developed by Hwang and Martins.
+For a highly-detailed account of how MAUD can be used to compute total derivatives, we refer you to the paper that describes the math and basic algorithms.
+In this document, we will simply describe the practical application of the central theoretical contribution of MAUD, the <a class="reference external" href="http://mdolab.engin.umich.edu/content/review-and-unification-discrete-methods-computing-derivatives-single-and-multi-disciplinary">Unified Derivative Equations</a> (UDE):</p>
+<div class="math notranslate nohighlight">
+\[\left[\frac{\partial \mathcal{R}}{\partial o}\right] \left[\frac{do}{dr}\right] = \left[ I \right] = \left[\frac{\partial \mathcal{R}}{\partial o}\right]^T \left[\frac{do}{dr}\right]^T,\]</div>
+<p>Where <span class="math notranslate nohighlight">\(o\)</span> denotes the vector of all the variables within the model (i.e. every output of every component), <span class="math notranslate nohighlight">\(\mathcal{R}\)</span> denotes the vector of residual functions, <span class="math notranslate nohighlight">\(r\)</span> is the vector of residual values,
+<span class="math notranslate nohighlight">\(\left[\frac{\partial \mathcal{R}}{\partial o}\right]\)</span> is the Jacobian matrix of all the partial derivatives,
+and <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span> is the matrix of total derivatives of <span class="math notranslate nohighlight">\(o\)</span> with respect to <span class="math notranslate nohighlight">\(r\)</span>.</p>
+<p>The left side of the UDE represents the forward (direct) form, which is solved once per design variable to compute one column of <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span>.
+The right side of this equation represents the reverse (adjoint) form, which requires one solve per objective and constraint to compute one row of <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span>.</p>
+<p>It may look a bit odd to take derivatives of output values with respect to residual values, but Hwang and Martins showed that if you adopt a specific mathematical representation for the equations, then <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span> contains all the total derivatives you actually want.
+Again we refer you to the paper on the <a class="reference external" href="http://mdolab.engin.umich.edu/content/computational-architecture-coupling-heterogeneous-numerical-models-and-computing-coupled">MAUD architecture</a> for the details, but lets work through an illustrative example.</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}x = 1,\\y_1 = y_2^2,\\e^{-y_1 y_2} - x y_1 = 0,\\f = y_1^2 - y_2 + 3.\end{aligned}\end{align} \]</div>
+<p>In an OpenMDAO model, each single equation would be represented by components, and the components would be connected as shown in the XDSM diagram below.
+<code class="code docutils literal notranslate"><span class="pre">Discipline</span> <span class="pre">2</span></code> is a different color, because it would be implemented using an <a class="reference internal" href="../../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a>.
+All of the red boxes would be built using <a class="reference internal" href="../../features/core_features/defining_components/explicitcomp.html#comp-type-2-explicitcomp"><span class="std std-ref">ExplicitComponents</span></a>.</p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="../../_images/simple_example_xdsm.png"><img alt="../../_images/simple_example_xdsm.png" src="../../_images/simple_example_xdsm.png" style="width: 75%;" /></a>
+<p class="caption"><span class="caption-text">XDSM for the simple example model used to explain total derivative computation</span></p>
+</div>
+<p>Even though the model is made up of both explicit and implicit calculations, OpenMDAO internally transforms all variables into an implicit form as follows:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}r_{x} &amp;= R_x(x) = x - 1 = 0,\\r_{y_1} &amp;= R_{y_1}(y_1, y_2) = y_1-y_2^2 = 0,\\r_{y_2} &amp;= R_{y_2}(x, y_1, y_2) = e^{-y_1 y_2} - x y_1 = 0,\\r_{f} &amp;= R_{f}(f, y_1, y_2) = f - y_1^2 - y_2 + 3 = 0.\end{aligned}\end{align} \]</div>
+<p>Now we can use the fully-implicit form with the UDE to compute <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span>, which would end up being:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\left[ \frac{do}{dr}\right] =
+\left[ \begin{array}{cccc}\frac{d x}{d r_{x}} &amp;  \frac{d x}{d r_{y_1}} &amp; \frac{d x}{d r_{y_2}} &amp; \frac{d x}{d r_{f}} \\
+                          \frac{d y_1}{d r_{x}} &amp;  \frac{d y_1}{d r_{y_1}} &amp; \frac{d y_1}{d r_{y_2}} &amp; \frac{d y_1}{d r_{f}} \\
+                          \frac{d y_2}{d r_{x}} &amp;  \frac{d y_2}{d r_{y_1}} &amp; \frac{d y_2}{d r_{y_2}} &amp; \frac{d y_2}{d r_{f}} \\
+                          \frac{d f}{d r_{x}} &amp;  \frac{d f}{d r_{y_1}} &amp; \frac{d f}{d r_{y_2}} &amp; \frac{d f}{d r_{f}} \end{array} \right] =
+\left[ \begin{array}{ccc} I &amp; 0 &amp; 0 &amp; 0\\
+                          \frac{d y_1}{d x} &amp; \frac{d y_1}{d r_{y_1}} &amp; \frac{d y_1}{d r_{y_2}} &amp; 0\\
+                          \frac{d y_2}{d x} &amp; \frac{d y_2}{d r_{y_1}} &amp; \frac{d y_2}{d r_{y_2}} &amp; 0 \\
+                          \frac{d f}{d x} &amp; \frac{d f}{d r_{y_1}} &amp; \frac{d f}{d r_{y_2}} &amp; I \end{array} \right].\end{split}\]</div>
+<p>Note that the total derivative an optimizer would need, <span class="math notranslate nohighlight">\(\frac{d f}{d x}\)</span>, is contained in the last row of <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span>.
+Since, for this simple one-variable problem, that is the only derivative we actually need, then we don’t need to compute all of <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span>.
+Rather, we can just compute either the first column or the first row using a single linear solve of the forward and reverse forms of the UDE, respectively.
+In practice, you would never need to compute all of <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span>, because the variable vector <span class="math notranslate nohighlight">\(o\)</span> contains not just your design variables and objective and constraints, but also all of the intermediate model variables as well.
+Instead, OpenMDAO will just solve for whichever rows or columns of <span class="math notranslate nohighlight">\(\left[\frac{do}{dr}\right]\)</span> are needed for your particular problem based on the design variables, objectives, and constraints you declared.</p>
+</div>
+<div class="section" id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline">¶</a></h2>
+<p>Above, we went over the theory behind how OpenMDAO solves for total derivatives via the Unified Derivative Equations.
+In the end, it all boils down to performing multiple linear solves to compute rows or columns of the total-derivative Jacobian.</p>
+<p>In the next chapters of this theory manual, we will discuss how to structure your model to make sure that the linear solves happen efficiently, and when to apply certain advanced algorithms to dramatically reduce compute cost for derivatives.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="setup_linear_solvers.html" title="Setting Up a Model for Efficient Linear Solves"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../scaling.html" title="Scaling Variables in OpenMDAO"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

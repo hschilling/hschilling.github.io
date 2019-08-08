@@ -1,0 +1,197 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Parallelizing Derivative Solves of Multipoint Models At a Small Memory Cost &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Vectorizing Derivative Solves for Array Variables At a Larger Memory Cost" href="vectorized.html" />
+    <link rel="prev" title="Solving for Derivatives of Multiple Separable Constraints Using a Single Linear Solve" href="separable.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="vectorized.html" title="Vectorizing Derivative Solves for Array Variables At a Larger Memory Cost"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="separable.html" title="Solving for Derivatives of Multiple Separable Constraints Using a Single Linear Solve"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Theory Manual</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="advanced_algorithms.html" accesskey="U">Advanced Linear Solver Algorithms for Special Cases</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="parallelizing-derivative-solves-of-multipoint-models-at-a-small-memory-cost">
+<span id="theory-fan-out"></span><h1>Parallelizing Derivative Solves of Multipoint Models At a Small Memory Cost<a class="headerlink" href="#parallelizing-derivative-solves-of-multipoint-models-at-a-small-memory-cost" title="Permalink to this headline">¶</a></h1>
+<p>A fan-out structure in a model is when you have a data path through the model that starts out serial and then reaches a point where multiple components can be run in parallel.
+This model structure is common in engineering problems, particularly in multi-point problems where you want to evaluate the performance of a given system at multiple operating conditions during a single analysis.</p>
+<p>For example, consider a simple example problem as follows:</p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="../../_images/dependent_model.png"><img alt="A very simple model with a fan-out structure." src="../../_images/dependent_model.png" style="width: 75%;" /></a>
+<p class="caption"><span class="caption-text">A very simple model with a fan-out structure.</span></p>
+</div>
+<p>Assume that the variables <code class="code docutils literal notranslate"><span class="pre">x</span></code> and <code class="code docutils literal notranslate"><span class="pre">y</span></code> are size 100 array variables computed by inexpensive components.
+These are upstream of the expensive implicit analyses (e.g. some kind of PDE solver) computing the very large
+implicit variables <code class="code docutils literal notranslate"><span class="pre">s1</span></code> and <code class="code docutils literal notranslate"><span class="pre">s2</span></code> (noted in yellow similar to the coloring in an N2 diagram).
+Lastly there are two scalar variables <code class="code docutils literal notranslate"><span class="pre">z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">z2</span></code>, computed using the converged values for <code class="code docutils literal notranslate"><span class="pre">s1</span></code> and <code class="code docutils literal notranslate"><span class="pre">s2</span></code>.</p>
+<p>The components that compute <code class="code docutils literal notranslate"><span class="pre">s1,z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">s2,z2</span></code> have no dependence on each other so we put them into a <a class="reference internal" href="../../features/core_features/grouping_components/parallel_group.html#feature-parallel-group"><span class="std std-ref">parallel group</span></a> and each group can run on its own processor (or set of processors).
+The upstream components that compute <code class="code docutils literal notranslate"><span class="pre">x</span></code> and <code class="code docutils literal notranslate"><span class="pre">y</span></code> are a serial bottleneck, but they are very inexpensive compared to the expensive components in the parallel group.
+So we can expect to get reasonable parallel scaling when running the nonlinear analysis a model set up like this.</p>
+<p>This potential for parallelization can also be seen by looking at the partial-derivative Jacobian structure of this example model.
+The dense column for <code class="code docutils literal notranslate"><span class="pre">y</span></code> means that you must compute it before you can compute <code class="code docutils literal notranslate"><span class="pre">s1,z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">s2,z2</span></code>.
+However, the block-diagonal structure for <code class="code docutils literal notranslate"><span class="pre">s1,z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">s2,z2</span></code> means that these parts of the model can be run in parallel.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../../_images/parallel_adj_jac.png"><img alt="Jacobian structure for fan-out models" src="../../_images/parallel_adj_jac.png" style="width: 80%;" /></a>
+</div>
+<p>If we want to compute the derivatives <span class="math notranslate nohighlight">\(\frac{dz1}{dx}\)</span> and <span class="math notranslate nohighlight">\(\frac{dz2}{dx}\)</span>, then reverse mode is preferred because it requires 2 linear solves instead of 100, but there is an inherent inefficiency that will limit the parallel scalability of reverse mode that needs to be considered as well.
+Given the feed-forward structure of this model, the <a class="reference internal" href="../../features/building_blocks/solvers/linear/linear_runonce.html#lnrunonce"><span class="std std-ref">LinearRunOnce</span></a> solver is recommended, which will use a back-substitution-style algorithm to solve for total derivatives in reverse mode.
+Looking at the linear system needed to solve in reverse mode, we see that the dense column for <code class="code docutils literal notranslate"><span class="pre">y</span></code> in the partial derivative Jacobian has now become a dense row —in reverse mode you use <span class="math notranslate nohighlight">\(\left[ \frac{\partial R}{\partial U} \right]^T\)</span> — and because we’re using back-propagation, that dense row now occurs <em>after</em> the two parallel constraints in the execution order (remember that order is reversed from the forward pass).
+You can see that in each of the two solution vectors, the entries for <code class="code docutils literal notranslate"><span class="pre">y</span></code> and <code class="code docutils literal notranslate"><span class="pre">x</span></code> are highlighted as nonzero, and hence they would overlap if you tried to perform both linear solves at the same time.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../../_images/parallel_adj_separate.png"><img alt="Jacobian structure for fan-out models" src="../../_images/parallel_adj_separate.png" style="width: 75%;" /></a>
+</div>
+<p>Recall that in the non-linear analysis, moving forward through the model, you could run both the expensive analyses in parallel, and not being able to do the same thing in reverse represents a significant parallel inefficiency.
+When solving for derivatives of <code class="code docutils literal notranslate"><span class="pre">z1</span></code>, the <code class="code docutils literal notranslate"><span class="pre">z2</span></code> components won’t have any work to do and will idle.
+Similarly the <code class="code docutils literal notranslate"><span class="pre">z1</span></code> components won’t have any work to do when solving for derivatives of <code class="code docutils literal notranslate"><span class="pre">z2</span></code>.
+That means that in each linear solve half of the computational resources of the model will be idle.
+This is represented visually by the light red sections of the vector, representing known zero entries in the vector.
+In general, if you had n different <code class="code docutils literal notranslate"><span class="pre">z</span></code> variables, then only <span class="math notranslate nohighlight">\(1/n\)</span> of the total compute resource would be active for any one linear solve.</p>
+<p>So despite having good parallel scaling for the nonlinear analysis (moving forward through the model), in reverse mode the parallel scaling is essentially non-existent.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This kind of parallel scaling limitation is unique to reverse mode. If <code class="code docutils literal notranslate"><span class="pre">z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">z2</span></code> were very large vectors, and <code class="code docutils literal notranslate"><span class="pre">x</span></code> was smaller vector, then we could use forward mode for the total derivative calculations, and both <code class="code docutils literal notranslate"><span class="pre">z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">z2</span></code> would have work to do for every single solve.</p>
+</div>
+<div class="section" id="approach-for-computing-parallel-derivatives-in-multipoint-models">
+<h2>Approach for Computing Parallel Derivatives in Multipoint Models<a class="headerlink" href="#approach-for-computing-parallel-derivatives-in-multipoint-models" title="Permalink to this headline">¶</a></h2>
+<p>Keeping in mind that we’ve stipulated that computations for <code class="code docutils literal notranslate"><span class="pre">x</span></code> and <code class="code docutils literal notranslate"><span class="pre">y</span></code> are inexpensive, the existing parallel resources of the model can be leveraged to enable parallel calculation of derivatives for both <code class="code docutils literal notranslate"><span class="pre">z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">z2</span></code>.</p>
+<p>The fundamental problem is that both <code class="code docutils literal notranslate"><span class="pre">z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">z2</span></code> need to back-propagate through <code class="code docutils literal notranslate"><span class="pre">y</span></code> and <code class="code docutils literal notranslate"><span class="pre">x</span></code> in order to compute derivatives, so parallelizing the two solves would result in the two back-propagations interfering with each other.
+However, we already have two processors (one for <code class="code docutils literal notranslate"><span class="pre">s1,z1</span></code> and one for <code class="code docutils literal notranslate"><span class="pre">s2,z2</span></code>), so we can duplicate <code class="code docutils literal notranslate"><span class="pre">y</span></code> and <code class="code docutils literal notranslate"><span class="pre">x</span></code> on each processor and then handle the back-propagation for each of the two linear solves on separate processors.
+At the end of that back-propagation, each processor will now have the correct derivative for one of the constraints, and the derivative values need to be all-gathered before they can be used.</p>
+<p>This duplication will come with a small additional memory cost, because space for <code class="code docutils literal notranslate"><span class="pre">x,y</span></code> must now be allocated in the linear vectors on all processors.
+As long as the  <code class="code docutils literal notranslate"><span class="pre">s1,z1</span></code> and <code class="code docutils literal notranslate"><span class="pre">s2,z1</span></code> variables are much larger, this additional memory cost is negligible.</p>
+<p>When using this parallelization algorithm, there are still <span class="math notranslate nohighlight">\(n\)</span> linear solves, for <span class="math notranslate nohighlight">\(n\)</span> variables, but now all of them can be run in parallel to gain back the scaling that is inherently present in the forward mode for this model structure.
+The linear solves now look like this:</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../../_images/parallel_adj_combined.png"><img alt="Jacobian structure for fan-out models using parallel adjoint" src="../../_images/parallel_adj_combined.png" style="width: 75%;" /></a>
+</div>
+<p>Here, each of the two vectors is being solved for on a different processor.
+The grayed-out blocks represent memory that is <strong>not</strong> allocated on that processor.</p>
+</div>
+<div class="section" id="coloring-variables-for-parallel-derivatives">
+<h2>Coloring Variables for Parallel Derivatives<a class="headerlink" href="#coloring-variables-for-parallel-derivatives" title="Permalink to this headline">¶</a></h2>
+<p>In the above example, there was only a single set of variables computed in parallel.
+Even if the model was larger and ran with <span class="math notranslate nohighlight">\(n\)</span> points across <span class="math notranslate nohighlight">\(n\)</span> processors, all the <span class="math notranslate nohighlight">\(z\)</span> variables could be combined into a single parallel derivative solve.
+In a parallel coloring sense, all the <span class="math notranslate nohighlight">\(z\)</span> variables belong to the same color.</p>
+<p>Consider a slightly more complex problem where each point outputs two different variables: <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span>.
+Using standard reverse mode, for <span class="math notranslate nohighlight">\(n\)</span> points there would need to be <span class="math notranslate nohighlight">\(2n\)</span> linear solves to compute all the derivatives.
+Just like before, parallel derivatives are needed to maintain the parallel scaling of the model in reverse mode.
+However, unlike the earlier problem, there would now need to be two different colors: one for all the <span class="math notranslate nohighlight">\(a\)</span> variables and one for all the <span class="math notranslate nohighlight">\(b\)</span> variables.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../../_images/parallel_adj_2color.png"><img alt="Jacobian structure for fan-out model with 2 colors using parallel adjoint" src="../../_images/parallel_adj_2color.png" style="width: 75%;" /></a>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Parallel derivative coloring is distinct from <a class="reference internal" href="separable.html#theory-separable-variables"><span class="std std-ref">simultaneous derivative coloring</span></a>.
+In the parallel coloring, you are specifying variables for which distinct linear solves can be performed in parallel on different processors.
+In simultaneous coloring you are specifying sets of variables that can be combined into a single linear solve.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="vectorized.html" title="Vectorizing Derivative Solves for Array Variables At a Larger Memory Cost"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="separable.html" title="Solving for Derivatives of Multiple Separable Constraints Using a Single Linear Solve"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Theory Manual</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="advanced_algorithms.html" >Advanced Linear Solver Algorithms for Special Cases</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

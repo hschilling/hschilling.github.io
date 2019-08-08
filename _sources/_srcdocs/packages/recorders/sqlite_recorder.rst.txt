@@ -1,0 +1,16 @@
+.. index:: sqlite_recorder.py
+
+.. _openmdao.recorders.sqlite_recorder.py:
+
+sqlite_recorder.py
+------------------
+
+.. automodule:: openmdao.recorders.sqlite_recorder
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

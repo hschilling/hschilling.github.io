@@ -1,0 +1,7 @@
+.. _VectorMagnitudeComp: 
+
+=========================
+VectorMagnitudeComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/vector_magnitude_comp.rst

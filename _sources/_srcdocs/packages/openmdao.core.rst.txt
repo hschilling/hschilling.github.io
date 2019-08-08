@@ -1,0 +1,17 @@
+openmdao.core
+-------------
+
+.. toctree::
+    :maxdepth: 1
+
+    core/analysis_error
+    core/component
+    core/driver
+    core/explicitcomponent
+    core/group
+    core/implicitcomponent
+    core/indepvarcomp
+    core/parallel_group
+    core/problem
+    core/system
+    core/total_jac

@@ -1,0 +1,307 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Memory Profiling &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Instance-Based Call Tracing" href="inst_call_tracing.html" />
+    <link rel="prev" title="Instance-based Profiling" href="inst_profile.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="inst_call_tracing.html" title="Instance-Based Call Tracing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="inst_profile.html" title="Instance-based Profiling"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Debugging</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Profiling and Tracing</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="memory-profiling">
+<span id="instbasedmemory"></span><h1>Memory Profiling<a class="headerlink" href="#memory-profiling" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">mem</span></code> command can be used to obtain an estimate of the memory usage of
+python function calls.</p>
+<p>For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao mem -p openmdao -p openaerostruct --tree run_CRM.py
+</pre></div>
+</div>
+<p>This will generate output to the console that looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>3486.46  (1 calls)  Problem.setup
+|3486.46  (1 calls)  System._setup:(Group)
+|   |3485.49  (1 calls)  Group._setup_procs
+|   |   |3481.97  (1 calls)  Group._setup_procs:(AeroPoint)
+|   |   |   |3479.86  (1 calls)  Group._setup_procs:(VLMStates)
+|   |   |   |   |2617.19  (2 calls)  Component._setup_procs:(EvalVelMtx)
+|   |   |   |   |   |3917.41  (2 calls)  EvalVelMtx.setup
+|   |   |   |   |   |   |  27.19  (2 calls)  ExplicitComponent.add_output:(EvalVelMtx)
+|   |   |   |   |   |   |   |  27.19  (2 calls)  Component.add_output:(EvalVelMtx)
+|   |   |   |   |   |   |   |   |  27.09  (2 calls)  &lt;/Users/banaylor/dev/blue/openmdao/utils/general_utils.py:151&gt;.ensure_compatible
+|   |   |   |   | 454.27  (2 calls)  Component._setup_procs:(GetVectors)
+|   |   |   |   |   | 454.27  (2 calls)  GetVectors.setup
+|   |   |   |   | 207.82  (1 calls)  Component._setup_procs:(VLMMtxRHSComp)
+|   |   |   |   |   | 207.82  (1 calls)  VLMMtxRHSComp.setup
+|   |   |   |   |   |   |  27.09  (3 calls)  Component.add_input:(VLMMtxRHSComp)
+|   |   |   |   |   |   |   |  27.09  (3 calls)  &lt;/Users/banaylor/dev/blue/openmdao/utils/general_utils.py:151&gt;.ensure_compatible
+|   |   |   |   |   |   |   9.13  (2 calls)  ExplicitComponent.add_output:(VLMMtxRHSComp)
+|   |   |   |   |   |   |   |   9.12  (2 calls)  Component.add_output:(VLMMtxRHSComp)
+|   |   |   |   |   |   |   |   |   9.03  (2 calls)  &lt;/Users/banaylor/dev/blue/openmdao/utils/general_utils.py:151&gt;.ensure_compatible
+|   |   |   |   | 162.62  (1 calls)  Component._setup_procs:(EvalVelocities)
+|   |   |   |   |   | 162.62  (1 calls)  EvalVelocities.setup
+|   |   |   |   |  36.21  (1 calls)  Component._setup_procs:(SolveMatrix)
+|   |   |   |   |   |  36.21  (1 calls)  SolveMatrix.setup
+|   |   |   |   1.31  (1 calls)  Component._setup_procs:(VLMGeometry)
+|   |   |   |   |   1.31  (1 calls)  VLMGeometry.setup
+|   |   |   3.35  (1 calls)  Group._setup_procs:(Geometry)
+|   |   |   |   2.85  (1 calls)  Group._setup_procs:(GeometryMesh)
+|   |   |   |   |   1.15  (1 calls)  Component._setup_procs:(Rotate)
+|   |   |   |   |   |   1.15  (1 calls)  Rotate.setup
+1399.43  (1 calls)  Problem.final_setup
+|1399.41  (1 calls)  System._final_setup:(Group)
+|   | 689.68  (1 calls)  Group._setup_transfers
+|   |   | 689.68  (1 calls)  DefaultTransfer._setup_transfers
+|   |   |   | 688.50  (1 calls)  Group._setup_transfers:(AeroPoint)
+|   |   |   |   | 688.50  (1 calls)  DefaultTransfer._setup_transfers
+|   |   |   |   |   | 688.33  (1 calls)  Group._setup_transfers:(VLMStates)
+|   |   |   |   |   |   | 688.33  (1 calls)  DefaultTransfer._setup_transfers
+|   |   |   |   |   |   |   | 516.52  (54 calls)  DefaultTransfer._setup_transfers.merge
+|   | 354.49  (1 calls)  System._setup_bounds:(Group)
+|   | 354.33  (1 calls)  System.set_initial_values:(Group)
+4.27  (1 calls)  /Users/banaylor/dev/blue/openmdao/api.py:1&lt;module&gt;
+|   1.09  (1 calls)  /Users/banaylor/dev/blue/openmdao/drivers/pyoptsparse_driver.py:7&lt;module&gt;
+|   1.06  (1 calls)  /Users/banaylor/dev/blue/openmdao/components/meta_model_structured_comp.py:1&lt;module&gt;
+169.36  (2 calls)  ExplicitComponent._solve_nonlinear:(GetVectors)
+| 113.30  (2 calls)  DefaultVector.set_const
+|  56.69  (2 calls)  GetVectors.compute
+17.88  (1 calls)  ExplicitComponent._solve_nonlinear:(VLMMtxRHSComp)
+|   9.04  (1 calls)  DefaultVector.set_const
+|   8.84  (1 calls)  VLMMtxRHSComp.compute
+8.57  (13 calls)  Group._transfer:(VLMStates)
+|   8.57  (13 calls)  DefaultTransfer.transfer
+147.45  (2 calls)  EvalVelMtx.compute
+| 686.95  (10 calls)  &lt;/Users/banaylor/dev/OpenAeroStruct/openaerostruct/aerodynamics/eval_mtx.py:18&gt;._compute_finite_vortex
+|   |  57.44  (10 calls)  &lt;/Users/banaylor/dev/OpenAeroStruct/openaerostruct/utils/vector_algebra.py:10&gt;.compute_dot
+|   |  21.36  (20 calls)  &lt;/Users/banaylor/dev/OpenAeroStruct/openaerostruct/utils/vector_algebra.py:90&gt;.compute_norm
+54.19  (2 calls)  DefaultVector.set_const
+
+Max mem usage: 5400.57 MB
+</pre></div>
+</div>
+<p>The memory use is mapped to the call tree structure.  Note that functions are tracked based on
+their full call tree path, so that the same function can appear multiple times in the tree,
+called from different places, and the different memory usage for those multiple calls can be
+seen in the tree.</p>
+<p>To see a flat listing rather than a tree, don’t use the <cite>–tree</cite> arg, and you’ll get output like
+this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1.06  (225 calls)  Vector.__init__:(DefaultVector)
+1.06  (1 calls)  /Users/banaylor/dev/blue/openmdao/components/meta_model_structured_comp.py:1&lt;module&gt;
+1.09  (1 calls)  /Users/banaylor/dev/blue/openmdao/drivers/pyoptsparse_driver.py:7&lt;module&gt;
+1.15  (1 calls)  Component._setup_procs:(Rotate)
+1.15  (1 calls)  Rotate.setup
+1.31  (1 calls)  Component._setup_procs:(VLMGeometry)
+1.31  (1 calls)  VLMGeometry.setup
+2.85  (1 calls)  Group._setup_procs:(GeometryMesh)
+3.35  (1 calls)  Group._setup_procs:(Geometry)
+4.27  (1 calls)  /Users/banaylor/dev/blue/openmdao/api.py:1&lt;module&gt;
+8.57  (13 calls)  Group._transfer:(VLMStates)
+8.58  (43 calls)  DefaultTransfer.transfer
+8.84  (1 calls)  VLMMtxRHSComp.compute
+9.12  (2 calls)  Component.add_output:(VLMMtxRHSComp)
+9.13  (2 calls)  ExplicitComponent.add_output:(VLMMtxRHSComp)
+17.88  (1 calls)  ExplicitComponent._solve_nonlinear:(VLMMtxRHSComp)
+21.36  (24 calls)  &lt;/Users/banaylor/dev/OpenAeroStruct/openaerostruct/utils/vector_algebra.py:90&gt;.compute_norm
+27.09  (3 calls)  Component.add_input:(VLMMtxRHSComp)
+27.19  (2 calls)  Component.add_output:(EvalVelMtx)
+27.19  (2 calls)  ExplicitComponent.add_output:(EvalVelMtx)
+36.21  (1 calls)  Component._setup_procs:(SolveMatrix)
+36.21  (1 calls)  SolveMatrix.setup
+56.69  (2 calls)  GetVectors.compute
+57.44  (14 calls)  &lt;/Users/banaylor/dev/OpenAeroStruct/openaerostruct/utils/vector_algebra.py:10&gt;.compute_dot
+64.25  (145 calls)  &lt;/Users/banaylor/dev/blue/openmdao/utils/general_utils.py:151&gt;.ensure_compatible
+147.45  (2 calls)  EvalVelMtx.compute
+162.62  (1 calls)  Component._setup_procs:(EvalVelocities)
+162.62  (1 calls)  EvalVelocities.setup
+169.36  (2 calls)  ExplicitComponent._solve_nonlinear:(GetVectors)
+177.06  (36 calls)  DefaultVector.set_const
+207.82  (1 calls)  Component._setup_procs:(VLMMtxRHSComp)
+207.82  (1 calls)  VLMMtxRHSComp.setup
+354.33  (1 calls)  System.set_initial_values:(Group)
+354.49  (1 calls)  System._setup_bounds:(Group)
+454.27  (2 calls)  Component._setup_procs:(GetVectors)
+454.27  (2 calls)  GetVectors.setup
+517.44  (186 calls)  DefaultTransfer._setup_transfers.merge
+686.95  (10 calls)  &lt;/Users/banaylor/dev/OpenAeroStruct/openaerostruct/aerodynamics/eval_mtx.py:18&gt;._compute_finite_vortex
+688.33  (1 calls)  Group._setup_transfers:(VLMStates)
+688.50  (1 calls)  Group._setup_transfers:(AeroPoint)
+689.68  (1 calls)  Group._setup_transfers
+1399.41  (1 calls)  System._final_setup:(Group)
+1399.44  (2 calls)  Problem.final_setup
+2068.28  (7 calls)  DefaultTransfer._setup_transfers
+2617.19  (2 calls)  Component._setup_procs:(EvalVelMtx)
+3479.86  (1 calls)  Group._setup_procs:(VLMStates)
+3481.97  (1 calls)  Group._setup_procs:(AeroPoint)
+3485.49  (1 calls)  Group._setup_procs
+3486.46  (1 calls)  System._setup:(Group)
+3486.46  (1 calls)  Problem.setup
+3917.41  (2 calls)  EvalVelMtx.setup
+
+Max mem usage: 5400.57 MB
+</pre></div>
+</div>
+<p>The <cite>-p</cite> argument(s) determine which package(s) will be traced. In the example above, the
+<cite>openmdao</cite> and <cite>openaerostruct</cite> packages were traced.  If no <cite>-p</cite> args are supplied, the
+<cite>openmdao</cite> package is assumed.  Note however that if <em>any</em> <cite>-p</cite> args are supplied, then the
+<cite>openmdao</cite> package will not be traced unless explicitly specified.</p>
+<p>The output can be filtered by minimum memory usage so that the parts with memory
+usage below a certain amount will not be shown.  The default minimum memory usage is 1 MB.
+If you wanted to set the minimum memory usage to 100 MB, for example, you could do it like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao mem &lt;your_python_script_here&gt; --min=100
+</pre></div>
+</div>
+<p>Running <cite>openmdao mem</cite> generates a raw memory dump file with a default name of <cite>mem_trace.raw</cite>.
+To display the memory profile using a pre-existing memory dump file, you can use the
+<cite>openmdao mempost</cite> command, for example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao mempost mem_trace.raw --min=100
+</pre></div>
+</div>
+<p>This just allows you to take different looks at the memory profile without having to re-run
+your code.</p>
+<p>As usual, any additional options for the <cite>openmdao mem</cite> and <cite>openmdao mempost</cite> commands can
+be seen by providing the <cite>-h</cite> argument, for example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao mem -h
+</pre></div>
+</div>
+
+    <div class="cell border-box-sizing code_cell rendered">
+       <div class="output_area"><pre>usage: openmdao mem [-h] [-o OUTFILE] [--min MIN_MEM] [-c] [--nogc]
+                    [-p PACKAGES] [-t]
+                    file
+
+positional arguments:
+  file                  Python file to profile.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTFILE, --outfile OUTFILE
+                        Name of file containing memory dump.
+  --min MIN_MEM         Dump function trace with memory usage in MB above
+                        min_mem to the given file. Default is 1.0.
+  -c, --colors          Display colors if the terminal supports it. Requires
+                        &#x27;colorama&#x27; python package. Use &#x27;pip install colorama&#x27;
+                        to install it.
+  --nogc                Disables automatic garbage collection.
+  -p PACKAGES, --package PACKAGES
+                        Determines which packages will be traced.
+  -t, --tree            Display memory use in tree format, showing memory use
+                        for each unique call sequence down to a function.
+</pre></div>
+    </div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">These memory usage numbers are only estimates, based on the changes in the process memory
+measured before and after each method call.  The exact memory use is difficult to determine due
+to the presence of python’s own internal memory management and garbage collection.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="inst_call_tracing.html" title="Instance-Based Call Tracing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="inst_profile.html" title="Instance-based Profiling"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Debugging</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Profiling and Tracing</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

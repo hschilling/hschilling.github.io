@@ -1,0 +1,364 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>EQConstraintComp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="ExternalCodeComp" href="external_code_comp.html" />
+    <link rel="prev" title="BalanceComp" href="balance_comp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="external_code_comp.html" title="ExternalCodeComp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="balance_comp.html" title="BalanceComp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="eqconstraintcomp">
+<span id="eq-constraint-comp-feature"></span><span id="index-0"></span><h1>EQConstraintComp<a class="headerlink" href="#eqconstraintcomp" title="Permalink to this headline">¶</a></h1>
+<p><cite>EQConstraintComp</cite> is a specialized component that provides a simple way to implement
+equality constraints.</p>
+<p>You can add one or more outputs to an <cite>EQConstraintComp</cite> that compute the difference
+between a pair of input values for the purposes of driving the two inputs to equality. It
+computes the output value as:</p>
+<div class="math notranslate nohighlight">
+\[name_{output} = \frac{ name_{mult} \times name_{lhs} - name_{rhs} }{f_{norm}(name_{rhs})}\]</div>
+<p>The normalization function <span class="math notranslate nohighlight">\(f_{norm}(name_{rhs})\)</span> takes one of the following forms:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}f_{norm}(name_{rhs}) =
+\begin{cases}
+  \left| name_{rhs} \right|,      &amp; \text{if normalize and } \left| name_{rhs} \right| \geq 2 \\
+  0.25 name_{rhs}^2 + 1,      &amp; \text{if normalize and } \left| name_{rhs} \right| &lt; 2 \\
+  1,      &amp; \text{if not normalize}
+\end{cases}\end{split}\]</div>
+<p>The following inputs and outputs are associated with each output variable.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="10%" />
+<col width="74%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">I/O</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>{name}</td>
+<td>output</td>
+<td>output variable</td>
+</tr>
+<tr class="row-odd"><td>lhs:{name}</td>
+<td>input</td>
+<td>left-hand side of difference equation</td>
+</tr>
+<tr class="row-even"><td>rhs:{name}</td>
+<td>input</td>
+<td>right-hand side of difference equation</td>
+</tr>
+<tr class="row-odd"><td>mult:{name}</td>
+<td>input</td>
+<td>left-hand side multiplier of difference equation</td>
+</tr>
+</tbody>
+</table>
+<p>The default value for the <code class="code docutils literal notranslate"><span class="pre">rhs:{name}</span></code> input can be set to via the
+<code class="code docutils literal notranslate"><span class="pre">rhs_val</span></code> argument (see arguments below). If the rhs value is fixed (e.g. 0),
+then the input can be left unconnected. The <code class="code docutils literal notranslate"><span class="pre">lhs:{name}</span></code> input must always have
+something connected to it.</p>
+<p>The multiplier is optional and will default to 1.0 if not connected.</p>
+<p><cite>EQConstraintComp</cite> supports vectorized outputs. Simply provide a default
+value or shape when adding the output that reflects the correct shape.</p>
+<p>You can provide the arguments to create an output variable when instantiating an
+<cite>EQConstraintComp</cite> or you can use the <code class="docutils literal notranslate"><span class="pre">add_eq_output</span></code> method to create one
+or more outputs after instantiation.  The constructor accepts all the same arguments
+as the <code class="docutils literal notranslate"><span class="pre">add_eq_output</span></code> method:</p>
+<dl class="method">
+<dt>
+<code class="descclassname">EQConstraintComp.</code><code class="descname">add_eq_output</code><span class="sig-paren">(</span><em>name</em>, <em>eq_units=None</em>, <em>lhs_name=None</em>, <em>rhs_name=None</em>, <em>rhs_val=0.0</em>, <em>use_mult=False</em>, <em>mult_name=None</em>, <em>mult_val=1.0</em>, <em>normalize=True</em>, <em>add_constraint=False</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/eq_constraint_comp.html#EQConstraintComp.add_eq_output"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add a new output variable computed via the difference equation.</p>
+<p>This will create new inputs <cite>lhs:name</cite>, <cite>rhs:name</cite>, and <cite>mult:name</cite> that will
+define the left and right sides of the difference equation, and a
+multiplier for the left-hand-side.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the output variable to be created.</p>
+</dd>
+<dt><strong>eq_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Units for the left-hand-side and right-hand-side of the difference equation.</p>
+</dd>
+<dt><strong>lhs_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Optional name for the LHS variable associated with the difference equation.  If
+None, the default will be used:  ‘lhs:{name}’.</p>
+</dd>
+<dt><strong>rhs_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Optional name for the RHS variable associated with the difference equation.  If
+None, the default will be used:  ‘rhs:{name}’.</p>
+</dd>
+<dt><strong>rhs_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, float, or np.array</span></dt>
+<dd><p class="first last">Default value for the RHS.  Must be compatible with the shape (optionally)
+given by the val or shape option in kwargs.</p>
+</dd>
+<dt><strong>use_mult</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Specifies whether the LHS multiplier is to be used.  If True, then an additional
+input <cite>mult_name</cite> is created, with the default value given by <cite>mult_val</cite>, that
+multiplies lhs.  Default is False.</p>
+</dd>
+<dt><strong>mult_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Optional name for the LHS multiplier variable associated with the output
+variable. If None, the default will be used: ‘mult:{name}’.</p>
+</dd>
+<dt><strong>mult_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, float, or np.array</span></dt>
+<dd><p class="first last">Default value for the LHS multiplier.  Must be compatible with the shape (optionally)
+given by the val or shape option in kwargs.</p>
+</dd>
+<dt><strong>normalize</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Specifies whether or not the resulting output should be normalized by a quadratic
+function of the RHS. When this option is True, the user-provided ref/ref0 scaler/adder
+options below are typically unnecessary.</p>
+</dd>
+<dt><strong>add_constraint</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Specifies whether to add an equality constraint.</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver. This option is only
+meaningful when add_constraint=True.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver. This option is only
+meaningful when add_constraint=True.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence. This option is only meaningful when add_constraint=True.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. This option is only meaningful when add_constraint=True.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional arguments to be passed for the creation of the output variable.
+(see <cite>add_output</cite> method).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>Note that the <cite>kwargs</cite> arguments can include any of the keyword arguments normally available
+when creating an output variable with the
+<a class="reference internal" href="../../../_srcdocs/packages/core/component.html#openmdao.core.component.Component.add_output" title="openmdao.core.component.Component.add_output"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_output</span></code></a> method of a <cite>Component</cite>.</p>
+<div class="section" id="example-sellar-idf">
+<h2>Example: Sellar IDF<a class="headerlink" href="#example-sellar-idf" title="Permalink to this headline">¶</a></h2>
+<p>The following example shows an Individual Design Feasible (IDF) architecture for the
+<a class="reference internal" href="../../../basic_guide/sellar.html#sellar"><span class="std std-ref">Sellar</span></a> problem that demonstrates the use of an <cite>EQConstraintComp</cite>.</p>
+<p>In IDF, the direct coupling between the disciplines is removed and the coupling variables
+are added to the optimizer’s design variables. The algorithm calls for two new equality
+constraints that enforce the coupling between the disciplines. This ensures that the final
+optimized solution is feasible, though it is achieved through the optimizer instead of
+using a solver.  The two new equality constraints are implemented in this example with
+an <cite>EQConstraintComp</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SellarIDF</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Individual Design Feasible (IDF) architecture for the Sellar problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># construct the Sellar model with `y1` and `y2` as independent variables</span>
+        <span class="n">dv</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+        <span class="n">dv</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+        <span class="n">dv</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+        <span class="n">dv</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+        <span class="n">dv</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;dv&#39;</span><span class="p">,</span> <span class="n">dv</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1withDerivatives</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2withDerivatives</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                           <span class="n">x</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">])))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv.x&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;d1.x&#39;</span><span class="p">,</span> <span class="s1">&#39;obj_cmp.x&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv.y1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;d2.y1&#39;</span><span class="p">,</span> <span class="s1">&#39;obj_cmp.y1&#39;</span><span class="p">,</span> <span class="s1">&#39;con_cmp1.y1&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv.y2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;d1.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;obj_cmp.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;con_cmp2.y2&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv.z&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;d1.z&#39;</span><span class="p">,</span> <span class="s1">&#39;d2.z&#39;</span><span class="p">,</span> <span class="s1">&#39;obj_cmp.z&#39;</span><span class="p">])</span>
+
+        <span class="c1"># rather than create a cycle by connecting d1.y1 to d2.y1 and d2.y2 to d1.y2</span>
+        <span class="c1"># we will constrain y1 and y2 to be equal for the two disciplines</span>
+
+        <span class="n">equal</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">EQConstraintComp</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">equal</span><span class="p">)</span>
+
+        <span class="n">equal</span><span class="o">.</span><span class="n">add_eq_output</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="n">add_constraint</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">equal</span><span class="o">.</span><span class="n">add_eq_output</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="n">add_constraint</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv.y1&#39;</span><span class="p">,</span> <span class="s1">&#39;equal.lhs:y1&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;d1.y1&#39;</span><span class="p">,</span> <span class="s1">&#39;equal.rhs:y1&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;equal.lhs:y2&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;d2.y2&#39;</span><span class="p">,</span> <span class="s1">&#39;equal.rhs:y2&#39;</span><span class="p">)</span>
+
+        <span class="c1"># the driver will effectively solve the cycle</span>
+        <span class="c1"># by satisfying the equality constraints</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;dv.x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">5.</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;dv.y1&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">5.</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;dv.y2&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">5.</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;dv.z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]),</span> <span class="n">upper</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj_cmp.obj&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con_cmp1.con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con_cmp2.con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar_feature</span> <span class="kn">import</span> <span class="n">SellarIDF</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarIDF</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Optimization terminated successfully.    (Exit mode 0)
+            Current function value: 3.1833939516939864
+            Iterations: 6
+            Function evaluations: 6
+            Gradient evaluations: 6
+Optimization Complete
+-----------------------------------</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dv.x&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">([</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dv.y1&#39;</span><span class="p">],</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;d1.y1&#39;</span><span class="p">]])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[array([3.16]), array([3.15999999])]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">([</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dv.y2&#39;</span><span class="p">],</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;d2.y2&#39;</span><span class="p">]])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[array([3.75527776]), array([3.75527776])]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dv.z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.97763888 0.        ]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;obj_cmp.obj&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[3.18339395]</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/EQConstraintComp.html#eqconstraintcomp"><span class="std std-ref">EQConstraintComp</span></a>, <a class="reference internal" href="../../../tags/Component.html#component"><span class="std std-ref">Component</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="external_code_comp.html" title="ExternalCodeComp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="balance_comp.html" title="BalanceComp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

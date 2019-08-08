@@ -1,0 +1,16 @@
+.. index:: record_util.py
+
+.. _openmdao.utils.record_util.py:
+
+record_util.py
+--------------
+
+.. automodule:: openmdao.utils.record_util
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

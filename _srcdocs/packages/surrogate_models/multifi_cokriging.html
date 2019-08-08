@@ -1,0 +1,760 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>multifi_cokriging.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="nearest_neighbor.py" href="nearest_neighbor.html" />
+    <link rel="prev" title="kriging.py" href="kriging.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="nearest_neighbor.html" title="nearest_neighbor.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kriging.html" title="kriging.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.surrogate_models.html" accesskey="U">openmdao.surrogate_models</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.surrogate_models.multifi_cokriging">
+<span id="multifi-cokriging-py"></span><span id="openmdao-surrogate-models-multifi-cokriging-py"></span><span id="index-0"></span><h1>multifi_cokriging.py<a class="headerlink" href="#module-openmdao.surrogate_models.multifi_cokriging" title="Permalink to this headline">¶</a></h1>
+<p>Integrates the Multi-Fidelity Co-Kriging method described in [LeGratiet2013].</p>
+<p>(Author: Remi Vauclin <a class="reference external" href="mailto:vauclin&#46;remi&#37;&#52;&#48;gmail&#46;com">vauclin<span>&#46;</span>remi<span>&#64;</span>gmail<span>&#46;</span>com</a>)</p>
+<p>This code was implemented using the package scikit-learn as basis.
+(Author: Vincent Dubourg, <a class="reference external" href="mailto:vincent&#46;dubourg&#37;&#52;&#48;gmail&#46;com">vincent<span>&#46;</span>dubourg<span>&#64;</span>gmail<span>&#46;</span>com</a>)</p>
+<p>OpenMDAO adaptation. Regression and correlation functions were directly copied
+from scikit-learn package here to avoid scikit-learn dependency.
+(Author: Remi Lafage, <a class="reference external" href="mailto:remi&#46;lafage&#37;&#52;&#48;onera&#46;fr">remi<span>&#46;</span>lafage<span>&#64;</span>onera<span>&#46;</span>fr</a>)</p>
+<p>ISAE/DMSM - ONERA/DCPS</p>
+<dl class="class">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging">
+<em class="property">class </em><code class="descclassname">openmdao.surrogate_models.multifi_cokriging.</code><code class="descname">MultiFiCoKriging</code><span class="sig-paren">(</span><em>regr='constant'</em>, <em>rho_regr='constant'</em>, <em>normalize=True</em>, <em>theta=None</em>, <em>theta0=None</em>, <em>thetaL=None</em>, <em>thetaU=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKriging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Integrate the Multi-Fidelity Co-Kriging method described in [LeGratiet2013].</p>
+<p class="rubric">Notes</p>
+<p>Implementation is based on the Package Scikit-Learn
+(Author: Vincent Dubourg, <a class="reference external" href="mailto:vincent&#46;dubourg&#37;&#52;&#48;gmail&#46;com">vincent<span>&#46;</span>dubourg<span>&#64;</span>gmail<span>&#46;</span>com</a>) which translates
+the DACE Matlab toolbox, see <a class="reference internal" href="#rafec0a633dc4-nlns2002" id="id1">[NLNS2002]</a>.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="rafec0a633dc4-nlns2002" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[NLNS2002]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>)</em> H. B. Nielsen, S. N. Lophaven, and J. Sondergaard.
+<cite>DACE - A MATLAB Kriging Toolbox.</cite> (2002)
+<a class="reference external" href="http://www2.imm.dtu.dk/~hbn/dace/dace.pdf">http://www2.imm.dtu.dk/~hbn/dace/dace.pdf</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="rafec0a633dc4-wbswm1992" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[WBSWM1992]</a></td><td>W. J. Welch, R. J. Buck, J. Sacks, H. P. Wynn, T. J. Mitchell,
+and M. D. Morris (1992). “Screening, predicting, and computer experiments.”
+<cite>Technometrics,</cite> 34(1) 15–25.
+<a class="reference external" href="http://www.jstor.org/pss/1269548">http://www.jstor.org/pss/1269548</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="rafec0a633dc4-legratiet2013" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[LeGratiet2013]</a></td><td>L. Le Gratiet (2013). “Multi-fidelity Gaussian process
+regression for computer experiments.”
+PhD thesis, Universite Paris-Diderot-Paris VII.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="rafec0a633dc4-tbkh2011" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[TBKH2011]</a></td><td>Toal, D. J., Bressloff, N. W., Keane, A. J., &amp; Holden, C. M. E. (2011).
+“The development of a hybridized particle swarm for kriging hyperparameter
+tuning.” <cite>Engineering optimization</cite>, 43(6), 675-699.</td></tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">openmdao.surrogate_models.multifi_cokriging</span> <span class="k">import</span> <span class="n">MultiFiCoKriging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Xe: DOE for expensive code (nested in Xc)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Xc: DOE for cheap code</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># ye: expensive response</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># yc: cheap response</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],[</span><span class="mf">0.4</span><span class="p">],[</span><span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">],[</span><span class="mf">0.2</span><span class="p">],[</span><span class="mf">0.3</span><span class="p">],[</span><span class="mf">0.5</span><span class="p">],[</span><span class="mf">0.6</span><span class="p">],[</span><span class="mf">0.7</span><span class="p">],[</span><span class="mf">0.8</span><span class="p">],[</span><span class="mf">0.9</span><span class="p">]]),</span><span class="n">Xe</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ye</span> <span class="o">=</span> <span class="p">((</span><span class="n">Xe</span><span class="o">*</span><span class="mi">6</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">Xe</span><span class="o">*</span><span class="mi">6</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">yc</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">Xc</span><span class="o">*</span><span class="mi">6</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">Xc</span><span class="o">*</span><span class="mi">6</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">Xc</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="mf">10.</span> <span class="o">-</span> <span class="mi">5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">MultiFiCoKriging</span><span class="p">(</span><span class="n">theta0</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">thetaL</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">thetaU</span><span class="o">=</span><span class="mf">50.</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">([</span><span class="n">Xc</span><span class="p">,</span> <span class="n">Xe</span><span class="p">],</span> <span class="p">[</span><span class="n">yc</span><span class="p">,</span> <span class="n">ye</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Prediction on x=0.05</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">([</span><span class="mf">0.05</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span><span class="o">-</span> <span class="p">((</span><span class="mf">0.05</span><span class="o">*</span><span class="mi">6</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="mf">0.05</span><span class="o">*</span><span class="mi">6</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">0.05</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="3%" />
+<col width="97%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>corr</strong></td>
+<td>(Object) Correlation function to use, default is squared_exponential_correlation.</td>
+</tr>
+<tr class="row-even"><td><strong>normalize</strong></td>
+<td>(bool, optional) When true, normalize X and Y so that the mean is at zero.</td>
+</tr>
+<tr class="row-odd"><td><strong>regr</strong></td>
+<td>(string or callable) A regression function returning an array of outputs of the linear regression functional basis for Universal Kriging purpose. regr is assumed to be the same for all levels of code. Default assumes a simple constant regression trend. Available built-in regression models are: ‘constant’, ‘linear’</td>
+</tr>
+<tr class="row-even"><td><strong>rho_regr</strong></td>
+<td>(string or callable or None) A regression function returning an array of outputs of the linear regression functional basis. Defines the regression function for the autoregressive parameter rho. rho_regr is assumed to be the same for all levels of code. Default assumes a simple constant regression trend. Available built-in regression models are: ‘constant’, ‘linear’</td>
+</tr>
+<tr class="row-odd"><td><strong>theta</strong></td>
+<td>(double, array_like or list or None) Value of correlation parameters if they are known; no optimization is run. Default is None, so that optimization is run. if double: value is replicated for all features and all levels. if array_like: an array with shape (n_features, ) for isotropic calculation. It is replicated for all levels. if list: a list of nlevel arrays specifying value for each level</td>
+</tr>
+<tr class="row-even"><td><strong>theta0</strong></td>
+<td>(double, array_like or list or None) Starting point for the maximum likelihood estimation of the best set of parameters. Default is None and meaning use of the default 0.5*np.ones(n_features) if double: value is replicated for all features and all levels. if array_like: an array with shape (n_features, ) for isotropic calculation. It is replicated for all levels. if list: a list of nlevel arrays specifying value for each level</td>
+</tr>
+<tr class="row-odd"><td><strong>thetaL</strong></td>
+<td>(double, array_like or list or None) Lower bound on the autocorrelation parameters for maximum likelihood estimation. Default is None meaning use of the default 1e-5*np.ones(n_features). if double: value is replicated for all features and all levels. if array_like: An array with shape matching theta0’s. It is replicated for all levels of code. if list: a list of nlevel arrays specifying value for each level</td>
+</tr>
+<tr class="row-even"><td><strong>thetaU</strong></td>
+<td>(double, array_like or list or None) Upper bound on the autocorrelation parameters for maximum likelihood estimation. Default is None meaning use of default value 50*np.ones(n_features). if double: value is replicated for all features and all levels. if array_like: An array with shape matching theta0’s. It is replicated for all levels of code. if list: a list of nlevel arrays specifying value for each level</td>
+</tr>
+<tr class="row-odd"><td><strong>X_mean</strong></td>
+<td>(float) Mean of the low fidelity training data for X.</td>
+</tr>
+<tr class="row-even"><td><strong>X_std</strong></td>
+<td>(float) Standard deviation of the low fidelity training data for X.</td>
+</tr>
+<tr class="row-odd"><td><strong>y_mean</strong></td>
+<td>(float) Mean of the low fidelity training data for y.</td>
+</tr>
+<tr class="row-even"><td><strong>y_std</strong></td>
+<td>(float) Standard deviation of the low fidelity training data for y.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>regr='constant'</em>, <em>rho_regr='constant'</em>, <em>normalize=True</em>, <em>theta=None</em>, <em>theta0=None</em>, <em>thetaL=None</em>, <em>thetaU=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKriging.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>regr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or callable, optional</span></dt>
+<dd><p class="first last">A regression function returning an array of outputs of the linear
+regression functional basis for Universal Kriging purpose.
+regr is assumed to be the same for all levels of code.
+Default assumes a simple constant regression trend.
+Available built-in regression models are:
+‘constant’, ‘linear’</p>
+</dd>
+<dt><strong>rho_regr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or callable, optional</span></dt>
+<dd><p class="first last">A regression function returning an array of outputs of the linear
+regression functional basis. Defines the regression function for the
+autoregressive parameter rho.
+rho_regr is assumed to be the same for all levels of code.
+Default assumes a simple constant regression trend.
+Available built-in regression models are:
+‘constant’, ‘linear’</p>
+</dd>
+<dt><strong>theta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Value of correlation parameters if they are known; no optimization is run.
+Default is None, so that optimization is run.
+if double: value is replicated for all features and all levels.
+if array_like: an array with shape (n_features, ) for
+isotropic calculation. It is replicated for all levels.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>theta0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Starting point for the maximum likelihood estimation of the
+best set of parameters.
+Default is None and meaning use of the default 0.5*np.ones(n_features)
+if double: value is replicated for all features and all levels.
+if array_like: an array with shape (n_features, ) for
+isotropic calculation. It is replicated for all levels.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>thetaL</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Lower bound on the autocorrelation parameters for maximum
+likelihood estimation.
+Default is None meaning use of the default 1e-5*np.ones(n_features).
+if double: value is replicated for all features and all levels.
+if array_like: An array with shape matching theta0’s. It is replicated
+for all levels of code.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>thetaU</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Upper bound on the autocorrelation parameters for maximum
+likelihood estimation.
+Default is None meaning use of default value 50*np.ones(n_features).
+if double: value is replicated for all features and all levels.
+if array_like: An array with shape matching theta0’s. It is replicated
+for all levels of code.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>normalize</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When true, normalize X and Y so that the mean is at zero.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y</em>, <em>initial_range=0.3</em>, <em>tol=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKriging.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement the Multi-Fidelity co-kriging model fitting method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>X</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of double array_like elements</span></dt>
+<dd><p class="first last">A list of arrays with the input at which observations were made, from lowest
+fidelity to highest fidelity. Designs must be nested
+with X[i] = np.vstack([…, X[i+1])</p>
+</dd>
+<dt><strong>y</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of double array_like elements</span></dt>
+<dd><p class="first last">A list of arrays with the observations of the scalar output to be predicted,
+from lowest fidelity to highest fidelity.</p>
+</dd>
+<dt><strong>initial_range</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Initial range for the optimizer.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Optimizer terminates when the tolerance tol is reached.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>X</em>, <em>eval_MSE=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKriging.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the predictions of the kriging model on X.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>X</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_eval, n_features) giving the point(s) at
+which the prediction(s) should be made.</p>
+</dd>
+<dt><strong>eval_MSE</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean, optional</span></dt>
+<dd><p class="first last">A boolean specifying whether the Mean Squared Error should be
+evaluated or not. Default assumes evalMSE is True.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>array_like</strong></dt>
+<dd><p class="first last">An array with shape (n_eval, ) with the Best Linear Unbiased
+Prediction at X. If all_levels is set to True, an array
+with shape (n_eval, nlevel) giving the BLUP for all levels.</p>
+</dd>
+<dt><strong>array_like, optional (if eval_MSE is True)</strong></dt>
+<dd><p class="first last">An array with shape (n_eval, ) with the Mean Squared Error at X.
+If all_levels is set to True, an array with shape (n_eval, nlevel)
+giving the MSE for all levels.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.rlf">
+<code class="descname">rlf</code><span class="sig-paren">(</span><em>lvl</em>, <em>theta=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKriging.rlf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKriging.rlf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine BLUP parameters and evaluate negative reduced likelihood function for theta.</p>
+<p>Maximizing this function wrt the autocorrelation parameters theta is
+equivalent to maximizing the likelihood of the assumed joint Gaussian
+distribution of the observations y evaluated onto the design of
+experiments X.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>lvl</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Integer</span></dt>
+<dd><p class="first last">Level of fidelity</p>
+</dd>
+<dt><strong>theta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like, optional</span></dt>
+<dd><p class="first last">An array containing the autocorrelation parameters at which the
+Gaussian Process model parameters should be determined.
+Default uses the built-in autocorrelation parameters
+(ie <code class="docutils literal notranslate"><span class="pre">theta</span> <span class="pre">=</span> <span class="pre">self.theta</span></code>).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>double</strong></dt>
+<dd><p class="first last">The value of the negative concentrated reduced likelihood function
+associated to the given autocorrelation parameters theta.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate">
+<em class="property">class </em><code class="descclassname">openmdao.surrogate_models.multifi_cokriging.</code><code class="descname">MultiFiCoKrigingSurrogate</code><span class="sig-paren">(</span><em>regr='constant'</em>, <em>rho_regr='constant'</em>, <em>normalize=True</em>, <em>theta=None</em>, <em>theta0=None</em>, <em>thetaL=None</em>, <em>thetaU=None</em>, <em>tolerance=1e-06</em>, <em>initial_range=0.3</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKrigingSurrogate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="surrogate_model.html#openmdao.surrogate_models.surrogate_model.MultiFiSurrogateModel" title="openmdao.surrogate_models.surrogate_model.MultiFiSurrogateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.surrogate_models.surrogate_model.MultiFiSurrogateModel</span></code></a></p>
+<p>OpenMDAO adapter of multi-fidelity recursive cokriging method described in [LeGratiet2013].</p>
+<p>See MultiFiCoKriging class.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="79%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>initial_range</strong></td>
+<td>(float) Initial range for the optimizer.</td>
+</tr>
+<tr class="row-even"><td><strong>model</strong></td>
+<td>(MultiFiCoKriging) Contains MultiFiCoKriging surrogate.</td>
+</tr>
+<tr class="row-odd"><td><strong>tolerance</strong></td>
+<td>(float) Optimizer terminates when the tolerance tol is reached.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>regr='constant'</em>, <em>rho_regr='constant'</em>, <em>normalize=True</em>, <em>theta=None</em>, <em>theta0=None</em>, <em>thetaL=None</em>, <em>thetaU=None</em>, <em>tolerance=1e-06</em>, <em>initial_range=0.3</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKrigingSurrogate.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>normalize</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When true, normalize X and Y so that the mean is at zero.</p>
+</dd>
+<dt><strong>regr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or callable, optional</span></dt>
+<dd><p class="first last">A regression function returning an array of outputs of the linear
+regression functional basis for Universal Kriging purpose.
+regr is assumed to be the same for all levels of code.
+Default assumes a simple constant regression trend.
+Available built-in regression models are:
+‘constant’, ‘linear’</p>
+</dd>
+<dt><strong>rho_regr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or callable, optional</span></dt>
+<dd><p class="first last">A regression function returning an array of outputs of the linear
+regression functional basis. Defines the regression function for the
+autoregressive parameter rho.
+rho_regr is assumed to be the same for all levels of code.
+Default assumes a simple constant regression trend.
+Available built-in regression models are:
+‘constant’, ‘linear’</p>
+</dd>
+<dt><strong>theta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Value of correlation parameters if they are known; no optimization is run.
+Default is None, so that optimization is run.
+if double: value is replicated for all features and all levels.
+if array_like: an array with shape (n_features, ) for
+isotropic calculation. It is replicated for all levels.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>theta0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Starting point for the maximum likelihood estimation of the
+best set of parameters.
+Default is None and meaning use of the default 0.5*np.ones(n_features)
+if double: value is replicated for all features and all levels.
+if array_like: an array with shape (n_features, ) for
+isotropic calculation. It is replicated for all levels.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>thetaL</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Lower bound on the autocorrelation parameters for maximum
+likelihood estimation.
+Default is None meaning use of the default 1e-5*np.ones(n_features).
+if double: value is replicated for all features and all levels.
+if array_like: An array with shape matching theta0’s. It is replicated
+for all levels of code.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>thetaU</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, array_like or list, optional</span></dt>
+<dd><p class="first last">Upper bound on the autocorrelation parameters for maximum
+likelihood estimation.
+Default is None meaning use of default value 50*np.ones(n_features).
+if double: value is replicated for all features and all levels.
+if array_like: An array with shape matching theta0’s. It is replicated
+for all levels of code.
+if list: a list of nlevel arrays specifying value for each level</p>
+</dd>
+<dt><strong>tolerance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Optimizer terminates when the tolerance tol is reached.</p>
+</dd>
+<dt><strong>initial_range</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Initial range for the optimizer.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.linearize">
+<code class="descname">linearize</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.linearize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the jacobian of the interpolant at the requested point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array-like</span></dt>
+<dd><p class="first last">Point at which the surrogate Jacobian is evaluated.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>new_x</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKrigingSurrogate.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a predicted value of the response based on the current trained model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>new_x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_eval, n_features) giving the point(s) at
+which the prediction(s) should be made.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>array_like</strong></dt>
+<dd><p class="first last">An array with shape (n_eval, ) with the Best Linear Unbiased
+Prediction at X. If all_levels is set to True, an array
+with shape (n_eval, nlevel) giving the BLUP for all levels.</p>
+</dd>
+<dt><strong>array_like</strong></dt>
+<dd><p class="first last">An array with shape (n_eval, ) with the square root of the Mean Squared Error at X.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.train">
+<code class="descname">train</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a predicted value of the response based on the current trained model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array-like</span></dt>
+<dd><p class="first last">Point(s) at which the surrogate is evaluated.</p>
+</dd>
+<dt><strong>y</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array-like</span></dt>
+<dd><p class="first last">Model responses at given inputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.train_multifi">
+<code class="descname">train_multifi</code><span class="sig-paren">(</span><em>X</em>, <em>Y</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#MultiFiCoKrigingSurrogate.train_multifi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.train_multifi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the surrogate model with the given set of inputs and outputs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>X</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_samples_X, n_features) with the input at which observations
+were made.</p>
+</dd>
+<dt><strong>Y</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_samples_X, n_features) with the observations of the scalar
+output to be predicted.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.vectorized_predict">
+<code class="descname">vectorized_predict</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.MultiFiCoKrigingSurrogate.vectorized_predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate predicted values of the response based on the current trained model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array-like</span></dt>
+<dd><p class="first last">Vectorized point(s) at which the surrogate is evaluated.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.surrogate_models.multifi_cokriging.constant_regression">
+<code class="descclassname">openmdao.surrogate_models.multifi_cokriging.</code><code class="descname">constant_regression</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#constant_regression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.constant_regression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Zero order polynomial (constant, p = 1) regression model.</p>
+<p>x –&gt; f(x) = 1</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">Input data.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>array_like</strong></dt>
+<dd><p class="first last">Constant regression output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.surrogate_models.multifi_cokriging.l1_cross_distances">
+<code class="descclassname">openmdao.surrogate_models.multifi_cokriging.</code><code class="descname">l1_cross_distances</code><span class="sig-paren">(</span><em>X</em>, <em>Y=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#l1_cross_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.l1_cross_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the nonzero componentwise L1 cross-distances between the vectors in X and Y.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>X</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_samples_X, n_features)</p>
+</dd>
+<dt><strong>Y</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_samples_Y, n_features)</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>array with shape (n_samples * (n_samples - 1) / 2, n_features)</strong></dt>
+<dd><p class="first last">The array of componentwise L1 cross-distances.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.surrogate_models.multifi_cokriging.linear_regression">
+<code class="descclassname">openmdao.surrogate_models.multifi_cokriging.</code><code class="descname">linear_regression</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#linear_regression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.linear_regression" title="Permalink to this definition">¶</a></dt>
+<dd><p>First order polynomial (linear, p = n+1) regression model.</p>
+<p>x –&gt; f(x) = [ 1, x_1, …, x_n ].T</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">Input data.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>array_like</strong></dt>
+<dd><p class="first last">Linear regression output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.surrogate_models.multifi_cokriging.squared_exponential_correlation">
+<code class="descclassname">openmdao.surrogate_models.multifi_cokriging.</code><code class="descname">squared_exponential_correlation</code><span class="sig-paren">(</span><em>theta</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/surrogate_models/multifi_cokriging.html#squared_exponential_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.surrogate_models.multifi_cokriging.squared_exponential_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Squared exponential correlation model (Radial Basis Function).</p>
+<p>(Infinitely differentiable stochastic process, very smooth):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                                    <span class="n">n</span>
+<span class="n">theta</span><span class="p">,</span> <span class="n">dx</span> <span class="o">--&gt;</span> <span class="n">r</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span>  <span class="nb">sum</span>  <span class="o">-</span> <span class="n">theta_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">dx_i</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span> <span class="p">)</span>
+                                  <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>theta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape 1 (isotropic) or n (anisotropic) giving the
+autocorrelation parameter(s).</p>
+</dd>
+<dt><strong>d</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_eval, n_features) giving the componentwise
+distances between locations x and x’ at which the correlation model
+should be evaluated.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>r</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">An array with shape (n_eval, ) containing the values of the
+autocorrelation model.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="nearest_neighbor.html" title="nearest_neighbor.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kriging.html" title="kriging.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.surrogate_models.html" >openmdao.surrogate_models</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

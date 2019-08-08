@@ -1,0 +1,222 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The Newton Solver Isn’t Converging &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Listing Variables" href="listing_variables.html" />
+    <link rel="prev" title="Debugging" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="listing_variables.html" title="Listing Variables"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Debugging"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Debugging</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-newton-solver-isn-t-converging">
+<span id="netwon-not-converging"></span><h1>The Newton Solver Isn’t Converging<a class="headerlink" href="#the-newton-solver-isn-t-converging" title="Permalink to this headline">¶</a></h1>
+<p>If you think that the <a class="reference internal" href="../building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a> is not properly converging your model,
+then there are several things you can do to debug it.
+The very first thing you need to do is set <a class="reference internal" href="../core_features/controlling_solvers/solver_options.html#solver-options"><span class="std std-ref">iprint=2</span></a> on the solver so you can see what is actually going on.</p>
+<p>There are two broad reasons why <a class="reference internal" href="../building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a> might fail:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>The linear solver isn’t able to solve for an update step</li>
+<li>The nonlinear solver is not able to find a solution</li>
+</ol>
+</div></blockquote>
+<div class="section" id="failing-linear-solve">
+<h2>Failing Linear Solve<a class="headerlink" href="#failing-linear-solve" title="Permalink to this headline">¶</a></h2>
+<p>Before you try any other debugging method, you need to check to make sure that you’ve correctly defined all the partial derivatives in all components inside the relevant group.
+You can use the <a class="reference internal" href="../core_features/working_with_derivatives/basic_check_partials.html#feature-check-partials"><span class="std std-ref">check_partials()</span></a> method to have OpenMDAO compare your analytic derivatives against finite-difference or complex-step approximations.</p>
+<div class="section" id="iterative-linear-solvers">
+<h3>Iterative Linear Solvers<a class="headerlink" href="#iterative-linear-solvers" title="Permalink to this headline">¶</a></h3>
+<p>If you are using one of the iterative linear solvers (e.g. <a class="reference internal" href="../building_blocks/solvers/linear/petsc_krylov.html#petsckrylov"><span class="std std-ref">PETScKrylov</span></a>, <a class="reference internal" href="../building_blocks/solvers/linear/scipy_iter_solver.html#scipyiterativesolver"><span class="std std-ref">ScipyKrylov</span></a>),
+try switching to the <a class="reference internal" href="../building_blocks/solvers/linear/direct_solver.html#directsolver"><span class="std std-ref">DirectSolver</span></a> instead.
+This solver will compute an LU factorization and then use it to solve for the Newton update.
+Alternatively, you could try adding the <a class="reference internal" href="../building_blocks/solvers/linear/direct_solver.html#directsolver"><span class="std std-ref">DirectSolver</span></a> as a <a class="reference internal" href="../building_blocks/solvers/linear/petsc_krylov.html#petsckrylov-precon"><span class="std std-ref">preconditioner</span></a> on one of the Krylov solvers.</p>
+<p>You should set <a class="reference internal" href="../core_features/controlling_solvers/solver_options.html#solver-options"><span class="std std-ref">options[‘iprint’]=2</span></a> setting on any iterative linear solver.
+You can use the <a class="reference internal" href="../core_features/controlling_solvers/solver_options.html#solver-options-set-solver-print"><span class="std std-ref">set_solver_print</span></a> helper method to set <cite>iprint</cite> on every solver in the model.</p>
+</div>
+<div class="section" id="direct-linear-solver">
+<h3>Direct Linear Solver<a class="headerlink" href="#direct-linear-solver" title="Permalink to this headline">¶</a></h3>
+<p>If you are seeing <cite>NAN</cite> in the output, then you need to resolve that.
+You can’t have <cite>NAN</cite> values in either the residual calculation or any of the partial derivative values.</p>
+<p>If you are getting errors complaining about <cite>Singular Matrix</cite>, then you have at least one row or column of your Jacobian that has all zeros in it.
+This can be caused by several different things:</p>
+<blockquote>
+<div><ul class="simple">
+<li>You did run <a class="reference internal" href="../core_features/working_with_derivatives/basic_check_partials.html#feature-check-partials"><span class="std std-ref">check_partials()</span></a>, right?!!!</li>
+<li><dl class="first docutils">
+<dt>Check for missing or incorrect data connections to one or more components.</dt>
+<dd><ul class="first last">
+<li>Use the <a class="reference internal" href="../../other/om_command.html#om-command-n2"><span class="std std-ref">N2 diagram</span></a> to inspect your model hierarchy and connections in a matrix format.</li>
+<li>Use the <a class="reference internal" href="../../other/om_command.html#om-command-view-connections"><span class="std std-ref">connection viewer</span></a> in a list format.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>Use <a class="reference internal" href="listing_variables.html#list-outputs"><span class="std std-ref">list_outputs()</span></a> to look at the state variable values and see if anything has taken on a bad value (e.g. 0 or 1e500) that causes the derivative to be ill-defined.</li>
+<li>Seriously, run <a class="reference internal" href="../core_features/working_with_derivatives/basic_check_partials.html#feature-check-partials"><span class="std std-ref">check_partials()</span></a> and look carefully at the output!</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="failing-nonlinear-solve">
+<h2>Failing Nonlinear Solve<a class="headerlink" href="#failing-nonlinear-solve" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes the linear solver is working fine, but the solver just cannot find the right answer.
+There are a number of things to look at at this point.</p>
+<div class="section" id="bad-initial-guess">
+<h3>Bad initial guess<a class="headerlink" href="#bad-initial-guess" title="Permalink to this headline">¶</a></h3>
+<p>Newton solvers are notorious for requiring a reasonably good starting guess in order to converge.
+Try turning on the <a class="reference internal" href="../building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">solve_subsystems</span></a> option.
+This lets the components in the model help the Newton solver out by providing better
+values for some of the variables via the <cite>compute</cite> and <cite>solve_nonlinear</cite> methods
+on <cite>ExplicitComponent</cite> and <cite>ImplicitComponent</cite> respectively.
+If all the components in your system are explicit, you probably want to turn this on.</p>
+<p>If the initial residual value is massive (set <a class="reference internal" href="../core_features/controlling_solvers/solver_options.html#solver-options"><span class="std std-ref">options[‘iprint’]=2</span></a>, so you can see the residuals),
+set <a class="reference internal" href="../building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">options[‘maxiter’]=0</span></a> and then call <a class="reference internal" href="../core_features/running/run_model.html#run-model"><span class="std std-ref">run_model()</span></a>.
+This will let you see what the solver sees as values and residuals at the very start.
+Then call <a class="reference internal" href="listing_variables.html#list-outputs"><span class="std std-ref">list_outputs()</span></a> to take a look at which residuals are way off
+and try to give a better guess for the associated state variables.</p>
+</div>
+<div class="section" id="things-to-try-to-help-convergence">
+<h3>Things to try to help convergence<a class="headerlink" href="#things-to-try-to-help-convergence" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ul class="simple">
+<li>You might need to give it more iterations (<a class="reference internal" href="../building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">maxiter</span></a> option).</li>
+<li>The default value is 10, which is not enough for some models.</li>
+<li>You might need to use a <a class="reference internal" href="../building_blocks/solvers/backtracking/index.html#feature-line-search"><span class="std std-ref">linesearch</span></a> algorithm to help things behave better.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="use-the-boundsenforcels-line-search-to-enforce-upper-and-lower-bounds">
+<h3>Use the BoundsEnforceLS line search to enforce upper and lower bounds<a class="headerlink" href="#use-the-boundsenforcels-line-search-to-enforce-upper-and-lower-bounds" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes the Newton solver will take bad steps along the way to convergence.
+For example, you might have a pressure value in your model that needs to stay positive always.
+In that case you can <a class="reference internal" href="../core_features/defining_components/declaring_variables.html#declaring-variables"><span class="std std-ref">set upper and lower bounds</span></a> on that specific output value and then add
+the <a class="reference internal" href="../building_blocks/solvers/backtracking/bounds_enforce.html#feature-bounds-enforce"><span class="std std-ref">BoundsEnforceLS line search</span></a> to the newton solver so it will respect those bounds.</p>
+</div>
+<div class="section" id="check-if-you-re-running-into-a-variable-bound">
+<h3>Check if you’re running into a variable bound<a class="headerlink" href="#check-if-you-re-running-into-a-variable-bound" title="Permalink to this headline">¶</a></h3>
+<p>If you’ve set the <cite>lower</cite> or <cite>upper</cite> bounds on any output values
+and added a <a class="reference internal" href="../building_blocks/solvers/backtracking/index.html#feature-line-search"><span class="std std-ref">linesearch</span></a> to the <a class="reference internal" href="../building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a>,
+then the solver might be getting stuck on one of those bounds.
+You might want to try changing the <a class="reference internal" href="../building_blocks/solvers/backtracking/bounds_enforce.html#feature-bounds-enforce"><span class="std std-ref">bounds enforcement method</span></a>.</p>
+<p>It’s also possible that you have set the bound to be too restrictive.
+If you see many iterations where the residual norm isn’t changing at all, that is an
+indication that the Newton step is repeatedly bumping into the same bound over and over again.
+You can set <a class="reference internal" href="../building_blocks/solvers/backtracking/bounds_enforce.html#feature-bounds-enforce"><span class="std std-ref">options[‘print_bound_enforce’]=True</span></a> to have the linesearch report which variables are hitting their bounds.</p>
+<p>If you see that you are butting up against a variable bound, then you have to consider if that bound is really necessary.
+Sometimes a newton solver needs to pass through that invalid space on the way to finding the answer, and if can’t then it won’t be able to converge.
+If you have something like pressure, that really can’t be negative ever perhaps because you are taking a log of it, then you have no choice but to make a lower bound of 0.
+However, if you just set the bounds to be something that is physically realistic, its possible that the bounds are overly constrictive and you need to loosen them up in order to get convergence.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="listing_variables.html" title="Listing Variables"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Debugging"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Debugging</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

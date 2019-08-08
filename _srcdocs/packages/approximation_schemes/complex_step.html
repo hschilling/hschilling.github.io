@@ -1,0 +1,199 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>complex_step.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="finite_difference.py" href="finite_difference.html" />
+    <link rel="prev" title="approximation_scheme.py" href="approximation_scheme.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="finite_difference.html" title="finite_difference.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="approximation_scheme.html" title="approximation_scheme.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.approximation_schemes.html" accesskey="U">openmdao.approximation_schemes</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.approximation_schemes.complex_step">
+<span id="complex-step-py"></span><span id="openmdao-approximation-schemes-complex-step-py"></span><span id="index-0"></span><h1>complex_step.py<a class="headerlink" href="#module-openmdao.approximation_schemes.complex_step" title="Permalink to this headline">¶</a></h1>
+<p>Complex Step derivative approximations.</p>
+<dl class="class">
+<dt id="openmdao.approximation_schemes.complex_step.ComplexStep">
+<em class="property">class </em><code class="descclassname">openmdao.approximation_schemes.complex_step.</code><code class="descname">ComplexStep</code><a class="reference internal" href="../../../_modules/openmdao/approximation_schemes/complex_step.html#ComplexStep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.approximation_schemes.complex_step.ComplexStep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="approximation_scheme.html#openmdao.approximation_schemes.approximation_scheme.ApproximationScheme" title="openmdao.approximation_schemes.approximation_scheme.ApproximationScheme"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.approximation_schemes.approximation_scheme.ApproximationScheme</span></code></a></p>
+<p>Approximation scheme using complex step to calculate derivatives.</p>
+<p>For example, using  a step size of ‘h’ will approximate the derivative in
+the following way:</p>
+<div class="math notranslate nohighlight">
+\[f'(x) = \Im{\frac{f(x+ih)}{h}}.\]</div>
+<dl class="attribute">
+<dt id="openmdao.approximation_schemes.complex_step.ComplexStep.DEFAULT_OPTIONS">
+<code class="descname">DEFAULT_OPTIONS</code><em class="property"> = {'directional': False, 'step': 1e-40}</em><a class="headerlink" href="#openmdao.approximation_schemes.complex_step.ComplexStep.DEFAULT_OPTIONS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.approximation_schemes.complex_step.ComplexStep.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/approximation_schemes/complex_step.html#ComplexStep.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.approximation_schemes.complex_step.ComplexStep.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the ApproximationScheme.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.approximation_schemes.complex_step.ComplexStep.add_approximation">
+<code class="descname">add_approximation</code><span class="sig-paren">(</span><em>abs_key</em>, <em>system</em>, <em>kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/approximation_schemes/complex_step.html#ComplexStep.add_approximation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.approximation_schemes.complex_step.ComplexStep.add_approximation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this approximation scheme to approximate the derivative d(of)/d(wrt).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>abs_key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple(str,str)</span></dt>
+<dd><p class="first last">Absolute name pairing of (of, wrt) for the derivative.</p>
+</dd>
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">Containing System.</p>
+</dd>
+<dt><strong>kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional keyword arguments, to be interpreted by sub-classes.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.approximation_schemes.complex_step.ComplexStep.compute_approximations">
+<code class="descname">compute_approximations</code><span class="sig-paren">(</span><em>system</em>, <em>jac</em>, <em>total=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/approximation_schemes/complex_step.html#ComplexStep.compute_approximations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.approximation_schemes.complex_step.ComplexStep.compute_approximations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the system to compute the approximate sub-Jacobians.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">System on which the execution is run.</p>
+</dd>
+<dt><strong>jac</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict-like</span></dt>
+<dd><p class="first last">Approximations are stored in the given dict-like object.</p>
+</dd>
+<dt><strong>total</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True total derivatives are being approximated, else partials.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="finite_difference.html" title="finite_difference.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="approximation_scheme.html" title="approximation_scheme.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.approximation_schemes.html" >openmdao.approximation_schemes</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+.. index:: default_allocator.py
+
+.. _openmdao.proc_allocators.default_allocator.py:
+
+default_allocator.py
+--------------------
+
+.. automodule:: openmdao.proc_allocators.default_allocator
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

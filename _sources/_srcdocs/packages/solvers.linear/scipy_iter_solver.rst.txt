@@ -1,0 +1,16 @@
+.. index:: scipy_iter_solver.py
+
+.. _openmdao.solvers.linear.scipy_iter_solver.py:
+
+scipy_iter_solver.py
+--------------------
+
+.. automodule:: openmdao.solvers.linear.scipy_iter_solver
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

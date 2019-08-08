@@ -1,0 +1,7 @@
+.. _IndepVarComp: 
+
+=========================
+IndepVarComp
+=========================
+  .. toctree::
+     ../basic_guide/component_types.rst

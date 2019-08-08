@@ -1,0 +1,7 @@
+.. _BsplinesComp: 
+
+=========================
+BsplinesComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/bsplines_comp.rst

@@ -1,0 +1,16 @@
+.. index:: paraboloid_mat_vec.py
+
+.. _openmdao.test_suite.components.paraboloid_mat_vec.py:
+
+paraboloid_mat_vec.py
+---------------------
+
+.. automodule:: openmdao.test_suite.components.paraboloid_mat_vec
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

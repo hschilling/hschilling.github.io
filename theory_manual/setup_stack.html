@@ -1,0 +1,269 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The System Setup Stack: Understanding When to Use setup and configure &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OpenMDAO Solvers" href="solver_api.html" />
+    <link rel="prev" title="Understanding How Variables Work" href="implicit_transformation_of_vars.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="solver_api.html" title="OpenMDAO Solvers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="implicit_transformation_of_vars.html" title="Understanding How Variables Work"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-system-setup-stack-understanding-when-to-use-setup-and-configure">
+<span id="theory-setup-stack"></span><h1>The System Setup Stack: Understanding When to Use setup and configure<a class="headerlink" href="#the-system-setup-stack-understanding-when-to-use-setup-and-configure" title="Permalink to this headline">¶</a></h1>
+<p>This document explains what happens during the OpenMDAO <cite>Problem</cite> <cite>setup</cite> process, and how some of the model
+API methods interact during that process.</p>
+<p>The purpose of the <cite>setup</cite> process is to prepare the data structures that OpenMDAO needs to efficiently
+run your model or driver. In particular, this includes setting up the vectors used for passing data
+to inputs, converging solvers, and calculating derivatives. It also includes setting up the MPI
+communicators.</p>
+<p>Setup also performs some level of model checking, mainly for critical errors. More extensive model
+checking can be done by setting “check” when calling <cite>setup</cite>, or by using the <a class="reference internal" href="../other/om_command.html#om-command"><span class="std std-ref">openmdao command
+line check</span></a>. It is recommended that you do this after making any changes to the configuration
+of your model.  The “check” argument to <cite>setup</cite> can be set to <cite>True</cite>, which will cause a default
+set of checks to run.  It can also be set to ‘all’, which will run all available checks.  Finally,
+it can be set to a specific list of checks to run.  The checks that are available can be
+determined by running the following command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao check -h
+</pre></div>
+</div>
+
+    <div class="cell border-box-sizing code_cell rendered">
+       <div class="output_area"><pre>usage: openmdao check [-h] [-o OUTFILE] [-c CHECKS] file
+
+positional arguments:
+  file        Python file containing the model.
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -o OUTFILE  output file.
+  -c CHECKS   Only perform specific check(s). Default checks are:
+              [&#x27;comp_has_no_outputs&#x27;, &#x27;dup_inputs&#x27;, &#x27;missing_recorders&#x27;,
+              &#x27;out_of_order&#x27;, &#x27;solvers&#x27;, &#x27;system&#x27;]. Other available checks
+              are: [&#x27;cycles&#x27;, &#x27;promotions&#x27;, &#x27;unconnected_inputs&#x27;].
+</pre></div>
+    </div><p>By default, the output of all checks will be written to a file called ‘openmdao_checks.out’ in
+addition to <cite>stdout</cite>.  Checks can also be performed by calling the <cite>check_config</cite> method on
+your problem object.</p>
+<p>The OpenMDAO <cite>Group</cite> API includes three methods that are invoked during the <cite>setup</cite> process: <cite>setup</cite>, <cite>configure</cite>, and
+<cite>initialize</cite>. Most of the time, <cite>setup</cite> is all you need to build a group. The specific use case for
+<cite>configure</cite> is shown below in the next section. The <cite>initialize</cite> method is only used for declaring options for your
+group (and also in <cite>Component</cite>), and their placement here allows them to be passed into the group as
+instantiation arguments.</p>
+<p>One question that is often asked is: why can’t we just put all of our model building code into our group’s
+<cite>__init__</cite> method so that everything is there when I instantiate the class? The answer is, when
+running a parallel model under MPI, certain systems might only be executed on certain processors.
+To save memory across the model, these systems are not fully set up on processors where they are
+not local. The only way to do this is to isolate the model building process into a custom method
+(<cite>setup</cite>) and only call it on the processors where you need the footprint for that group. While
+not everyone will run their models in parallel, it is a good practice to follow the stricter
+guideline so that, if someone wants to include your model in a larger parallel model, they won’t
+be forced to refactor it.</p>
+<div class="section" id="usage-of-setup-vs-configure">
+<span id="theory-setup-vs-configure"></span><h2>Usage of setup vs. configure<a class="headerlink" href="#usage-of-setup-vs-configure" title="Permalink to this headline">¶</a></h2>
+<p>The need for two methods for setting up a group arose from a need to sometimes change the linear or
+nonlinear solvers in a subgroup after it has been added. When <cite>setup</cite> is called on the <cite>problem</cite>, the
+<cite>setup</cite> method in each group is called recursively from top to bottom of the hierarchy. For example,
+a group may contain several components and groups. Setup is first called in that top group, during
+which, those components and groups are instantiated. However, the <cite>setup</cite> methods belonging to those sub-components
+and groups cannot be called until the top group’s <cite>setup</cite> finishes. This means they are in a state where
+components and groups that are declared in the subgroup don’t exist yet.</p>
+<p>To remedy this, there is a second api method called <cite>configure</cite> that lets you make changes to your subsystems
+after they have been created. The <cite>configure</cite> method is only needed with groups, and it is called
+recursively from the bottom of the hierarchy to the top, so that at any level, you can be sure that
+<cite>configure</cite> has already run for all your subsystems. This assures that changes made in higher-level groups
+take precedence over those in lower-level ones. Top precedence is given to changes made after calling <cite>setup</cite>
+on the <cite>Problem</cite>.</p>
+<p>A second use case for <cite>configure</cite> is issuing connections to subsystems when you need information (e.g. path names)
+that has been set during setup of those subsystems.  Since <cite>configure</cite> runs after <cite>setup</cite> has been
+called on all subsystems, you can be sure that this information will be available.</p>
+<p>Here is a quick guide covering what you can do in the <cite>setup</cite> and <cite>configure</cite> methods.</p>
+<p><strong>setup</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Add subsystems</li>
+<li>Issue connections</li>
+<li>Assign linear and nonlinear solvers at this group level</li>
+<li>Change solver settings for any solver at this group level</li>
+<li>Assign Jacobians at this group level</li>
+<li>Set system execution order</li>
+<li>Add desvars, objectives, and constraints</li>
+<li>Add a case recorder to the group or a solver in that group.</li>
+</ul>
+</div></blockquote>
+<p><strong>configure</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Issue connections</li>
+<li>Assign linear and nonlinear solvers to subsystems</li>
+<li>Change solver settings in subsystems</li>
+<li>Assign Jacobians to subsystems</li>
+<li>Set execution order in subsystems</li>
+<li>Add a case recorder to a subsystem or a solver in a subsystem.</li>
+</ul>
+</div></blockquote>
+<p><strong>Things you should never do in configure</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Add subsystems</li>
+<li>Delete subsystems</li>
+</ul>
+<p>Keep in mind that, when <cite>configure</cite> is being run, you are already done calling <cite>setup</cite> on every group
+and component in the model, so if you add something here, setup will never be called, and it will
+never be fully integrated into the model hierarchy.</p>
+</div></blockquote>
+</div>
+<div class="section" id="problem-setup-and-final-setup">
+<h2>Problem setup and final_setup<a class="headerlink" href="#problem-setup-and-final-setup" title="Permalink to this headline">¶</a></h2>
+<p>OpenMDAO 2.0 introduces a new change to the setup process in which the original monolithic process
+is split into two separate phases triggered by the methods: <cite>setup</cite> and <cite>final_setup</cite>. The <cite>final_setup</cite> method is
+however something you will probably never have to call, as it is called automatically the first time that
+you call <cite>run_model</cite> or <cite>run_driver</cite> after running <cite>setup</cite>. The reason that the <cite>setup</cite> process was split into two
+phases is to allow you to perform certain actions after <cite>setup</cite>:</p>
+<p><strong>Post-setup actions</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Set values of unconnected inputs and indepvarcomps</li>
+<li>Change settings on solvers</li>
+<li>Change options on systems</li>
+<li>Add recorders</li>
+<li>Assign Jacobians</li>
+<li>Add training data to metamodels</li>
+</ul>
+</div></blockquote>
+<p>If you do anything that changes the model hierarchy, such as adding a component to a group, then you will need to
+run <cite>setup</cite> again.</p>
+<p>During setup, the following things happen:</p>
+<blockquote>
+<div><ul class="simple">
+<li>MPI processors are allocated</li>
+<li>For each custom Group, setup function is called recursively from top to bottom</li>
+<li>Model hierarchy is created</li>
+<li>For each custom Group, configure function is called recursively from bottom to top</li>
+<li>Variables are sized</li>
+<li>Connections are assembled and verified</li>
+</ul>
+</div></blockquote>
+<p>This is just enough to allow you to perform the post-setup actions listed above, but there are
+still more things to do before the model can run. In <cite>final_setup</cite>, the following happens:</p>
+<blockquote>
+<div><ul class="simple">
+<li>All vectors for the nonlinear and linear systems are created and allocated</li>
+<li>Data transfers are created (i.e., scatters for MPI)</li>
+<li>Solvers are set up</li>
+<li>Jacobians are set up and allocated</li>
+<li>Recorders are set up</li>
+<li>Drivers are set up</li>
+<li>Initial values are loaded into the inputs and outputs vectors</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="solver_api.html" title="OpenMDAO Solvers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="implicit_transformation_of_vars.html" title="Understanding How Variables Work"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

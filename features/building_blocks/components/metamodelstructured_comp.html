@@ -1,0 +1,442 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>MetaModelStructuredComp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="MetaModelUnStructuredComp" href="metamodelunstructured_comp.html" />
+    <link rel="prev" title="LinearSystemComp" href="linearsystem_comp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="metamodelunstructured_comp.html" title="MetaModelUnStructuredComp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="linearsystem_comp.html" title="LinearSystemComp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="metamodelstructuredcomp">
+<span id="feature-metamodelstructuredcomp"></span><h1>MetaModelStructuredComp<a class="headerlink" href="#metamodelstructuredcomp" title="Permalink to this headline">¶</a></h1>
+<p><cite>MetaModelStructuredComp</cite> is a smooth interpolation Component for data that exists on a regular, structured, grid.
+This differs from <a class="reference internal" href="metamodelunstructured_comp.html#feature-metamodelunstructuredcomp"><span class="std std-ref">MetaModelUnStructured</span></a> which accepts unstructured data as collections of points.</p>
+<p><cite>MetaModelStructuredComp</cite> produces smooth fits through provided training data using polynomial
+splines of order 1 (linear), 3 (cubic), or 5 (quintic). Analytic
+derivatives are automatically computed.</p>
+<p>Note that <cite>MetaModelStructuredComp</cite> only accepts scaler inputs and outputs. If you have a multivariable function, each
+input variable needs its own named OpenMDAO input.</p>
+<p>For multi-dimensional data, fits are computed
+on a separable per-axis basis. If a particular dimension does not have
+enough training data points to support a selected spline order (e.g. 3
+sample points, but an order 5 quintic spline is specified), the order of the
+fitted spline will be automatically reduced for that dimension alone.</p>
+<p>Extrapolation is supported, but disabled by default. It can be enabled
+via the <code class="code docutils literal notranslate"><span class="pre">extrapolate</span></code> option (see below).</p>
+<div class="section" id="metamodelstructuredcomp-options">
+<h2>MetaModelStructuredComp Options<a class="headerlink" href="#metamodelstructuredcomp-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="4%" />
+<col width="19%" />
+<col width="10%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>distributed</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>True if the component has variables that are distributed across multiple processes.</td>
+</tr>
+<tr class="row-odd"><td>extrapolate</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Sets whether extrapolation should be performed when an input is out of bounds.</td>
+</tr>
+<tr class="row-even"><td>method</td>
+<td>cubic</td>
+<td>[‘cubic’, ‘slinear’, ‘quintic’]</td>
+<td>N/A</td>
+<td>Spline interpolation order.</td>
+</tr>
+<tr class="row-odd"><td>training_data_gradients</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Sets whether gradients with respect to output training data should be computed.</td>
+</tr>
+<tr class="row-even"><td>vec_size</td>
+<td>1</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>Number of points to evaluate at once.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="metamodelstructuredcomp-examples">
+<h2>MetaModelStructuredComp Examples<a class="headerlink" href="#metamodelstructuredcomp-examples" title="Permalink to this headline">¶</a></h2>
+<p>A simple quick-start example is fitting the exclusive-or (“XOR”) operator between
+two inputs, <cite>x</cite> and <cite>y</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="c1"># Create regular grid interpolator instance</span>
+<span class="n">xor_interp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MetaModelStructuredComp</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;slinear&#39;</span><span class="p">)</span>
+
+<span class="c1"># set up inputs and outputs</span>
+<span class="n">xor_interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span> <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+<span class="n">xor_interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span> <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+
+<span class="n">xor_interp</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;xor&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]]),</span> <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+
+<span class="c1"># Set up the OpenMDAO model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+<span class="n">ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ivc&#39;</span><span class="p">,</span> <span class="n">ivc</span><span class="p">,</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">xor_interp</span><span class="p">,</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">])</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># Now test out a &#39;fuzzy&#39; XOR</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.001242</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">computed</span> <span class="o">=</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;xor&#39;</span><span class="p">]</span>
+<span class="n">actual</span> <span class="o">=</span> <span class="mf">0.8990064</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">computed</span><span class="p">)</span>
+
+<span class="c1"># we can verify all gradients by checking against finite-difference</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[0.8990064]
+-----------------------------------------
+Component: MetaModelStructuredComp &#x27;comp&#x27;
+-----------------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+
+&#x27;xor&#x27;      wrt &#x27;x&#x27;          | 9.9752e-01 | 9.9752e-01 | 8.7954e-11 | 8.8173e-11
+&#x27;xor&#x27;      wrt &#x27;y&#x27;          | 8.0000e-01 | 8.0000e-01 | 1.3403e-10 | 1.6753e-10
+
+########################################################################
+Sub Jacobian with Largest Relative Error: MetaModelStructuredComp &#x27;comp&#x27;
+########################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+&#x27;xor&#x27;      wrt &#x27;y&#x27;          | 8.0000e-01 | 8.0000e-01 | 1.3403e-10 | 1.6753e-10
+</pre></div></div><p>An important consideration for multi-dimensional input is that the order in which
+the input variables are added sets the expected dimension of the output
+training data. For example, if inputs <cite>x</cite>, <cite>y</cite> and <cite>z</cite> are added to the component
+with training data array lengths of 5, 12, and 20 respectively, and are added
+in <cite>x</cite>, <cite>y</cite>, and <cite>z</cite> order, than the output training data must be an ndarray
+with shape (5, 12, 20).</p>
+<p>This is illustrated by the example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="c1"># create input param training data, of sizes 25, 5, and 10 points resp.</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">p3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># can use meshgrid to create a 3D array of test data</span>
+<span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">P1</span><span class="p">)</span> <span class="o">+</span> <span class="n">P2</span> <span class="o">*</span> <span class="n">P3</span>
+
+<span class="c1"># verify the shape matches the order and size of the input params</span>
+<span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="c1"># Create regular grid interpolator instance</span>
+<span class="n">interp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MetaModelStructuredComp</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;cubic&#39;</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">p1</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">p2</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p3&#39;</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">p3</span><span class="p">)</span>
+
+<span class="n">interp</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+
+<span class="c1"># Set up the OpenMDAO model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">interp</span><span class="p">,</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">])</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># set inputs</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">55.12</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.14</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.323</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">computed</span> <span class="o">=</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]</span>
+<span class="n">actual</span> <span class="o">=</span> <span class="mf">6.73306472</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">computed</span><span class="p">)</span>
+
+<span class="c1"># we can verify all gradients by checking against finite-difference</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(25, 5, 10)
+[6.73306472]
+-----------------------------------------
+Component: MetaModelStructuredComp &#x27;comp&#x27;
+-----------------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+
+&#x27;f&#x27;        wrt &#x27;p1&#x27;         | 6.7347e-02 | 6.7347e-02 | 6.9102e-10 | 1.0261e-08
+&#x27;f&#x27;        wrt &#x27;p2&#x27;         | 3.2300e-01 | 3.2300e-01 | 7.9788e-11 | 2.4702e-10
+&#x27;f&#x27;        wrt &#x27;p3&#x27;         | 2.1400e+00 | 2.1400e+00 | 3.1689e-10 | 1.4808e-10
+
+########################################################################
+Sub Jacobian with Largest Relative Error: MetaModelStructuredComp &#x27;comp&#x27;
+########################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+&#x27;f&#x27;        wrt &#x27;p1&#x27;         | 6.7347e-02 | 6.7347e-02 | 6.9102e-10 | 1.0261e-08
+</pre></div></div><p>You can also predict multiple independent output points by setting the <cite>vec_size</cite> argument to be equal to the number of
+points you want to predict. Here, we set it to 2 and predict 2 points with <cite>MetaModelStructuredComp</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="c1"># create input param training data, of sizes 25, 5, and 10 points resp.</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">p3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># can use meshgrid to create a 3D array of test data</span>
+<span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">P1</span><span class="p">)</span> <span class="o">+</span> <span class="n">P2</span> <span class="o">*</span> <span class="n">P3</span>
+
+<span class="c1"># Create regular grid interpolator instance</span>
+<span class="n">interp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MetaModelStructuredComp</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;cubic&#39;</span><span class="p">,</span> <span class="n">vec_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">p1</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">p2</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p3&#39;</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">p3</span><span class="p">)</span>
+
+<span class="n">interp</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+
+<span class="c1"># Set up the OpenMDAO model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">interp</span><span class="p">,</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">])</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># set inputs</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">55.12</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">])</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">2.14</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">])</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.323</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">computed</span> <span class="o">=</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]</span>
+<span class="n">actual</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">6.73306472</span><span class="p">,</span> <span class="mf">5.2118645</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">computed</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[6.73306472 5.21186454]
+</pre></div></div><p>Finally, it is possible to compute gradients with respect to the given
+output training data. These gradients are not computed by default, but
+can be enabled by setting the option <cite>training_data_gradients</cite> to <cite>True</cite>.
+When this is done, for each output that is added to the component, a
+corresponding input is added to the component with the same name but with an
+<cite>_train</cite> suffix. This allows you to connect in the training data as an input
+array, if desired.</p>
+<p>The following example shows the use of training data gradients. This is the
+same example problem as above, but note <cite>training_data_gradients</cite> has been set
+to <cite>True</cite>. This automatically creates an input named <cite>f_train</cite> when the output
+<cite>f</cite> was added. The gradient of <cite>f</cite> with respect to <cite>f_train</cite> is also seen to
+match the finite difference estimate in the <cite>check_partials</cite> output.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="c1"># create input param training data, of sizes 25, 5, and 10 points resp.</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">p3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># can use meshgrid to create a 3D array of test data</span>
+<span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">P1</span><span class="p">)</span> <span class="o">+</span> <span class="n">P2</span> <span class="o">*</span> <span class="n">P3</span>
+
+<span class="c1"># verify the shape matches the order and size of the input params</span>
+<span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="c1"># Create regular grid interpolator instance</span>
+<span class="n">interp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MetaModelStructuredComp</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;cubic&#39;</span><span class="p">,</span> <span class="n">training_data_gradients</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">p1</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+<span class="n">interp</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;p3&#39;</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="n">p3</span><span class="p">)</span>
+
+<span class="n">interp</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+<span class="c1"># Set up the OpenMDAO model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">interp</span><span class="p">,</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">])</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># set inputs</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">55.12</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.14</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;p3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.323</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">computed</span> <span class="o">=</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]</span>
+<span class="n">actual</span> <span class="o">=</span> <span class="mf">6.73306472</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">computed</span><span class="p">)</span>
+
+<span class="c1"># we can verify all gradients by checking against finite-difference</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_partials</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(25, 5, 10)
+[6.73306472]
+-----------------------------------------
+Component: MetaModelStructuredComp &#x27;comp&#x27;
+-----------------------------------------
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+
+&#x27;f&#x27;        wrt &#x27;f_train&#x27;    | 7.9970e-01 | 7.9970e-01 | 2.9413e-08 | 3.6780e-08
+&#x27;f&#x27;        wrt &#x27;p1&#x27;         | 6.7347e-02 | 6.7347e-02 | 6.9102e-10 | 1.0261e-08
+&#x27;f&#x27;        wrt &#x27;p2&#x27;         | 3.2300e-01 | 3.2300e-01 | 7.9788e-11 | 2.4702e-10
+&#x27;f&#x27;        wrt &#x27;p3&#x27;         | 2.1400e+00 | 2.1400e+00 | 3.1689e-10 | 1.4808e-10
+
+########################################################################
+Sub Jacobian with Largest Relative Error: MetaModelStructuredComp &#x27;comp&#x27;
+########################################################################
+&#x27;&lt;output&gt;&#x27; wrt &#x27;&lt;variable&gt;&#x27; | fwd mag.   | check mag. | a(fwd-chk) | r(fwd-chk)
+-------------------------------------------------------------------------------
+&#x27;f&#x27;        wrt &#x27;f_train&#x27;    | 7.9970e-01 | 7.9970e-01 | 2.9413e-08 | 3.6780e-08
+</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/MetaModelStructuredComp.html#metamodelstructuredcomp"><span class="std std-ref">MetaModelStructuredComp</span></a>, <a class="reference internal" href="../../../tags/Component.html#component"><span class="std std-ref">Component</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="metamodelunstructured_comp.html" title="MetaModelUnStructuredComp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="linearsystem_comp.html" title="LinearSystemComp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,399 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>assert_utils.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="class_util.py" href="class_util.html" />
+    <link rel="prev" title="array_utils.py" href="array_utils.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="class_util.html" title="class_util.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="array_utils.html" title="array_utils.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.assert_utils">
+<span id="assert-utils-py"></span><span id="openmdao-utils-assert-utils-py"></span><span id="index-0"></span><h1>assert_utils.py<a class="headerlink" href="#module-openmdao.utils.assert_utils" title="Permalink to this headline">¶</a></h1>
+<p>Functions for making assertions about OpenMDAO Systems.</p>
+<dl class="class">
+<dt id="openmdao.utils.assert_utils.SkipParameterized">
+<em class="property">class </em><code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">SkipParameterized</code><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#SkipParameterized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.SkipParameterized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Replaces the parameterized class, skipping decorated test cases.</p>
+<dl class="attribute">
+<dt id="openmdao.utils.assert_utils.SkipParameterized.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.assert_utils.SkipParameterized.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="openmdao.utils.assert_utils.SkipParameterized.expand">
+<em class="property">classmethod </em><code class="descname">expand</code><span class="sig-paren">(</span><em>input</em>, <em>name_func=None</em>, <em>doc_func=None</em>, <em>skip_on_empty=False</em>, <em>**legacy</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#SkipParameterized.expand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.SkipParameterized.expand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorate a test so that it raises a SkipTest.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>input</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable</span></dt>
+<dd><p class="first last">Not used (part of parameterized API).</p>
+</dd>
+<dt><strong>name_func</strong> <span class="classifier-delimiter">:</span> <span class="classifier">function</span></dt>
+<dd><p class="first last">Not used (part of parameterized API).</p>
+</dd>
+<dt><strong>doc_func</strong> <span class="classifier-delimiter">:</span> <span class="classifier">function</span></dt>
+<dd><p class="first last">Not used (part of parameterized API).</p>
+</dd>
+<dt><strong>skip_on_empty</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Not used (part of parameterized API).</p>
+</dd>
+<dt><strong>**legacy</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Not used (part of parameterized API).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>function</strong></dt>
+<dd><p class="first last">The wrapper function.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.assert_check_partials">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">assert_check_partials</code><span class="sig-paren">(</span><em>data</em>, <em>atol=1e-06</em>, <em>rtol=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#assert_check_partials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.assert_check_partials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise assertion if any entry from the return from check_partials is above a tolerance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict of dicts of dicts</span></dt>
+<dd><dl class="first last docutils">
+<dt>First key:</dt>
+<dd><p class="first last">is the component name;</p>
+</dd>
+<dt>Second key:</dt>
+<dd><p class="first last">is the (output, input) tuple of strings;</p>
+</dd>
+<dt>Third key:</dt>
+<dd><p class="first last">is one of [‘rel error’, ‘abs error’, ‘magnitude’, ‘J_fd’, ‘J_fwd’, ‘J_rev’];</p>
+</dd>
+<dt>For ‘rel error’, ‘abs error’, ‘magnitude’ the value is: A tuple containing norms for</dt>
+<dd><p class="first last">forward - fd, adjoint - fd, forward - adjoint.</p>
+</dd>
+<dt>For ‘J_fd’, ‘J_fwd’, ‘J_rev’ the value is: A numpy array representing the computed</dt>
+<dd><p class="first last">Jacobian for the three different methods of computation.</p>
+</dd>
+</dl>
+</dd>
+<dt><strong>atol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">absolute error. Default is 1e-6.</p>
+</dd>
+<dt><strong>rtol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">relative error. Default is 1e-6.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.assert_equal_arrays">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">assert_equal_arrays</code><span class="sig-paren">(</span><em>a1</em>, <em>a2</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#assert_equal_arrays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.assert_equal_arrays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that two arrays are equal.</p>
+<p>This is a simplified method useful when the arrays to be compared may
+not be numeric. It simply compares the shapes of the two arrays and then
+does a value by value comparison.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>a1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd><p class="first last">The first array to compare.</p>
+</dd>
+<dt><strong>a2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd><p class="first last">The second array to compare.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.assert_no_approx_partials">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">assert_no_approx_partials</code><span class="sig-paren">(</span><em>system</em>, <em>include_self=True</em>, <em>recurse=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#assert_no_approx_partials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.assert_no_approx_partials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise assertion error if any component within system is using approximated partials.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">The system under which to search for approximated partials.</p>
+</dd>
+<dt><strong>include_self</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, include this system in the iteration.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, iterate over the whole tree under this system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>AssertionError</strong></dt>
+<dd><p class="first last">If a subsystem of group is found to be using approximated partials.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.assert_no_dict_jacobians">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">assert_no_dict_jacobians</code><span class="sig-paren">(</span><em>system</em>, <em>include_self=True</em>, <em>recurse=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#assert_no_dict_jacobians"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.assert_no_dict_jacobians" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise an assertion error if any Group within system is found to be using dictionary jacobians.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">The system under which to search for approximated partials.</p>
+</dd>
+<dt><strong>include_self</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, include this system in the iteration.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, iterate over the whole tree under this system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>AssertionError</strong></dt>
+<dd><p class="first last">If a subsystem of group is found to be using approximated partials.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.assert_rel_error">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">assert_rel_error</code><span class="sig-paren">(</span><em>test_case</em>, <em>actual</em>, <em>desired</em>, <em>tolerance=1e-15</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#assert_rel_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.assert_rel_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check relative error.</p>
+<p>Determine that the relative error between <cite>actual</cite> and <cite>desired</cite>
+is within <cite>tolerance</cite>. If <cite>desired</cite> is zero, then use absolute error.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>test_case</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.TestCase</span></code></span></dt>
+<dd><p class="first last">TestCase instance used for assertions.</p>
+</dd>
+<dt><strong>actual</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, array-like, dict</span></dt>
+<dd><p class="first last">The value from the test.</p>
+</dd>
+<dt><strong>desired</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, array-like, dict</span></dt>
+<dd><p class="first last">The value expected.</p>
+</dd>
+<dt><strong>tolerance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Maximum relative error <code class="docutils literal notranslate"><span class="pre">(actual</span> <span class="pre">-</span> <span class="pre">desired)</span> <span class="pre">/</span> <span class="pre">desired</span></code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">The error.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.assert_warning">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">assert_warning</code><span class="sig-paren">(</span><em>category</em>, <em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#assert_warning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.assert_warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Context manager asserting that a warning is issued.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>category</strong> <span class="classifier-delimiter">:</span> <span class="classifier">class</span></dt>
+<dd><p class="first last">The class of the expected warning.</p>
+</dd>
+<dt><strong>msg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The text of the expected warning.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>AssertionError</strong></dt>
+<dd><p class="first last">If the expected warning is not raised.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.assert_utils.skip_helper">
+<code class="descclassname">openmdao.utils.assert_utils.</code><code class="descname">skip_helper</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/assert_utils.html#skip_helper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.assert_utils.skip_helper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise a SkipTest.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>msg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The skip messaage.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>SkipTest</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="class_util.html" title="class_util.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="array_utils.html" title="array_utils.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,663 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.utils.om &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.utils.om</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A console script wrapper for multiple openmdao functions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.problem</span> <span class="k">import</span> <span class="n">Problem</span>
+<span class="kn">from</span> <span class="nn">openmdao.visualization.n2_viewer.n2_viewer</span> <span class="k">import</span> <span class="n">n2</span>
+<span class="kn">from</span> <span class="nn">openmdao.visualization.connection_viewer.viewconns</span> <span class="k">import</span> <span class="n">view_connections</span>
+<span class="kn">from</span> <span class="nn">openmdao.devtools.debug</span> <span class="k">import</span> <span class="n">config_summary</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">dump_dist_idxs</span>
+<span class="kn">from</span> <span class="nn">openmdao.devtools.itrace</span> <span class="k">import</span> <span class="n">_itrace_exec</span><span class="p">,</span> <span class="n">_itrace_setup_parser</span>
+<span class="kn">from</span> <span class="nn">openmdao.devtools.iprofile_app.iprofile_app</span> <span class="k">import</span> <span class="n">_iprof_exec</span><span class="p">,</span> <span class="n">_iprof_setup_parser</span>
+<span class="kn">from</span> <span class="nn">openmdao.devtools.iprofile</span> <span class="k">import</span> <span class="n">_iprof_totals_exec</span><span class="p">,</span> <span class="n">_iprof_totals_setup_parser</span>
+<span class="kn">from</span> <span class="nn">openmdao.devtools.iprof_mem</span> <span class="k">import</span> <span class="n">_mem_prof_exec</span><span class="p">,</span> <span class="n">_mem_prof_setup_parser</span><span class="p">,</span> \
+    <span class="n">_mempost_exec</span><span class="p">,</span> <span class="n">_mempost_setup_parser</span>
+<span class="kn">from</span> <span class="nn">openmdao.devtools.iprof_utils</span> <span class="k">import</span> <span class="n">_Options</span>
+<span class="kn">from</span> <span class="nn">openmdao.visualization.xdsm_viewer.xdsm_writer</span> <span class="k">import</span> <span class="n">write_xdsm</span><span class="p">,</span> \
+    <span class="n">_DEFAULT_BOX_STACKING</span><span class="p">,</span> <span class="n">_DEFAULT_BOX_WIDTH</span><span class="p">,</span> <span class="n">_MAX_BOX_LINES</span><span class="p">,</span> <span class="n">_DEFAULT_OUTPUT_SIDE</span><span class="p">,</span> <span class="n">_CHAR_SUBS</span>
+<span class="kn">from</span> <span class="nn">openmdao.error_checking.check_config</span> <span class="k">import</span> <span class="n">_check_config_cmd</span><span class="p">,</span> <span class="n">_check_config_setup_parser</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.find_cite</span> <span class="k">import</span> <span class="n">print_citations</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.code_utils</span> <span class="k">import</span> <span class="n">_calltree_setup_parser</span><span class="p">,</span> <span class="n">_calltree_exec</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.coloring</span> <span class="k">import</span> <span class="n">_total_coloring_setup_parser</span><span class="p">,</span> <span class="n">_total_coloring_cmd</span><span class="p">,</span> \
+    <span class="n">_sparsity_setup_parser</span><span class="p">,</span> <span class="n">_sparsity_cmd</span><span class="p">,</span> <span class="n">_partial_coloring_setup_parser</span><span class="p">,</span> <span class="n">_partial_coloring_cmd</span><span class="p">,</span> \
+    <span class="n">_view_coloring_setup_parser</span><span class="p">,</span> <span class="n">_view_coloring_exec</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.scaffold</span> <span class="k">import</span> <span class="n">_scaffold_setup_parser</span><span class="p">,</span> <span class="n">_scaffold_exec</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+
+
+<span class="k">def</span> <span class="nf">_n2_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao n2&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python script or recording containing the model.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;n2.html&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outfile&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;html output file.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_browser&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;no_browser&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;don&#39;t display in a browser.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--embed&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;embeddable&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;create embeddable version.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--title&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;diagram title.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--use_declare_partial_info&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;use_declare_partial_info&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;use declare partial info for internal connectivity.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_n2_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Process command line args and call n2 on the specified file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
+        <span class="c1"># the file is a python script, run as a post_setup hook</span>
+        <span class="k">def</span> <span class="nf">_viewmod</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+            <span class="n">n2</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="n">show_browser</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_browser</span><span class="p">,</span>
+               <span class="n">title</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">embeddable</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">embeddable</span><span class="p">,</span>
+               <span class="n">use_declare_partial_info</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">use_declare_partial_info</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">()</span>  <span class="c1"># could make this command line selectable later</span>
+
+        <span class="n">options</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">options</span><span class="p">:</span> <span class="n">_viewmod</span>
+        <span class="n">_post_setup_exec</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># assume the file is a recording, run standalone</span>
+        <span class="n">n2</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+           <span class="n">show_browser</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_browser</span><span class="p">,</span> <span class="n">embeddable</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">embeddable</span><span class="p">,</span>
+           <span class="n">use_declare_partial_info</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">use_declare_partial_info</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_view_model_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;view_model&#39; command has been deprecated. Use &#39;n2&#39; instead.&quot;</span><span class="p">)</span>
+    <span class="n">_n2_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_xdsm_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao xdsm&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python script or recording containing the model.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;--outfile&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;xdsm_out&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outfile&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;XDSM output file. (use pathname without extension)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="s1">&#39;--format&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;html&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;format&#39;</span><span class="p">,</span>
+                        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;html&#39;</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;tex&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;format of XSDM output.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="s1">&#39;--model_path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;model_path&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to system to transcribe to XDSM.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="s1">&#39;--recurse&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;recurse&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Don&#39;t treat the top level of each name as the source/target &quot;</span>
+                             <span class="s2">&quot;component.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_browser&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;no_browser&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Don&#39;t display in a browser.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_parallel&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;no_parallel&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;don&#39;t show stacked parallel blocks. Only active for &#39;pdf&#39; and &#39;tex&#39; &quot;</span>
+                             <span class="s2">&quot;formats.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_ext&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;no_extern_outputs&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Don&#39;t show externally connected outputs.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="s1">&#39;--include_solver&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;include_solver&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Include the problem model&#39;s solver in the XDSM.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_process_conns&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;no_process_conns&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Don&#39;t add process connections (thin black lines).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--box_stacking&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_DEFAULT_BOX_STACKING</span><span class="p">,</span>
+                        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;max_chars&#39;</span><span class="p">,</span> <span class="s1">&#39;vertical&#39;</span><span class="p">,</span> <span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="s1">&#39;cut_chars&#39;</span><span class="p">,</span> <span class="s1">&#39;empty&#39;</span><span class="p">],</span>
+                        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;box_stacking&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Controls the appearance of boxes.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--box_width&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_DEFAULT_BOX_WIDTH</span><span class="p">,</span>
+                        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;box_width&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Controls the width of boxes.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--box_lines&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_MAX_BOX_LINES</span><span class="p">,</span>
+                        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;box_lines&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Limits number of vertical lines in box if box_stacking is vertical.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--numbered_comps&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;numbered_comps&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Display components with numbers.  Only active for &#39;pdf&#39; and &#39;tex&#39; &quot;</span>
+                        <span class="s2">&quot;formats.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--number_alignment&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;number_alignment&#39;</span><span class="p">,</span>
+                        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="s1">&#39;vertical&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Positions the number either above or in front of the component label &#39;</span>
+                        <span class="s1">&#39;if numbered_comps is true.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--output_side&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;output_side&#39;</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="n">_DEFAULT_OUTPUT_SIDE</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Position of the outputs on the diagram. Left or right, or a &#39;</span>
+                             <span class="s1">&#39;dictionary with component types as keys. Component type key can be &#39;</span>
+                             <span class="s1">&#39;&quot;optimization&quot;, &quot;doe&quot; or &quot;default&quot;.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--legend&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;legend&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;If True, show legend.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--class_names&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;class_names&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;If true, appends class name of the groups/components to the &#39;</span>
+                             <span class="s1">&#39;component blocks of the diagram..&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_xdsm_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Process command line args and call xdsm on the specified file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;box_stacking&#39;</span><span class="p">,</span> <span class="s1">&#39;box_width&#39;</span><span class="p">,</span> <span class="s1">&#39;box_lines&#39;</span><span class="p">,</span> <span class="s1">&#39;numbered_comps&#39;</span><span class="p">,</span> <span class="s1">&#39;number_alignment&#39;</span><span class="p">]:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+    <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
+        <span class="c1"># the file is a python script, run as a post_setup hook</span>
+        <span class="k">def</span> <span class="nf">_xdsm</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+            <span class="n">write_xdsm</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="n">model_path</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
+                       <span class="n">recurse</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">recurse</span><span class="p">,</span>
+                       <span class="n">include_external_outputs</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_extern_outputs</span><span class="p">,</span>
+                       <span class="n">out_format</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
+                       <span class="n">include_solver</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">include_solver</span><span class="p">,</span> <span class="n">subs</span><span class="o">=</span><span class="n">_CHAR_SUBS</span><span class="p">,</span>
+                       <span class="n">show_browser</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_browser</span><span class="p">,</span> <span class="n">show_parallel</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_parallel</span><span class="p">,</span>
+                       <span class="n">add_process_conns</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_process_conns</span><span class="p">,</span>
+                       <span class="n">output_side</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">output_side</span><span class="p">,</span>
+                       <span class="n">legend</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">legend</span><span class="p">,</span>
+                       <span class="n">class_names</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">class_names</span><span class="p">,</span>
+                       <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">()</span>
+
+        <span class="n">options</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">options</span><span class="p">:</span> <span class="n">_xdsm</span>
+
+        <span class="n">_post_setup_exec</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># assume the file is a recording, run standalone</span>
+        <span class="n">write_xdsm</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="n">model_path</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
+                   <span class="n">recurse</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">recurse</span><span class="p">,</span>
+                   <span class="n">include_external_outputs</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_extern_outputs</span><span class="p">,</span>
+                   <span class="n">out_format</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
+                   <span class="n">include_solver</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">include_solver</span><span class="p">,</span> <span class="n">subs</span><span class="o">=</span><span class="n">_CHAR_SUBS</span><span class="p">,</span>
+                   <span class="n">show_browser</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_browser</span><span class="p">,</span> <span class="n">show_parallel</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_parallel</span><span class="p">,</span>
+                   <span class="n">add_process_conns</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_process_conns</span><span class="p">,</span> <span class="n">output_side</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">output_side</span><span class="p">,</span>
+                   <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_view_connections_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao view_connections&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python file containing the model.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;connections.html&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outfile&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;html output file.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_browser&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;no_browser&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;don&#39;t display in a browser.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_view_connections_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the post_setup hook function for &#39;openmdao view_connections&#39;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    function</span>
+<span class="sd">        The post-setup hook function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_viewconns</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+        <span class="n">view_connections</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="n">show_browser</span><span class="o">=</span><span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_browser</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_viewconns</span>
+
+
+<span class="k">def</span> <span class="nf">_config_summary_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao summary&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python file containing the model.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_config_summary_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the post_setup hook function for &#39;openmdao summary&#39;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    function</span>
+<span class="sd">        The post-setup hook function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+        <span class="n">config_summary</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">summary</span>
+
+
+<span class="k">def</span> <span class="nf">_tree_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao tree&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python file containing the model.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outfile&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Output file name. By default, output goes to stdout.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;--colors&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;show_colors&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Display colors if the terminal supports it.  Requires &#39;colorama&#39; &quot;</span>
+                             <span class="s2">&quot;python package.  Use &#39;pip install colorama&#39; to install it.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="s1">&#39;--depth&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Max depth of tree to display.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="s1">&#39;--attr&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;append&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;attrs&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Add an attribute to search for in tree systems.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="s1">&#39;--var&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;append&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;vecvars&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Add a variable to search for in vectors of tree systems.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="s1">&#39;--rank&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;rank&#39;</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Display the tree on this rank (if MPI is active).&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_tree_filter</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">vecvars</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pull attributes and input/output vector variables out of a tree System.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    attrs : list of str</span>
+<span class="sd">        Names of attributes (may contain dots).</span>
+<span class="sd">    vecvars : list of str</span>
+<span class="sd">        Names of variables contained in the input or output vectors.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    function</span>
+<span class="sd">        A function that takes a System and returns a list of name value pairs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_finder</span><span class="p">(</span><span class="n">system</span><span class="p">):</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>  <span class="c1"># allow attrs with dots</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">system</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">attr</span><span class="p">,</span> <span class="n">obj</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">vecvars</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span><span class="p">:</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span><span class="p">[</span><span class="n">var</span><span class="p">]))</span>
+            <span class="k">elif</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_inputs</span><span class="p">:</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="n">system</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[</span><span class="n">var</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">found</span>
+
+    <span class="k">return</span> <span class="n">_finder</span>
+
+
+<span class="k">def</span> <span class="nf">_tree_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the post_setup hook function for &#39;openmdao tree&#39;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    function</span>
+<span class="sd">        The post-setup hook function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">attrs</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">vecvars</span><span class="p">:</span>
+        <span class="n">filt</span> <span class="o">=</span> <span class="n">_get_tree_filter</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">attrs</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">vecvars</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filt</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_tree</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+        <span class="n">tree</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">show_colors</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">show_colors</span><span class="p">,</span>
+             <span class="nb">filter</span><span class="o">=</span><span class="n">filt</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">depth</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">rank</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_tree</span>
+
+
+<span class="k">def</span> <span class="nf">_dump_dist_idxs_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao dump_idxs&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python file containing the model.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outfile&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Name of output file.  By default, output goes to stdout.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="s1">&#39;--vecname&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;vecname&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Name of vectors to show indices for.  Default is &quot;nonlinear&quot;.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_dump_dist_idxs_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the post_setup hook function for &#39;openmdao dump_idxs&#39;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    function</span>
+<span class="sd">        The post-setup hook function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_dumpdist</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+        <span class="n">dump_dist_idxs</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">vec_name</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">vecname</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_dumpdist</span>
+
+
+<span class="k">def</span> <span class="nf">_cite_setup_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the openmdao subparser for the &#39;openmdao cite&#39; command.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse subparser</span>
+<span class="sd">        The parser we&#39;re adding options to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Python file containing the model.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outfile&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Name of output file.  By default, output goes to stdout.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;--class&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;append&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;classes&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Find citation for this class.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_cite_cmd</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the post setup hook function for `openmdao cite`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    function</span>
+<span class="sd">        The post-setup hook function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">classes</span><span class="p">:</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">classes</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_cite</span><span class="p">(</span><span class="n">prob</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">print_citations</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">classes</span><span class="p">,</span> <span class="n">out_stream</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">_cite</span>
+
+
+<span class="k">def</span> <span class="nf">_post_setup_exec</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use this as executor for commands that run as Problem post-setup commands.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    options : argparse Namespace</span>
+<span class="sd">        Command line options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">progname</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">progname</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">progname</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="nb">compile</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">progname</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">)</span>
+
+    <span class="n">globals_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;__file__&#39;</span><span class="p">:</span> <span class="n">progname</span><span class="p">,</span>
+        <span class="s1">&#39;__name__&#39;</span><span class="p">:</span> <span class="s1">&#39;__main__&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;__package__&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;__cached__&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Problem</span><span class="o">.</span><span class="n">_post_setup_func</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+
+    <span class="n">exec</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">globals_dict</span><span class="p">)</span>
+
+
+<span class="c1"># NOTE: any post_setup functions must handle their own exit behavior. If you want them</span>
+<span class="c1"># to exit after running, exit() must be called from within your function.  This also gives</span>
+<span class="c1"># you the option of controlling the exit behavior via a command line argument.</span>
+
+<span class="c1"># All post-setup functions go here.</span>
+<span class="c1"># this dict should contain names mapped to tuples of the form:</span>
+<span class="c1">#   (setup_parser_func, func, description)</span>
+<span class="n">_post_setup_map</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;view_connections&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_view_connections_setup_parser</span><span class="p">,</span> <span class="n">_view_connections_cmd</span><span class="p">,</span>
+                         <span class="s1">&#39;Connection viewer showing values and source/target units.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;summary&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_config_summary_setup_parser</span><span class="p">,</span> <span class="n">_config_summary_cmd</span><span class="p">,</span>
+                <span class="s1">&#39;Print a short top-level summary of the problem.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;tree&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_tree_setup_parser</span><span class="p">,</span> <span class="n">_tree_cmd</span><span class="p">,</span> <span class="s1">&#39;Print the system tree.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;dump_idxs&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_dump_dist_idxs_setup_parser</span><span class="p">,</span> <span class="n">_dump_dist_idxs_cmd</span><span class="p">,</span>
+                  <span class="s1">&#39;Show distributed index information.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;total_coloring&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_total_coloring_setup_parser</span><span class="p">,</span> <span class="n">_total_coloring_cmd</span><span class="p">,</span>
+                       <span class="s1">&#39;Compute a coloring for the total jacobian.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;partial_coloring&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_partial_coloring_setup_parser</span><span class="p">,</span> <span class="n">_partial_coloring_cmd</span><span class="p">,</span>
+                         <span class="s1">&#39;Compute coloring(s) for specified partial jacobians.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;total_sparsity&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_sparsity_setup_parser</span><span class="p">,</span> <span class="n">_sparsity_cmd</span><span class="p">,</span>
+                       <span class="s1">&#39;Compute the sparsity pattern of the total jacobian.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;cite&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_cite_setup_parser</span><span class="p">,</span> <span class="n">_cite_cmd</span><span class="p">,</span>
+             <span class="s1">&#39;Print citations referenced by problem&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;check&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_check_config_setup_parser</span><span class="p">,</span> <span class="n">_check_config_cmd</span><span class="p">,</span>
+              <span class="s1">&#39;Perform a number of configuration checks on the problem.&#39;</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="c1"># Other non-post-setup functions go here</span>
+<span class="n">_non_post_setup_map</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_n2_setup_parser</span><span class="p">,</span> <span class="n">_n2_cmd</span><span class="p">,</span> <span class="s1">&#39;Display an interactive N2 diagram of the problem.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;view_model&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_n2_setup_parser</span><span class="p">,</span> <span class="n">_view_model_cmd</span><span class="p">,</span>
+                   <span class="s1">&#39;Display an interactive N2 diagram of the problem. &#39;</span>
+                   <span class="s1">&#39;(Deprecated, please use n2 instead.)&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;trace&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_itrace_setup_parser</span><span class="p">,</span> <span class="n">_itrace_exec</span><span class="p">,</span> <span class="s1">&#39;Dump trace output.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;call_tree&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_calltree_setup_parser</span><span class="p">,</span> <span class="n">_calltree_exec</span><span class="p">,</span>
+                  <span class="s2">&quot;Display the call tree for the specified class method and all &#39;self&#39; class &quot;</span>
+                  <span class="s2">&quot;methods it calls.&quot;</span><span class="p">),</span>
+    <span class="s1">&#39;iprof&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_iprof_setup_parser</span><span class="p">,</span> <span class="n">_iprof_exec</span><span class="p">,</span>
+              <span class="s1">&#39;Profiling of calls to particular object instances.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;iprof_totals&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_iprof_totals_setup_parser</span><span class="p">,</span> <span class="n">_iprof_totals_exec</span><span class="p">,</span>
+                     <span class="s1">&#39;Total timings of calls to particular object instances.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;mem&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_mem_prof_setup_parser</span><span class="p">,</span> <span class="n">_mem_prof_exec</span><span class="p">,</span> <span class="s1">&#39;Memory profiler.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;mempost&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_mempost_setup_parser</span><span class="p">,</span> <span class="n">_mempost_exec</span><span class="p">,</span> <span class="s1">&#39;Post-processor for memory profile output.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;view_coloring&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_view_coloring_setup_parser</span><span class="p">,</span> <span class="n">_view_coloring_exec</span><span class="p">,</span>
+                      <span class="s1">&#39;Colored jacobian viewer.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;xdsm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_xdsm_setup_parser</span><span class="p">,</span> <span class="n">_xdsm_cmd</span><span class="p">,</span> <span class="s1">&#39;XDSM viewer.&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;scaffold&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">_scaffold_setup_parser</span><span class="p">,</span> <span class="n">_scaffold_exec</span><span class="p">,</span>
+                 <span class="s1">&#39;Generate a simple scaffold for a component.&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="openmdao_cmd"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/om.html#openmdao.utils.om.openmdao_cmd">[docs]</a><span class="k">def</span> <span class="nf">openmdao_cmd</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrap a number of Problem viewing/debugging command line functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;OpenMDAO Command Line Tools&#39;</span><span class="p">,</span>
+                                     <span class="n">epilog</span><span class="o">=</span><span class="s1">&#39;Use -h after any sub-command for sub-command help.&#39;</span><span class="p">)</span>
+
+    <span class="n">subs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;Tools&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="n">parser_setup_func</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">help_str</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="n">_post_setup_map</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+                                                              <span class="n">_non_post_setup_map</span><span class="o">.</span><span class="n">items</span><span class="p">())):</span>
+        <span class="n">subp</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">help_str</span><span class="p">)</span>
+        <span class="n">parser_setup_func</span><span class="p">(</span><span class="n">subp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_post_setup_map</span><span class="p">:</span>
+            <span class="n">subp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">cmd</span><span class="p">,</span> <span class="n">executor</span><span class="o">=</span><span class="n">_post_setup_exec</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">executor</span><span class="o">=</span><span class="n">cmd</span><span class="p">)</span>
+
+    <span class="c1"># handle case where someone just runs `openmdao &lt;script&gt;`</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">subs</span><span class="o">.</span><span class="n">choices</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">_post_setup_exec</span><span class="p">(</span><span class="n">_Options</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="p">[</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="s1">&#39;executor&#39;</span><span class="p">):</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">executor</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Nothing to do.&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">openmdao_cmd</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

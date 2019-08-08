@@ -1,0 +1,728 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.drivers.pyoptsparse_driver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.drivers.pyoptsparse_driver</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">OpenMDAO Wrapper for pyoptsparse.</span>
+
+<span class="sd">pyoptsparse is based on pyOpt, which is an object-oriented framework for</span>
+<span class="sd">formulating and solving nonlinear constrained optimization problems, with</span>
+<span class="sd">additional MPI capability.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="n">string_types</span><span class="p">,</span> <span class="n">reraise</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">coo_matrix</span>
+
+<span class="kn">from</span> <span class="nn">pyoptsparse</span> <span class="k">import</span> <span class="n">Optimization</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.analysis_error</span> <span class="k">import</span> <span class="n">AnalysisError</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.driver</span> <span class="k">import</span> <span class="n">Driver</span><span class="p">,</span> <span class="n">RecordingDebugging</span>
+<span class="kn">import</span> <span class="nn">openmdao.utils.coloring</span> <span class="k">as</span> <span class="nn">coloring_mod</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">FakeComm</span>
+
+
+<span class="c1"># names of optimizers that use gradients</span>
+<span class="n">grad_drivers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;CONMIN&#39;</span><span class="p">,</span> <span class="s1">&#39;FSQP&#39;</span><span class="p">,</span> <span class="s1">&#39;IPOPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NLPQLP&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;PSQP&#39;</span><span class="p">,</span> <span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="s1">&#39;SNOPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NLPY_AUGLAG&#39;</span><span class="p">}</span>
+
+<span class="c1"># names of optimizers that allow multiple objectives</span>
+<span class="n">multi_obj_drivers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NSGA2&#39;</span><span class="p">}</span>
+
+<span class="c1"># All optimizers in pyoptsparse</span>
+<span class="n">optlist</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ALPSO&#39;</span><span class="p">,</span> <span class="s1">&#39;CONMIN&#39;</span><span class="p">,</span> <span class="s1">&#39;FSQP&#39;</span><span class="p">,</span> <span class="s1">&#39;IPOPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NLPQLP&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;NSGA2&#39;</span><span class="p">,</span> <span class="s1">&#39;PSQP&#39;</span><span class="p">,</span> <span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="s1">&#39;SNOPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NLPY_AUGLAG&#39;</span><span class="p">,</span> <span class="s1">&#39;NOMAD&#39;</span><span class="p">]</span>
+
+<span class="c1"># All optimizers that require an initial run</span>
+<span class="n">run_required</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NSGA2&#39;</span><span class="p">,</span> <span class="s1">&#39;ALPSO&#39;</span><span class="p">]</span>
+
+<span class="n">CITATIONS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;@article{Hwang_maud_2018</span>
+<span class="s2"> author = {Hwang, John T. and Martins, Joaquim R.R.A.},</span>
+<span class="s2"> title = &quot;{A Computational Architecture for Coupling Heterogeneous</span>
+<span class="s2">          Numerical Models and Computing Coupled Derivatives}&quot;,</span>
+<span class="s2"> journal = &quot;{ACM Trans. Math. Softw.}&quot;,</span>
+<span class="s2"> volume = </span><span class="si">{44}</span><span class="s2">,</span>
+<span class="s2"> number = </span><span class="si">{4}</span><span class="s2">,</span>
+<span class="s2"> month = jun,</span>
+<span class="s2"> year = </span><span class="si">{2018}</span><span class="s2">,</span>
+<span class="s2"> pages = {37:1--37:39},</span>
+<span class="s2"> articleno = </span><span class="si">{37}</span><span class="s2">,</span>
+<span class="s2"> numpages = </span><span class="si">{39}</span><span class="s2">,</span>
+<span class="s2"> doi = {10.1145/3182393},</span>
+<span class="s2"> publisher = </span><span class="si">{ACM}</span><span class="s2">,</span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="pyOptSparseDriver"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/pyoptsparse_driver.html#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver">[docs]</a><span class="k">class</span> <span class="nc">pyOptSparseDriver</span><span class="p">(</span><span class="n">Driver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Driver wrapper for pyoptsparse.</span>
+
+<span class="sd">    Pyoptsparse is based on pyOpt, which</span>
+<span class="sd">    is an object-oriented framework for formulating and solving nonlinear</span>
+<span class="sd">    constrained optimization problems, with additional MPI capability.</span>
+<span class="sd">    pypptsparse has interfaces to the following optimizers:</span>
+<span class="sd">    ALPSO, CONMIN, FSQP, IPOPT, NLPQLP, NSGA2, PSQP, SLSQP,</span>
+<span class="sd">    SNOPT, NLPY_AUGLAG, NOMAD.</span>
+<span class="sd">    Note that some of these are not open source and therefore not included</span>
+<span class="sd">    in the pyoptsparse source code.</span>
+
+<span class="sd">    pyOptSparseDriver supports the following:</span>
+<span class="sd">        equality_constraints</span>
+
+<span class="sd">        inequality_constraints</span>
+
+<span class="sd">        two_sided_constraints</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fail : bool</span>
+<span class="sd">        Flag that indicates failure of most recent optimization.</span>
+<span class="sd">    hist_file : str or None</span>
+<span class="sd">        File location for saving pyopt_sparse optimization history.</span>
+<span class="sd">        Default is None for no output.</span>
+<span class="sd">    hotstart_file : str</span>
+<span class="sd">        Optional file to hot start the optimization.</span>
+<span class="sd">    opt_settings : dict</span>
+<span class="sd">        Dictionary for setting optimizer-specific options.</span>
+<span class="sd">    pyopt_solution : Solution</span>
+<span class="sd">        Pyopt_sparse solution object.</span>
+<span class="sd">    _indep_list : list</span>
+<span class="sd">        List of design variables.</span>
+<span class="sd">    _quantities : list</span>
+<span class="sd">        Contains the objectives plus nonlinear constraints.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="pyOptSparseDriver.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/pyoptsparse_driver.html#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize pyopt.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Driver options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">pyOptSparseDriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># What we support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;inequality_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;equality_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;multiple_objectives&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;two_sided_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;linear_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;simultaneous_derivatives&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;total_jac_sparsity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># What we don&#39;t support yet</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;active_set&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;integer_design_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># The user places optimizer-specific settings in here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_settings</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># The user can set a file name here to store history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hist_file</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># The user can set a file here to hot start the optimization</span>
+        <span class="c1"># with a history file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hotstart_file</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># We save the pyopt_solution so that it can be queried later on.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyopt_solution</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_indep_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fail</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cite</span> <span class="o">=</span> <span class="n">CITATIONS</span></div>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;optimizer&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">optlist</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Name of optimizers to use&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;Optimization using pyOpt_sparse&#39;</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Title of this optimization run&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;print_results&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Print pyOpt results if True&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;gradient method&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;openmdao&#39;</span><span class="p">,</span>
+                             <span class="n">values</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;openmdao&#39;</span><span class="p">,</span> <span class="s1">&#39;pyopt_fd&#39;</span><span class="p">,</span> <span class="s1">&#39;snopt_fd&#39;</span><span class="p">},</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Finite difference implementation to use&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;dynamic_derivs_sparsity&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Compute derivative sparsity dynamically if True.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;dynamic_simul_derivs&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Compute simultaneous derivative coloring dynamically &#39;</span>
+                             <span class="s1">&#39;if True (deprecated)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;dynamic_derivs_repeats&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of compute_totals calls during dynamic computation of &#39;</span>
+                                  <span class="s1">&#39;simultaneous derivative coloring or derivatives sparsity&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_driver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the driver for execution.</span>
+
+<span class="sd">        This is the final thing to run during setup.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        problem : &lt;Problem&gt;</span>
+<span class="sd">            Pointer to the containing problem.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">pyOptSparseDriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup_driver</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;gradients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">grad_drivers</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">multi_obj_drivers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Multiple objectives have been added to pyOptSparseDriver&#39;</span>
+                               <span class="s1">&#39; but the selected optimizer (</span><span class="si">{0}</span><span class="s1">) does not support&#39;</span>
+                               <span class="s1">&#39; multiple objectives.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_tot_jac_sparsity</span><span class="p">()</span>
+
+<div class="viewcode-block" id="pyOptSparseDriver.run"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/pyoptsparse_driver.html#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Excute pyOptsparse.</span>
+
+<span class="sd">        Note that pyOpt controls the execution, and the individual optimizers</span>
+<span class="sd">        (e.g., SNOPT) control the iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            Failure flag; True if failed to converge, False is successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">relevant</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_relevant</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyopt_solution</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">fwd</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">_mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantities</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_for_missing_objective</span><span class="p">()</span>
+
+        <span class="c1"># Only need initial run if we have linear constraints or if we are using an optimizer that</span>
+        <span class="c1"># doesn&#39;t perform one initially.</span>
+        <span class="n">con_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span>
+        <span class="n">model_ran</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">optimizer</span> <span class="ow">in</span> <span class="n">run_required</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cons</span><span class="p">)]):</span>
+            <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+                <span class="c1"># Initial Run</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+                <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">model_ran</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># compute dynamic simul deriv coloring or just sparsity if option is set</span>
+        <span class="k">if</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_use_total_sparsity</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DYN_COLORING</span><span class="p">:</span>
+                <span class="n">coloring_mod</span><span class="o">.</span><span class="n">dynamic_total_coloring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_model</span><span class="o">=</span><span class="ow">not</span> <span class="n">model_ran</span><span class="p">,</span>
+                                                    <span class="n">fname</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_total_coloring_fname</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup_tot_jac_sparsity</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dynamic_simul_derivs&#39;</span><span class="p">]:</span>
+                <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;dynamic_simul_derivs&#39; option has been deprecated. Call &quot;</span>
+                                 <span class="s2">&quot;the &#39;declare_coloring&#39; function instead.&quot;</span><span class="p">)</span>
+                <span class="n">coloring_mod</span><span class="o">.</span><span class="n">dynamic_total_coloring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_model</span><span class="o">=</span><span class="ow">not</span> <span class="n">model_ran</span><span class="p">,</span>
+                                                    <span class="n">fname</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_total_coloring_fname</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup_tot_jac_sparsity</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dynamic_derivs_sparsity&#39;</span><span class="p">]:</span>
+                <span class="n">coloring_mod</span><span class="o">.</span><span class="n">dynamic_derivs_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">comm</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">comm</span><span class="p">,</span> <span class="n">FakeComm</span><span class="p">)</span> <span class="k">else</span> <span class="n">problem</span><span class="o">.</span><span class="n">comm</span>
+        <span class="n">opt_prob</span> <span class="o">=</span> <span class="n">Optimization</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objfunc</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">comm</span><span class="p">)</span>
+
+        <span class="c1"># Add all design variables</span>
+        <span class="n">param_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_indep_list</span> <span class="o">=</span> <span class="n">indep_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">param_meta</span><span class="p">)</span>
+        <span class="n">param_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_design_var_values</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">param_meta</span><span class="p">):</span>
+            <span class="n">opt_prob</span><span class="o">.</span><span class="n">addVarGroup</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">,</span>
+                                 <span class="n">value</span><span class="o">=</span><span class="n">param_vals</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+                                 <span class="n">lower</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">],</span> <span class="n">upper</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">])</span>
+
+        <span class="n">opt_prob</span><span class="o">.</span><span class="n">finalizeDesignVariables</span><span class="p">()</span>
+
+        <span class="c1"># Add all objectives</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+            <span class="n">opt_prob</span><span class="o">.</span><span class="n">addObj</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_quantities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># Calculate and save derivatives for any linear constraints.</span>
+        <span class="n">lcons</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">con</span><span class="p">)</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">con_meta</span><span class="p">)</span> <span class="k">if</span> <span class="n">con</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lcons</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_lin_jacs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_totals</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">lcons</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">indep_list</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">)</span>
+            <span class="c1"># convert all of our linear constraint jacs to COO format. Otherwise pyoptsparse will</span>
+            <span class="c1"># do it for us and we&#39;ll end up with a fully dense COO matrix and very slow evaluation</span>
+            <span class="c1"># of linear constraints!</span>
+            <span class="n">to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">jacdct</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="n">_lin_jacs</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">subjac</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">jacdct</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subjac</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="c1"># we can safely use coo_matrix to automatically convert the ndarray</span>
+                        <span class="c1"># since our linear constraint jacs are constant, so zeros won&#39;t become</span>
+                        <span class="c1"># nonzero during the optimization.</span>
+                        <span class="n">mat</span> <span class="o">=</span> <span class="n">coo_matrix</span><span class="p">(</span><span class="n">subjac</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">mat</span><span class="o">.</span><span class="n">row</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="c1"># convert to &#39;coo&#39; format here to avoid an emphatic warning</span>
+                            <span class="c1"># by pyoptsparse.</span>
+                            <span class="n">jacdct</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;coo&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">mat</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">mat</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">mat</span><span class="o">.</span><span class="n">data</span><span class="p">],</span> <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">}</span>
+
+        <span class="c1"># Add all equality constraints</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">con_meta</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+                <span class="n">wrt</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">indep_list</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">relevant</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rels</span> <span class="o">=</span> <span class="n">relevant</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">wrt</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">indep_list</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rels</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]:</span>
+                <span class="n">jac</span> <span class="o">=</span> <span class="p">{</span><span class="n">w</span><span class="p">:</span> <span class="n">_lin_jacs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wrt</span><span class="p">}</span>
+                <span class="n">opt_prob</span><span class="o">.</span><span class="n">addConGroup</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
+                                     <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">wrt</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span><span class="p">:</span>
+                    <span class="n">resjac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="n">jac</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">resjac</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">wrt</span><span class="p">}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">jac</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">opt_prob</span><span class="o">.</span><span class="n">addConGroup</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">wrt</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_quantities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># Add all inequality constraints</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">con_meta</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+
+            <span class="c1"># Bounds - double sided is supported</span>
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+                <span class="n">wrt</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">indep_list</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">relevant</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rels</span> <span class="o">=</span> <span class="n">relevant</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">wrt</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">indep_list</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rels</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]:</span>
+                <span class="n">jac</span> <span class="o">=</span> <span class="p">{</span><span class="n">w</span><span class="p">:</span> <span class="n">_lin_jacs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wrt</span><span class="p">}</span>
+                <span class="n">opt_prob</span><span class="o">.</span><span class="n">addConGroup</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span>
+                                     <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">wrt</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span><span class="p">:</span>
+                    <span class="n">resjac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="n">jac</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">resjac</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">wrt</span><span class="p">}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">jac</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">opt_prob</span><span class="o">.</span><span class="n">addConGroup</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">wrt</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_quantities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># Instantiate the requested optimizer</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_tmp</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;pyoptsparse&#39;</span><span class="p">,</span> <span class="nb">globals</span><span class="p">(),</span> <span class="nb">locals</span><span class="p">(),</span> <span class="p">[</span><span class="n">optimizer</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">opt</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">_tmp</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)()</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="c1"># Change whatever pyopt gives us to an ImportError, give it a readable message,</span>
+            <span class="c1"># but raise with the original traceback.</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Optimizer </span><span class="si">%s</span><span class="s2"> is not available in this installation.&quot;</span> <span class="o">%</span> <span class="n">optimizer</span>
+            <span class="n">reraise</span><span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">),</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="c1"># Set optimization options</span>
+        <span class="k">for</span> <span class="n">option</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_settings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">setOption</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># Execute the optimization problem</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;gradient method&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;pyopt_fd&#39;</span><span class="p">:</span>
+
+            <span class="c1"># Use pyOpt&#39;s internal finite difference</span>
+            <span class="c1"># TODO: Need to get this from OpenMDAO</span>
+            <span class="c1"># fd_step = problem.root.deriv_options[&#39;step_size&#39;]</span>
+            <span class="n">fd_step</span> <span class="o">=</span> <span class="mf">1e-6</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">opt</span><span class="p">(</span><span class="n">opt_prob</span><span class="p">,</span> <span class="n">sens</span><span class="o">=</span><span class="s1">&#39;FD&#39;</span><span class="p">,</span> <span class="n">sensStep</span><span class="o">=</span><span class="n">fd_step</span><span class="p">,</span> <span class="n">storeHistory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_file</span><span class="p">,</span>
+                      <span class="n">hotStart</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hotstart_file</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;gradient method&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;snopt_fd&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;SNOPT&#39;</span><span class="p">:</span>
+
+                <span class="c1"># Use SNOPT&#39;s internal finite difference</span>
+                <span class="c1"># TODO: Need to get this from OpenMDAO</span>
+                <span class="c1"># fd_step = problem.root.deriv_options[&#39;step_size&#39;]</span>
+                <span class="n">fd_step</span> <span class="o">=</span> <span class="mf">1e-6</span>
+                <span class="n">sol</span> <span class="o">=</span> <span class="n">opt</span><span class="p">(</span><span class="n">opt_prob</span><span class="p">,</span> <span class="n">sens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sensStep</span><span class="o">=</span><span class="n">fd_step</span><span class="p">,</span> <span class="n">storeHistory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_file</span><span class="p">,</span>
+                          <span class="n">hotStart</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hotstart_file</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;SNOPT&#39;s internal finite difference can only be used with SNOPT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="c1"># Use OpenMDAO&#39;s differentiator for the gradient</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">opt</span><span class="p">(</span><span class="n">opt_prob</span><span class="p">,</span> <span class="n">sens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gradfunc</span><span class="p">,</span> <span class="n">storeHistory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_file</span><span class="p">,</span>
+                      <span class="n">hotStart</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hotstart_file</span><span class="p">)</span>
+
+        <span class="c1"># Print results</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;print_results&#39;</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+
+        <span class="c1"># Pull optimal parameters back into framework and re-run, so that</span>
+        <span class="c1"># framework is left in the right final state</span>
+        <span class="n">dv_dict</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">getDVs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">indep_list</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_design_var</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dv_dict</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+        <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Save the most recent solution.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyopt_solution</span> <span class="o">=</span> <span class="n">sol</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">exit_status</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">optInform</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fail</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="c1"># These are various failed statuses.</span>
+            <span class="k">if</span> <span class="n">exit_status</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fail</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># optimizers other than pySNOPT may not populate this dict</span>
+            <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fail</span></div>
+
+    <span class="k">def</span> <span class="nf">_objfunc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the objective function and constraints.</span>
+
+<span class="sd">        This function is passed to pyOpt&#39;s Optimization object and is called</span>
+<span class="sd">        from its optimizers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dv_dict : dict</span>
+<span class="sd">            Dictionary of design variable values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        func_dict : dict</span>
+<span class="sd">            Dictionary of all functional variables evaluated at design point.</span>
+
+<span class="sd">        fail : int</span>
+<span class="sd">            0 for successful function evaluation</span>
+<span class="sd">            1 for unsuccessful function evaluation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">fail</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indep_list</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_design_var</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dv_dict</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+            <span class="c1"># print(&quot;Setting DV&quot;)</span>
+            <span class="c1"># print(dv_dict)</span>
+
+            <span class="c1"># Execute the model</span>
+            <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+
+                <span class="c1"># Let the optimizer try to handle the error</span>
+                <span class="k">except</span> <span class="n">AnalysisError</span><span class="p">:</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">_clear_iprint</span><span class="p">()</span>
+                    <span class="n">fail</span> <span class="o">=</span> <span class="mi">1</span>
+
+                <span class="n">func_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">()</span>
+                <span class="n">func_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraint_values</span><span class="p">(</span><span class="n">lintype</span><span class="o">=</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">))</span>
+
+                <span class="c1"># Record after getting obj and constraint to assure they have</span>
+                <span class="c1"># been gathered in MPI.</span>
+                <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+            <span class="c1"># Exceptions seem to be swallowed by the C code, so this</span>
+            <span class="c1"># should give the user more info than the dreaded &quot;segfault&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="mi">70</span> <span class="o">*</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">tb</span><span class="p">,</span> <span class="mi">70</span> <span class="o">*</span> <span class="s2">&quot;=&quot;</span><span class="p">)</span>
+            <span class="n">fail</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">func_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># print(&quot;Functions calculated&quot;)</span>
+        <span class="c1"># print(dv_dict)</span>
+
+        <span class="k">return</span> <span class="n">func_dict</span><span class="p">,</span> <span class="n">fail</span>
+
+    <span class="k">def</span> <span class="nf">_gradfunc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv_dict</span><span class="p">,</span> <span class="n">func_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the gradient of the objective function and constraints.</span>
+
+<span class="sd">        This function is passed to pyOpt&#39;s Optimization object and is called</span>
+<span class="sd">        from its optimizers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dv_dict : dict</span>
+<span class="sd">            Dictionary of design variable values.</span>
+<span class="sd">        func_dict : dict</span>
+<span class="sd">            Dictionary of all functional variables evaluated at design point.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sens_dict : dict</span>
+<span class="sd">            Dictionary of dictionaries for gradient of each dv/func pair</span>
+
+<span class="sd">        fail : int</span>
+<span class="sd">            0 for successful function evaluation</span>
+<span class="sd">            1 for unsuccessful function evaluation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
+        <span class="n">fail</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">try</span><span class="p">:</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">sens_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_totals</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_quantities</span><span class="p">,</span>
+                                                 <span class="n">wrt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_indep_list</span><span class="p">,</span>
+                                                 <span class="n">return_format</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">)</span>
+            <span class="c1"># Let the optimizer try to handle the error</span>
+            <span class="k">except</span> <span class="n">AnalysisError</span><span class="p">:</span>
+                <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_clear_iprint</span><span class="p">()</span>
+                <span class="n">fail</span> <span class="o">=</span> <span class="mi">1</span>
+
+                <span class="c1"># We need to cobble together a sens_dict of the correct size.</span>
+                <span class="c1"># Best we can do is return zeros.</span>
+
+                <span class="n">sens_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">okey</span><span class="p">,</span> <span class="n">oval</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">func_dict</span><span class="p">):</span>
+                    <span class="n">sens_dict</span><span class="p">[</span><span class="n">okey</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                    <span class="n">osize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">oval</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">ikey</span><span class="p">,</span> <span class="n">ival</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">):</span>
+                        <span class="n">isize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ival</span><span class="p">)</span>
+                        <span class="n">sens_dict</span><span class="p">[</span><span class="n">okey</span><span class="p">][</span><span class="n">ikey</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">osize</span><span class="p">,</span> <span class="n">isize</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># if we don&#39;t convert to &#39;coo&#39; here, pyoptsparse will do a</span>
+                <span class="c1"># conversion of our dense array into a fully dense &#39;coo&#39;, which is bad.</span>
+                <span class="c1"># TODO: look into getting rid of all of these conversions!</span>
+                <span class="n">new_sens</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                <span class="n">res_jacs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span>
+                <span class="k">for</span> <span class="n">okey</span> <span class="ow">in</span> <span class="n">func_dict</span><span class="p">:</span>
+                    <span class="n">new_sens</span><span class="p">[</span><span class="n">okey</span><span class="p">]</span> <span class="o">=</span> <span class="n">newdv</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">dv_dict</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">okey</span> <span class="ow">in</span> <span class="n">res_jacs</span> <span class="ow">and</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">res_jacs</span><span class="p">[</span><span class="n">okey</span><span class="p">]:</span>
+                            <span class="n">arr</span> <span class="o">=</span> <span class="n">sens_dict</span><span class="p">[</span><span class="n">okey</span><span class="p">][</span><span class="n">ikey</span><span class="p">]</span>
+                            <span class="n">coo</span> <span class="o">=</span> <span class="n">res_jacs</span><span class="p">[</span><span class="n">okey</span><span class="p">][</span><span class="n">ikey</span><span class="p">]</span>
+                            <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">coo</span><span class="p">[</span><span class="s1">&#39;coo&#39;</span><span class="p">]</span>
+                            <span class="n">coo</span><span class="p">[</span><span class="s1">&#39;coo&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                            <span class="n">newdv</span><span class="p">[</span><span class="n">ikey</span><span class="p">]</span> <span class="o">=</span> <span class="n">coo</span>
+                        <span class="k">elif</span> <span class="n">okey</span> <span class="ow">in</span> <span class="n">sens_dict</span><span class="p">:</span>
+                            <span class="n">newdv</span><span class="p">[</span><span class="n">ikey</span><span class="p">]</span> <span class="o">=</span> <span class="n">sens_dict</span><span class="p">[</span><span class="n">okey</span><span class="p">][</span><span class="n">ikey</span><span class="p">]</span>
+                <span class="n">sens_dict</span> <span class="o">=</span> <span class="n">new_sens</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+            <span class="c1"># Exceptions seem to be swallowed by the C code, so this</span>
+            <span class="c1"># should give the user more info than the dreaded &quot;segfault&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="mi">70</span> <span class="o">*</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">tb</span><span class="p">,</span> <span class="mi">70</span> <span class="o">*</span> <span class="s2">&quot;=&quot;</span><span class="p">)</span>
+            <span class="n">sens_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># print(&quot;Derivatives calculated&quot;)</span>
+        <span class="c1"># print(dv_dict)</span>
+        <span class="c1"># print(sens_dict)</span>
+        <span class="k">return</span> <span class="n">sens_dict</span><span class="p">,</span> <span class="n">fail</span>
+
+    <span class="k">def</span> <span class="nf">_get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get name of current optimizer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The name of the current optimizer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;pyOptSparse_&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_get_ordered_nl_responses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the names of nonlinear responses in the order used by the driver.</span>
+
+<span class="sd">        Default order is objectives followed by nonlinear constraints.  This is used for</span>
+<span class="sd">        simultaneous derivative coloring and sparsity determination.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of str</span>
+<span class="sd">            The nonlinear response names in order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nl_order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">)</span>
+        <span class="n">neq_order</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cons</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;linear&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">meta</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">nl_order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">neq_order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+        <span class="n">nl_order</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neq_order</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">nl_order</span>
+
+    <span class="k">def</span> <span class="nf">_setup_tot_jac_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up total jacobian subjac sparsity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">coloring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_static_coloring</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">coloring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">total_sparsity</span> <span class="o">=</span> <span class="n">coloring</span><span class="o">.</span><span class="n">get_subjac_sparsity</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Total jac sparsity was set in both _total_coloring&quot;</span>
+                                   <span class="s2">&quot; and _total_jac_sparsity.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">total_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span>
+
+        <span class="k">if</span> <span class="n">total_sparsity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">res</span><span class="p">,</span> <span class="n">resdict</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">total_sparsity</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">:</span>  <span class="c1"># skip objectives</span>
+                <span class="k">continue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span><span class="p">[</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">dv</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">resdict</span><span class="p">):</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span><span class="p">[</span><span class="n">res</span><span class="p">][</span><span class="n">dv</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;coo&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">rows</span><span class="o">.</span><span class="n">size</span><span class="p">)],</span>
+                    <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="n">shape</span><span class="p">,</span>
+                <span class="p">}</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

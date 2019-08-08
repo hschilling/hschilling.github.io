@@ -1,0 +1,2917 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>meta_model_structured_comp.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="meta_model_unstructured_comp.py" href="meta_model_unstructured_comp.html" />
+    <link rel="prev" title="matrix_vector_product_comp.py" href="matrix_vector_product_comp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="meta_model_unstructured_comp.html" title="meta_model_unstructured_comp.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="matrix_vector_product_comp.html" title="matrix_vector_product_comp.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.components.html" accesskey="U">openmdao.components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.components.meta_model_structured_comp">
+<span id="meta-model-structured-comp-py"></span><span id="openmdao-components-meta-model-structured-comp-py"></span><span id="index-0"></span><h1>meta_model_structured_comp.py<a class="headerlink" href="#module-openmdao.components.meta_model_structured_comp" title="Permalink to this headline">¶</a></h1>
+<p>Define the RegularGridInterpComp class.</p>
+<dl class="class">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured">
+<em class="property">class </em><code class="descclassname">openmdao.components.meta_model_structured_comp.</code><code class="descname">MetaModelStructured</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructured"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp" title="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.components.meta_model_structured_comp.MetaModelStructuredComp</span></code></a></p>
+<p>Deprecated.</p>
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructured.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capture Initialize to throw warning.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*args</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">Deprecated arguments.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Deprecated arguments.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_constraint">
+<code class="descname">add_constraint</code><span class="sig-paren">(</span><em>name</em>, <em>lower=None</em>, <em>upper=None</em>, <em>equals=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>indices=None</em>, <em>linear=False</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_constraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a constraint variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the response variable in the system.</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the variable</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the variable</p>
+</dd>
+<dt><strong>equals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Equality constraint value for the variable</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">sequence of int, optional</span></dt>
+<dd><p class="first last">If variable is an array, these indicate which entries are of
+interest for this particular response.  These may be positive or
+negative integers.</p>
+</dd>
+<dt><strong>linear</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if constraint is linear. Default is False.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_design_var">
+<code class="descname">add_design_var</code><span class="sig-paren">(</span><em>name</em>, <em>lower=None</em>, <em>upper=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>indices=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_design_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a design variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the design variable in the system.</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the param</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the param</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of design var that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of design var that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter of int, optional</span></dt>
+<dd><p class="first last">If a param is an array, these indicate which entries are of
+interest for this particular design variable.  These may be
+positive or negative integers.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_discrete_input">
+<code class="descname">add_discrete_input</code><span class="sig-paren">(</span><em>name</em>, <em>val</em>, <em>desc=''</em>, <em>tags=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_discrete_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a discrete input variable to the component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">name of the variable in this component’s namespace.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a picklable object</span></dt>
+<dd><p class="first last">The initial value of the variable being added.</p>
+</dd>
+<dt><strong>desc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of the variable</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed when calling
+list_inputs and list_outputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">metadata for added variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_discrete_output">
+<code class="descname">add_discrete_output</code><span class="sig-paren">(</span><em>name</em>, <em>val</em>, <em>desc=''</em>, <em>tags=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_discrete_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an output variable to the component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">name of the variable in this component’s namespace.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a picklable object</span></dt>
+<dd><p class="first last">The initial value of the variable being added.</p>
+</dd>
+<dt><strong>desc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of the variable.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs or set of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed when calling
+list_inputs and list_outputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">metadata for added variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_input">
+<code class="descname">add_input</code><span class="sig-paren">(</span><em>name</em>, <em>val=1.0</em>, <em>training_data=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an input to this component and a corresponding training input.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the input.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
+<dd><p class="first last">Initial value for the input.</p>
+</dd>
+<dt><strong>training_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">training data sample points for this input variable.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional agruments for add_input.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_objective">
+<code class="descname">add_objective</code><span class="sig-paren">(</span><em>name</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>index=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_objective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a response variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the response variable in the system.</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">If variable is an array, this indicates which entry is of
+interest for this particular response. This may be a positive
+or negative integer.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The objective can be scaled using scaler and adder, where</p>
+<div class="math notranslate nohighlight">
+\[x_{scaled} = scaler(x + adder)\]</div>
+<p>or through the use of ref/ref0, which map to scaler and adder through
+the equations:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}0 = scaler(ref_0 + adder)\\1 = scaler(ref + adder)\end{aligned}\end{align} \]</div>
+<p>which results in:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}adder = -ref_0\\scaler = \frac{1}{ref + adder}\end{aligned}\end{align} \]</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_output">
+<code class="descname">add_output</code><span class="sig-paren">(</span><em>name</em>, <em>val=1.0</em>, <em>training_data=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an output to this component and a corresponding training output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the output.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
+<dd><p class="first last">Initial value for the output.</p>
+</dd>
+<dt><strong>training_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">training data sample points for this output variable.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional agruments for add_output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em>, <em>recurse=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">Flag indicating if the recorder should be added to all the subsystems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.add_response">
+<code class="descname">add_response</code><span class="sig-paren">(</span><em>name</em>, <em>type_</em>, <em>lower=None</em>, <em>upper=None</em>, <em>equals=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>indices=None</em>, <em>index=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>linear=False</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.add_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a response variable to this system.</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the response variable in the system.</p>
+</dd>
+<dt><strong>type_</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">The type of response. Supported values are ‘con’ and ‘obj’</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the variable</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the variable</p>
+</dd>
+<dt><strong>equals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">equals or ndarray, optional</span></dt>
+<dd><p class="first last">Equality constraint value for the variable</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">sequence of int, optional</span></dt>
+<dd><p class="first last">If variable is an array, these indicate which entries are of
+interest for this particular response.</p>
+</dd>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">If variable is an array, this indicates which entry is of
+interest for this particular response.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>linear</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if constraint is linear. Default is False.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.check_config">
+<code class="descname">check_config</code><span class="sig-paren">(</span><em>logger</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.check_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform optional error checks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>logger</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that manages logging output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.compute">
+<code class="descname">compute</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the interpolation at run time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional output variables read via outputs[key]</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.compute_jacvec_product">
+<code class="descname">compute_jacvec_product</code><span class="sig-paren">(</span><em>inputs</em>, <em>d_inputs</em>, <em>d_outputs</em>, <em>mode</em>, <em>discrete_inputs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.compute_jacvec_product" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute jac-vector product. The model is assumed to be in an unscaled state.</p>
+<dl class="docutils">
+<dt>If mode is:</dt>
+<dd><p class="first">‘fwd’: d_inputs |-&gt; d_outputs</p>
+<p class="last">‘rev’: d_outputs |-&gt; d_inputs</p>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>d_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">see inputs; product must be computed only if var_name in d_inputs</p>
+</dd>
+<dt><strong>d_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">see outputs; product must be computed only if var_name in d_outputs</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">either ‘fwd’ or ‘rev’</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.compute_partials">
+<code class="descname">compute_partials</code><span class="sig-paren">(</span><em>inputs</em>, <em>partials</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.compute_partials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect computed partial derivatives and return them.</p>
+<p>Checks if the needed derivatives are cached already based on the
+inputs vector. Refreshes the cache by re-computing the current point
+if necessary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>partials</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Jacobian</span></dt>
+<dd><p class="first last">sub-jac components written to partials[output_name, input_name]</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.declare_coloring">
+<code class="descname">declare_coloring</code><span class="sig-paren">(</span><em>wrt=('*'</em>, <em>)</em>, <em>method='fd'</em>, <em>form=None</em>, <em>step=None</em>, <em>per_instance=False</em>, <em>num_full_jacs=3</em>, <em>tol=1e-25</em>, <em>orders=None</em>, <em>perturb_size=1e-09</em>, <em>show_summary=True</em>, <em>show_sparsity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.declare_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set options for deriv coloring of a set of wrt vars matching the given pattern(s).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name or names of the variables that derivatives are taken with respect to.
+This can contain input names, output names, or glob patterns.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method used to compute derivative: “fd” for finite difference, “cs” for complex step.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Finite difference form, can be “forward”, “central”, or “backward”. Leave
+undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for finite difference. Leave undeclared to keep unchanged from previous
+or default value.</p>
+</dd>
+<dt><strong>per_instance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, a separate coloring will be generated for each instance of a given class.
+Otherwise, only one coloring for a given class will be generated and all instances
+of that class will use it.</p>
+</dd>
+<dt><strong>num_full_jacs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of times to repeat partial jacobian computation when computing sparsity.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Tolerance used to determine if an array entry is nonzero during sparsity determination.</p>
+</dd>
+<dt><strong>orders</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of orders above and below the tolerance to check during the tolerance sweep.</p>
+</dd>
+<dt><strong>perturb_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Size of input/output perturbation during generation of sparsity.</p>
+</dd>
+<dt><strong>show_summary</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display summary information after generating coloring.</p>
+</dd>
+<dt><strong>show_sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display sparsity with coloring info after generating coloring.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.declare_partials">
+<code class="descname">declare_partials</code><span class="sig-paren">(</span><em>of</em>, <em>wrt</em>, <em>dependent=True</em>, <em>rows=None</em>, <em>cols=None</em>, <em>val=None</em>, <em>method='exact'</em>, <em>step=None</em>, <em>form=None</em>, <em>step_calc=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.declare_partials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare information about this component’s subjacobians.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>of</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name of the residual(s) that derivatives are being computed for.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name of the variables that derivatives are taken with respect to.
+This can contain the name of any input or output variable.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>dependent</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool(True)</span></dt>
+<dd><p class="first last">If False, specifies no dependence between the output(s) and the
+input(s). This is only necessary in the case of a sparse global
+jacobian, because if ‘dependent=False’ is not specified and
+declare_partials is not called for a given pair, then a dense
+matrix of zeros will be allocated in the sparse global jacobian
+for that pair.  In the case of a dense global jacobian it doesn’t
+matter because the space for a dense subjac will always be
+allocated for every pair.</p>
+</dd>
+<dt><strong>rows</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray of int or None</span></dt>
+<dd><p class="first last">Row indices for each nonzero entry.  For sparse subjacobians only.</p>
+</dd>
+<dt><strong>cols</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray of int or None</span></dt>
+<dd><p class="first last">Column indices for each nonzero entry.  For sparse subjacobians only.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray of float or scipy.sparse</span></dt>
+<dd><p class="first last">Value of subjacobian.  If rows and cols are not None, this will
+contain the values found at each (row, col) location in the subjac.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The type of approximation that should be used. Valid options include:
+‘fd’: Finite Difference, ‘cs’: Complex Step, ‘exact’: use the component
+defined analytic derivatives. Default is ‘exact’.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for approximation. Defaults to None, in which case the approximation
+method provides its default value.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Form for finite difference, can be ‘forward’, ‘backward’, or ‘central’. Defaults
+to None, in which case the approximation method provides its default value.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Step type for finite difference, can be ‘abs’ for absolute’, or ‘rel’ for
+relative. Defaults to None, in which case the approximation method provides
+its default value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Metadata dict for the specified partial(s).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.distributed">
+<code class="descname">distributed</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide ‘distributed’ property for backwards compatibility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">reference to the ‘distributed’ option.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_approx_coloring_fname">
+<code class="descname">get_approx_coloring_fname</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_approx_coloring_fname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the full pathname to a coloring file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">The System having its coloring saved or loaded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Full pathname of the coloring file.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_constraints">
+<code class="descname">get_constraints</code><span class="sig-paren">(</span><em>recurse=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Constraint settings from this system.</p>
+<p>Retrieve the constraint settings for the current system as a dict,
+keyed by variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all constraints relative to the this system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The constraints defined in the current system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_design_vars">
+<code class="descname">get_design_vars</code><span class="sig-paren">(</span><em>recurse=True</em>, <em>get_sizes=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_design_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the DesignVariable settings from this system.</p>
+<p>Retrieve all design variable settings from the system and, if recurse
+is True, all of its subsystems.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all design vars relative to the this system.</p>
+</dd>
+<dt><strong>get_sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, compute the size of each design variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The design variables defined in the current system and, if
+recurse=True, its subsystems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_linear_vectors">
+<code class="descname">get_linear_vectors</code><span class="sig-paren">(</span><em>vec_name='linear'</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_linear_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the linear inputs, outputs, and residuals vectors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>vec_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of the linear right-hand-side vector. The default is ‘linear’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(inputs, outputs, residuals)</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of &lt;Vector&gt; instances</span></dt>
+<dd><p class="first last">Yields the inputs, outputs, and residuals linear vectors for vec_name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_nonlinear_vectors">
+<code class="descname">get_nonlinear_vectors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_nonlinear_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the inputs, outputs, and residuals vectors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(inputs, outputs, residuals)</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of &lt;Vector&gt; instances</span></dt>
+<dd><p class="first last">Yields the inputs, outputs, and residuals nonlinear vectors.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_objectives">
+<code class="descname">get_objectives</code><span class="sig-paren">(</span><em>recurse=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_objectives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Objective settings from this system.</p>
+<p>Retrieve all objectives settings from the system as a dict, keyed
+by variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all objective relative to the this system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The objectives defined in the current system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.get_responses">
+<code class="descname">get_responses</code><span class="sig-paren">(</span><em>recurse=True</em>, <em>get_sizes=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.get_responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the response variable settings from this system.</p>
+<p>Retrieve all response variable settings from the system as a dict,
+keyed by variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all responses relative to the this system.</p>
+</dd>
+<dt><strong>get_sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, compute the size of each response.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The responses defined in the current system and, if
+recurse=True, its subsystems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.initialize">
+<code class="descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the component.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.is_active">
+<code class="descname">is_active</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.is_active" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the system is active on this rank.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">If running under MPI, returns True if this <cite>System</cite> has a valid
+communicator. Always returns True if not running under MPI.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.linear_solver">
+<code class="descname">linear_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.linear_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the linear solver for this system.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.list_inputs">
+<code class="descname">list_inputs</code><span class="sig-paren">(</span><em>values=True</em>, <em>prom_name=False</em>, <em>units=False</em>, <em>shape=False</em>, <em>hierarchical=True</em>, <em>print_arrays=False</em>, <em>tags=None</em>, <em>out_stream=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.list_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return and optionally log a list of input names and other optional information.</p>
+<p>If the model is parallel, only the local variables are returned to the process.
+Also optionally logs the information to a user defined output stream. If the model is
+parallel, the rank 0 process logs information about all variables across all processes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>values</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return input values. Default is True.</p>
+</dd>
+<dt><strong>prom_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the promoted name of the variable.
+Default is False.</p>
+</dd>
+<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return units. Default is False.</p>
+</dd>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the shape of the value. Default is False.</p>
+</dd>
+<dt><strong>hierarchical</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, human readable output shows variables in hierarchical format.</p>
+</dd>
+<dt><strong>print_arrays</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.
+The norm is surrounded by vertical bars to indicate that it is a norm.
+When True, also display full values of the ndarray below the row. Format is affected
+by the values set with numpy.set_printoptions
+Default is False.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed. Only inputs with the
+given tags will be listed.
+Default is None, which means there will be no filtering based on tags.</p>
+</dd>
+<dt><strong>out_stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like object</span></dt>
+<dd><p class="first last">Where to send human readable output. Default is sys.stdout.
+Set to None to suppress.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">list of input names and other optional information about those inputs</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.list_outputs">
+<code class="descname">list_outputs</code><span class="sig-paren">(</span><em>explicit=True</em>, <em>implicit=True</em>, <em>values=True</em>, <em>prom_name=False</em>, <em>residuals=False</em>, <em>residuals_tol=None</em>, <em>units=False</em>, <em>shape=False</em>, <em>bounds=False</em>, <em>scaling=False</em>, <em>hierarchical=True</em>, <em>print_arrays=False</em>, <em>tags=None</em>, <em>out_stream=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.list_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return and optionally log a list of output names and other optional information.</p>
+<p>If the model is parallel, only the local variables are returned to the process.
+Also optionally logs the information to a user defined output stream. If the model is
+parallel, the rank 0 process logs information about all variables across all processes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>explicit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">include outputs from explicit components. Default is True.</p>
+</dd>
+<dt><strong>implicit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">include outputs from implicit components. Default is True.</p>
+</dd>
+<dt><strong>values</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return output values. Default is True.</p>
+</dd>
+<dt><strong>prom_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the promoted name of the variable.
+Default is False.</p>
+</dd>
+<dt><strong>residuals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return residual values. Default is False.</p>
+</dd>
+<dt><strong>residuals_tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">If set, limits the output of list_outputs to only variables where
+the norm of the resids array is greater than the given ‘residuals_tol’.
+Default is None.</p>
+</dd>
+<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return units. Default is False.</p>
+</dd>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the shape of the value. Default is False.</p>
+</dd>
+<dt><strong>bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return bounds (lower and upper). Default is False.</p>
+</dd>
+<dt><strong>scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return scaling (ref, ref0, and res_ref). Default is False.</p>
+</dd>
+<dt><strong>hierarchical</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, human readable output shows variables in hierarchical format.</p>
+</dd>
+<dt><strong>print_arrays</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.
+The norm is surrounded by vertical bars to indicate that it is a norm.
+When True, also display full values of the ndarray below the row. Format  is affected
+by the values set with numpy.set_printoptions
+Default is False.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed. Only outputs with the
+given tags will be listed.
+Default is None, which means there will be no filtering based on tags.</p>
+</dd>
+<dt><strong>out_stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like</span></dt>
+<dd><p class="first last">Where to send human readable output. Default is sys.stdout.
+Set to None to suppress.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">list of output names and other optional information about those outputs</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.ln_solver">
+<code class="descname">ln_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.ln_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the linear solver for this system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the options for this System.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Our instance pathname, if available, or our class name.  For use in error messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Either our instance pathname or class name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.nl_solver">
+<code class="descname">nl_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.nl_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the nonlinear solver for this system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.nonlinear_solver">
+<code class="descname">nonlinear_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.nonlinear_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the nonlinear solver for this system.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.reconfigure">
+<code class="descname">reconfigure</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.reconfigure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform reconfiguration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">If True, reconfiguration is to be performed.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current System.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.resetup">
+<code class="descname">resetup</code><span class="sig-paren">(</span><em>setup_mode='full'</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.resetup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Public wrapper for _setup that reconfigures after an initial setup has been performed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>setup_mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Must be one of ‘full’, ‘reconf’, or ‘update’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.run_apply_linear">
+<code class="descname">run_apply_linear</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>scope_out=None</em>, <em>scope_in=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.run_apply_linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute jac-vec product.</p>
+<p>This calls _apply_linear, but with the model assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>scope_out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set or None</span></dt>
+<dd><p class="first last">Set of absolute output names in the scope of this mat-vec product.
+If None, all are in the scope.</p>
+</dd>
+<dt><strong>scope_in</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set or None</span></dt>
+<dd><p class="first last">Set of absolute input names in the scope of this mat-vec product.
+If None, all are in the scope.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.run_apply_nonlinear">
+<code class="descname">run_apply_nonlinear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.run_apply_nonlinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute residuals.</p>
+<p>This calls _apply_nonlinear, but with the model assumed to be in an unscaled state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.run_linearize">
+<code class="descname">run_linearize</code><span class="sig-paren">(</span><em>sub_do_ln=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.run_linearize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute jacobian / factorization.</p>
+<p>This calls _linearize, but with the model assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>sub_do_ln</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">Flag indicating if the children should call linearize on their linear solvers.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.run_solve_linear">
+<code class="descname">run_solve_linear</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.run_solve_linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply inverse jac product.</p>
+<p>This calls _solve_linear, but with the model assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.run_solve_nonlinear">
+<code class="descname">run_solve_nonlinear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.run_solve_nonlinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute outputs.</p>
+<p>This calls _solve_nonlinear, but with the model assumed to be in an unscaled state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.set_check_partial_options">
+<code class="descname">set_check_partial_options</code><span class="sig-paren">(</span><em>wrt</em>, <em>method='fd'</em>, <em>form=None</em>, <em>step=None</em>, <em>step_calc=None</em>, <em>directional=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.set_check_partial_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set options that will be used for checking partial derivatives.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name or names of the variables that derivatives are taken with respect to.
+This can contain the name of any input or output variable.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method for check: “fd” for finite difference, “cs” for complex step.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Finite difference form for check, can be “forward”, “central”, or “backward”. Leave
+undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for finite difference check. Leave undeclared to keep unchanged from previous
+or default value.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Type of step calculation for check, can be “abs” for absolute (default) or “rel” for
+relative.  Leave undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>directional</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to perform a single directional derivative for each vector variable in the
+pattern named in wrt.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.set_initial_values">
+<code class="descname">set_initial_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.set_initial_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set all input and output variables to their declared initial values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare inputs and outputs.</p>
+<dl class="docutils">
+<dt>Available attributes:</dt>
+<dd>name
+pathname
+comm
+options</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.system_iter">
+<code class="descname">system_iter</code><span class="sig-paren">(</span><em>include_self=False</em>, <em>recurse=True</em>, <em>typ=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.system_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield a generator of local subsystems of this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>include_self</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, include this system in the iteration.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, iterate over the whole tree under this system.</p>
+</dd>
+<dt><strong>typ</strong> <span class="classifier-delimiter">:</span> <span class="classifier">type</span></dt>
+<dd><p class="first last">If not None, only yield Systems that match that are instances of the
+given type.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructured.use_fixed_coloring">
+<code class="descname">use_fixed_coloring</code><span class="sig-paren">(</span><em>coloring=&lt;object object&gt;</em>, <em>recurse=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructured.use_fixed_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use a precomputed coloring for this System.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">A coloring filename.  If no arg is passed, filename will be determined
+automatically.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, set fixed coloring in all subsystems that declare a coloring. Ignored
+if a specific coloring is passed in.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp">
+<em class="property">class </em><code class="descclassname">openmdao.components.meta_model_structured_comp.</code><code class="descname">MetaModelStructuredComp</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../core/explicitcomponent.html#openmdao.core.explicitcomponent.ExplicitComponent" title="openmdao.core.explicitcomponent.ExplicitComponent"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.core.explicitcomponent.ExplicitComponent</span></code></a></p>
+<p>Interpolation Component generated from data on a regular grid.</p>
+<p>Produces smooth fits through provided training data using polynomial
+splines of order 1 (linear), 3 (cubic), or 5 (quintic). Analytic
+derivatives are automatically computed.</p>
+<p>For multi-dimensional data, fits are computed
+on a separable per-axis basis. If a particular dimension does not have
+enough training data points to support a selected spline order (e.g. 3
+sample points, but an order 5 quintic spline is specified) the order of the
+fitted spline with be automatically reduced for that dimension alone.</p>
+<p>Extrapolation is supported, but disabled by default. It can be enabled
+via initialization attribute (see below).</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="79%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>interps</strong></td>
+<td>(dict) Dictionary of interpolations for each output.</td>
+</tr>
+<tr class="row-even"><td><strong>params</strong></td>
+<td>(list) List containing training data for each input.</td>
+</tr>
+<tr class="row-odd"><td><strong>pnames</strong></td>
+<td>(list) Cached list of input names.</td>
+</tr>
+<tr class="row-even"><td><strong>sh</strong></td>
+<td>(tuple) Cached shape of the gradient of the outputs wrt the training inputs.</td>
+</tr>
+<tr class="row-odd"><td><strong>training_outputs</strong></td>
+<td>(dict) Dictionary of training data each output.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict of keyword arguments</span></dt>
+<dd><p class="first last">Keyword arguments that will be mapped into the Component options.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_constraint">
+<code class="descname">add_constraint</code><span class="sig-paren">(</span><em>name</em>, <em>lower=None</em>, <em>upper=None</em>, <em>equals=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>indices=None</em>, <em>linear=False</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_constraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a constraint variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the response variable in the system.</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the variable</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the variable</p>
+</dd>
+<dt><strong>equals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Equality constraint value for the variable</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">sequence of int, optional</span></dt>
+<dd><p class="first last">If variable is an array, these indicate which entries are of
+interest for this particular response.  These may be positive or
+negative integers.</p>
+</dd>
+<dt><strong>linear</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if constraint is linear. Default is False.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_design_var">
+<code class="descname">add_design_var</code><span class="sig-paren">(</span><em>name</em>, <em>lower=None</em>, <em>upper=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>indices=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_design_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a design variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the design variable in the system.</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the param</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the param</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of design var that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of design var that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter of int, optional</span></dt>
+<dd><p class="first last">If a param is an array, these indicate which entries are of
+interest for this particular design variable.  These may be
+positive or negative integers.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_discrete_input">
+<code class="descname">add_discrete_input</code><span class="sig-paren">(</span><em>name</em>, <em>val</em>, <em>desc=''</em>, <em>tags=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_discrete_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a discrete input variable to the component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">name of the variable in this component’s namespace.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a picklable object</span></dt>
+<dd><p class="first last">The initial value of the variable being added.</p>
+</dd>
+<dt><strong>desc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of the variable</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed when calling
+list_inputs and list_outputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">metadata for added variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_discrete_output">
+<code class="descname">add_discrete_output</code><span class="sig-paren">(</span><em>name</em>, <em>val</em>, <em>desc=''</em>, <em>tags=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_discrete_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an output variable to the component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">name of the variable in this component’s namespace.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a picklable object</span></dt>
+<dd><p class="first last">The initial value of the variable being added.</p>
+</dd>
+<dt><strong>desc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of the variable.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs or set of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed when calling
+list_inputs and list_outputs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">metadata for added variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_input">
+<code class="descname">add_input</code><span class="sig-paren">(</span><em>name</em>, <em>val=1.0</em>, <em>training_data=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp.add_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an input to this component and a corresponding training input.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the input.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
+<dd><p class="first last">Initial value for the input.</p>
+</dd>
+<dt><strong>training_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">training data sample points for this input variable.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional agruments for add_input.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_objective">
+<code class="descname">add_objective</code><span class="sig-paren">(</span><em>name</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>index=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_objective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a response variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the response variable in the system.</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">If variable is an array, this indicates which entry is of
+interest for this particular response. This may be a positive
+or negative integer.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The objective can be scaled using scaler and adder, where</p>
+<div class="math notranslate nohighlight">
+\[x_{scaled} = scaler(x + adder)\]</div>
+<p>or through the use of ref/ref0, which map to scaler and adder through
+the equations:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}0 = scaler(ref_0 + adder)\\1 = scaler(ref + adder)\end{aligned}\end{align} \]</div>
+<p>which results in:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}adder = -ref_0\\scaler = \frac{1}{ref + adder}\end{aligned}\end{align} \]</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_output">
+<code class="descname">add_output</code><span class="sig-paren">(</span><em>name</em>, <em>val=1.0</em>, <em>training_data=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp.add_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an output to this component and a corresponding training output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the output.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
+<dd><p class="first last">Initial value for the output.</p>
+</dd>
+<dt><strong>training_data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">training data sample points for this output variable.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional agruments for add_output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em>, <em>recurse=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;CaseRecorder&gt;</span></dt>
+<dd><p class="first last">A recorder instance.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">Flag indicating if the recorder should be added to all the subsystems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_response">
+<code class="descname">add_response</code><span class="sig-paren">(</span><em>name</em>, <em>type_</em>, <em>lower=None</em>, <em>upper=None</em>, <em>equals=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>indices=None</em>, <em>index=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>linear=False</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.add_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a response variable to this system.</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the response variable in the system.</p>
+</dd>
+<dt><strong>type_</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">The type of response. Supported values are ‘con’ and ‘obj’</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the variable</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the variable</p>
+</dd>
+<dt><strong>equals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">equals or ndarray, optional</span></dt>
+<dd><p class="first last">Equality constraint value for the variable</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Value of response variable that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">sequence of int, optional</span></dt>
+<dd><p class="first last">If variable is an array, these indicate which entries are of
+interest for this particular response.</p>
+</dd>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">If variable is an array, this indicates which entry is of
+interest for this particular response.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>linear</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if constraint is linear. Default is False.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.check_config">
+<code class="descname">check_config</code><span class="sig-paren">(</span><em>logger</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.check_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform optional error checks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>logger</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that manages logging output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.compute">
+<code class="descname">compute</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the interpolation at run time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional output variables read via outputs[key]</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.compute_jacvec_product">
+<code class="descname">compute_jacvec_product</code><span class="sig-paren">(</span><em>inputs</em>, <em>d_inputs</em>, <em>d_outputs</em>, <em>mode</em>, <em>discrete_inputs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.compute_jacvec_product" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute jac-vector product. The model is assumed to be in an unscaled state.</p>
+<dl class="docutils">
+<dt>If mode is:</dt>
+<dd><p class="first">‘fwd’: d_inputs |-&gt; d_outputs</p>
+<p class="last">‘rev’: d_outputs |-&gt; d_inputs</p>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>d_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">see inputs; product must be computed only if var_name in d_inputs</p>
+</dd>
+<dt><strong>d_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">see outputs; product must be computed only if var_name in d_outputs</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">either ‘fwd’ or ‘rev’</p>
+</dd>
+<dt><strong>discrete_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or None</span></dt>
+<dd><p class="first last">If not None, dict containing discrete input values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.compute_partials">
+<code class="descname">compute_partials</code><span class="sig-paren">(</span><em>inputs</em>, <em>partials</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp.compute_partials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.compute_partials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect computed partial derivatives and return them.</p>
+<p>Checks if the needed derivatives are cached already based on the
+inputs vector. Refreshes the cache by re-computing the current point
+if necessary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">unscaled, dimensional input variables read via inputs[key]</p>
+</dd>
+<dt><strong>partials</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Jacobian</span></dt>
+<dd><p class="first last">sub-jac components written to partials[output_name, input_name]</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.declare_coloring">
+<code class="descname">declare_coloring</code><span class="sig-paren">(</span><em>wrt=('*'</em>, <em>)</em>, <em>method='fd'</em>, <em>form=None</em>, <em>step=None</em>, <em>per_instance=False</em>, <em>num_full_jacs=3</em>, <em>tol=1e-25</em>, <em>orders=None</em>, <em>perturb_size=1e-09</em>, <em>show_summary=True</em>, <em>show_sparsity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.declare_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set options for deriv coloring of a set of wrt vars matching the given pattern(s).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name or names of the variables that derivatives are taken with respect to.
+This can contain input names, output names, or glob patterns.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method used to compute derivative: “fd” for finite difference, “cs” for complex step.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Finite difference form, can be “forward”, “central”, or “backward”. Leave
+undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for finite difference. Leave undeclared to keep unchanged from previous
+or default value.</p>
+</dd>
+<dt><strong>per_instance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, a separate coloring will be generated for each instance of a given class.
+Otherwise, only one coloring for a given class will be generated and all instances
+of that class will use it.</p>
+</dd>
+<dt><strong>num_full_jacs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of times to repeat partial jacobian computation when computing sparsity.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Tolerance used to determine if an array entry is nonzero during sparsity determination.</p>
+</dd>
+<dt><strong>orders</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of orders above and below the tolerance to check during the tolerance sweep.</p>
+</dd>
+<dt><strong>perturb_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Size of input/output perturbation during generation of sparsity.</p>
+</dd>
+<dt><strong>show_summary</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display summary information after generating coloring.</p>
+</dd>
+<dt><strong>show_sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display sparsity with coloring info after generating coloring.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.declare_partials">
+<code class="descname">declare_partials</code><span class="sig-paren">(</span><em>of</em>, <em>wrt</em>, <em>dependent=True</em>, <em>rows=None</em>, <em>cols=None</em>, <em>val=None</em>, <em>method='exact'</em>, <em>step=None</em>, <em>form=None</em>, <em>step_calc=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.declare_partials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare information about this component’s subjacobians.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>of</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name of the residual(s) that derivatives are being computed for.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name of the variables that derivatives are taken with respect to.
+This can contain the name of any input or output variable.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>dependent</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool(True)</span></dt>
+<dd><p class="first last">If False, specifies no dependence between the output(s) and the
+input(s). This is only necessary in the case of a sparse global
+jacobian, because if ‘dependent=False’ is not specified and
+declare_partials is not called for a given pair, then a dense
+matrix of zeros will be allocated in the sparse global jacobian
+for that pair.  In the case of a dense global jacobian it doesn’t
+matter because the space for a dense subjac will always be
+allocated for every pair.</p>
+</dd>
+<dt><strong>rows</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray of int or None</span></dt>
+<dd><p class="first last">Row indices for each nonzero entry.  For sparse subjacobians only.</p>
+</dd>
+<dt><strong>cols</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray of int or None</span></dt>
+<dd><p class="first last">Column indices for each nonzero entry.  For sparse subjacobians only.</p>
+</dd>
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray of float or scipy.sparse</span></dt>
+<dd><p class="first last">Value of subjacobian.  If rows and cols are not None, this will
+contain the values found at each (row, col) location in the subjac.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The type of approximation that should be used. Valid options include:
+‘fd’: Finite Difference, ‘cs’: Complex Step, ‘exact’: use the component
+defined analytic derivatives. Default is ‘exact’.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for approximation. Defaults to None, in which case the approximation
+method provides its default value.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Form for finite difference, can be ‘forward’, ‘backward’, or ‘central’. Defaults
+to None, in which case the approximation method provides its default value.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Step type for finite difference, can be ‘abs’ for absolute’, or ‘rel’ for
+relative. Defaults to None, in which case the approximation method provides
+its default value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Metadata dict for the specified partial(s).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.distributed">
+<code class="descname">distributed</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide ‘distributed’ property for backwards compatibility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">reference to the ‘distributed’ option.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_approx_coloring_fname">
+<code class="descname">get_approx_coloring_fname</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_approx_coloring_fname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the full pathname to a coloring file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">System</span></dt>
+<dd><p class="first last">The System having its coloring saved or loaded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Full pathname of the coloring file.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_constraints">
+<code class="descname">get_constraints</code><span class="sig-paren">(</span><em>recurse=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Constraint settings from this system.</p>
+<p>Retrieve the constraint settings for the current system as a dict,
+keyed by variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all constraints relative to the this system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The constraints defined in the current system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_design_vars">
+<code class="descname">get_design_vars</code><span class="sig-paren">(</span><em>recurse=True</em>, <em>get_sizes=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_design_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the DesignVariable settings from this system.</p>
+<p>Retrieve all design variable settings from the system and, if recurse
+is True, all of its subsystems.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all design vars relative to the this system.</p>
+</dd>
+<dt><strong>get_sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, compute the size of each design variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The design variables defined in the current system and, if
+recurse=True, its subsystems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_linear_vectors">
+<code class="descname">get_linear_vectors</code><span class="sig-paren">(</span><em>vec_name='linear'</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_linear_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the linear inputs, outputs, and residuals vectors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>vec_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of the linear right-hand-side vector. The default is ‘linear’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(inputs, outputs, residuals)</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of &lt;Vector&gt; instances</span></dt>
+<dd><p class="first last">Yields the inputs, outputs, and residuals linear vectors for vec_name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_nonlinear_vectors">
+<code class="descname">get_nonlinear_vectors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_nonlinear_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the inputs, outputs, and residuals vectors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(inputs, outputs, residuals)</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of &lt;Vector&gt; instances</span></dt>
+<dd><p class="first last">Yields the inputs, outputs, and residuals nonlinear vectors.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_objectives">
+<code class="descname">get_objectives</code><span class="sig-paren">(</span><em>recurse=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_objectives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Objective settings from this system.</p>
+<p>Retrieve all objectives settings from the system as a dict, keyed
+by variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all objective relative to the this system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The objectives defined in the current system.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_responses">
+<code class="descname">get_responses</code><span class="sig-paren">(</span><em>recurse=True</em>, <em>get_sizes=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.get_responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the response variable settings from this system.</p>
+<p>Retrieve all response variable settings from the system as a dict,
+keyed by variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, recurse through the subsystems and return the path of
+all responses relative to the this system.</p>
+</dd>
+<dt><strong>get_sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, compute the size of each response.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The responses defined in the current system and, if
+recurse=True, its subsystems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.initialize">
+<code class="descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#MetaModelStructuredComp.initialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the component.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.is_active">
+<code class="descname">is_active</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.is_active" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the system is active on this rank.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">If running under MPI, returns True if this <cite>System</cite> has a valid
+communicator. Always returns True if not running under MPI.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.linear_solver">
+<code class="descname">linear_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.linear_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the linear solver for this system.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.list_inputs">
+<code class="descname">list_inputs</code><span class="sig-paren">(</span><em>values=True</em>, <em>prom_name=False</em>, <em>units=False</em>, <em>shape=False</em>, <em>hierarchical=True</em>, <em>print_arrays=False</em>, <em>tags=None</em>, <em>out_stream=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.list_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return and optionally log a list of input names and other optional information.</p>
+<p>If the model is parallel, only the local variables are returned to the process.
+Also optionally logs the information to a user defined output stream. If the model is
+parallel, the rank 0 process logs information about all variables across all processes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>values</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return input values. Default is True.</p>
+</dd>
+<dt><strong>prom_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the promoted name of the variable.
+Default is False.</p>
+</dd>
+<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return units. Default is False.</p>
+</dd>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the shape of the value. Default is False.</p>
+</dd>
+<dt><strong>hierarchical</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, human readable output shows variables in hierarchical format.</p>
+</dd>
+<dt><strong>print_arrays</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.
+The norm is surrounded by vertical bars to indicate that it is a norm.
+When True, also display full values of the ndarray below the row. Format is affected
+by the values set with numpy.set_printoptions
+Default is False.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed. Only inputs with the
+given tags will be listed.
+Default is None, which means there will be no filtering based on tags.</p>
+</dd>
+<dt><strong>out_stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like object</span></dt>
+<dd><p class="first last">Where to send human readable output. Default is sys.stdout.
+Set to None to suppress.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">list of input names and other optional information about those inputs</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.list_outputs">
+<code class="descname">list_outputs</code><span class="sig-paren">(</span><em>explicit=True</em>, <em>implicit=True</em>, <em>values=True</em>, <em>prom_name=False</em>, <em>residuals=False</em>, <em>residuals_tol=None</em>, <em>units=False</em>, <em>shape=False</em>, <em>bounds=False</em>, <em>scaling=False</em>, <em>hierarchical=True</em>, <em>print_arrays=False</em>, <em>tags=None</em>, <em>out_stream=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.list_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return and optionally log a list of output names and other optional information.</p>
+<p>If the model is parallel, only the local variables are returned to the process.
+Also optionally logs the information to a user defined output stream. If the model is
+parallel, the rank 0 process logs information about all variables across all processes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>explicit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">include outputs from explicit components. Default is True.</p>
+</dd>
+<dt><strong>implicit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">include outputs from implicit components. Default is True.</p>
+</dd>
+<dt><strong>values</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return output values. Default is True.</p>
+</dd>
+<dt><strong>prom_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the promoted name of the variable.
+Default is False.</p>
+</dd>
+<dt><strong>residuals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return residual values. Default is False.</p>
+</dd>
+<dt><strong>residuals_tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">If set, limits the output of list_outputs to only variables where
+the norm of the resids array is greater than the given ‘residuals_tol’.
+Default is None.</p>
+</dd>
+<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return units. Default is False.</p>
+</dd>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return the shape of the value. Default is False.</p>
+</dd>
+<dt><strong>bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return bounds (lower and upper). Default is False.</p>
+</dd>
+<dt><strong>scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, display/return scaling (ref, ref0, and res_ref). Default is False.</p>
+</dd>
+<dt><strong>hierarchical</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When True, human readable output shows variables in hierarchical format.</p>
+</dd>
+<dt><strong>print_arrays</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">When False, in the columnar display, just display norm of any ndarrays with size &gt; 1.
+The norm is surrounded by vertical bars to indicate that it is a norm.
+When True, also display full values of the ndarray below the row. Format  is affected
+by the values set with numpy.set_printoptions
+Default is False.</p>
+</dd>
+<dt><strong>tags</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of strs</span></dt>
+<dd><p class="first last">User defined tags that can be used to filter what gets listed. Only outputs with the
+given tags will be listed.
+Default is None, which means there will be no filtering based on tags.</p>
+</dd>
+<dt><strong>out_stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like</span></dt>
+<dd><p class="first last">Where to send human readable output. Default is sys.stdout.
+Set to None to suppress.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">list of output names and other optional information about those outputs</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.ln_solver">
+<code class="descname">ln_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.ln_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the linear solver for this system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the options for this System.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Our instance pathname, if available, or our class name.  For use in error messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Either our instance pathname or class name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.nl_solver">
+<code class="descname">nl_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.nl_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the nonlinear solver for this system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.nonlinear_solver">
+<code class="descname">nonlinear_solver</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.nonlinear_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the nonlinear solver for this system.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.reconfigure">
+<code class="descname">reconfigure</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.reconfigure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform reconfiguration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">If True, reconfiguration is to be performed.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current System.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.resetup">
+<code class="descname">resetup</code><span class="sig-paren">(</span><em>setup_mode='full'</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.resetup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Public wrapper for _setup that reconfigures after an initial setup has been performed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>setup_mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Must be one of ‘full’, ‘reconf’, or ‘update’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_apply_linear">
+<code class="descname">run_apply_linear</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em>, <em>scope_out=None</em>, <em>scope_in=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_apply_linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute jac-vec product.</p>
+<p>This calls _apply_linear, but with the model assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+<dt><strong>scope_out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set or None</span></dt>
+<dd><p class="first last">Set of absolute output names in the scope of this mat-vec product.
+If None, all are in the scope.</p>
+</dd>
+<dt><strong>scope_in</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set or None</span></dt>
+<dd><p class="first last">Set of absolute input names in the scope of this mat-vec product.
+If None, all are in the scope.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_apply_nonlinear">
+<code class="descname">run_apply_nonlinear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_apply_nonlinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute residuals.</p>
+<p>This calls _apply_nonlinear, but with the model assumed to be in an unscaled state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_linearize">
+<code class="descname">run_linearize</code><span class="sig-paren">(</span><em>sub_do_ln=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_linearize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute jacobian / factorization.</p>
+<p>This calls _linearize, but with the model assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>sub_do_ln</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">Flag indicating if the children should call linearize on their linear solvers.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_solve_linear">
+<code class="descname">run_solve_linear</code><span class="sig-paren">(</span><em>vec_names</em>, <em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_solve_linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply inverse jac product.</p>
+<p>This calls _solve_linear, but with the model assumed to be in an unscaled state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[str, …]</span></dt>
+<dd><p class="first last">list of names of the right-hand-side vectors.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">‘fwd’ or ‘rev’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_solve_nonlinear">
+<code class="descname">run_solve_nonlinear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.run_solve_nonlinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute outputs.</p>
+<p>This calls _solve_nonlinear, but with the model assumed to be in an unscaled state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.set_check_partial_options">
+<code class="descname">set_check_partial_options</code><span class="sig-paren">(</span><em>wrt</em>, <em>method='fd'</em>, <em>form=None</em>, <em>step=None</em>, <em>step_calc=None</em>, <em>directional=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.set_check_partial_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set options that will be used for checking partial derivatives.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">The name or names of the variables that derivatives are taken with respect to.
+This can contain the name of any input or output variable.
+May also contain a glob pattern.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method for check: “fd” for finite difference, “cs” for complex step.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Finite difference form for check, can be “forward”, “central”, or “backward”. Leave
+undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for finite difference check. Leave undeclared to keep unchanged from previous
+or default value.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Type of step calculation for check, can be “abs” for absolute (default) or “rel” for
+relative.  Leave undeclared to keep unchanged from previous or default value.</p>
+</dd>
+<dt><strong>directional</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to perform a single directional derivative for each vector variable in the
+pattern named in wrt.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.set_initial_values">
+<code class="descname">set_initial_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.set_initial_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set all input and output variables to their declared initial values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare inputs and outputs.</p>
+<dl class="docutils">
+<dt>Available attributes:</dt>
+<dd>name
+pathname
+comm
+options</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.system_iter">
+<code class="descname">system_iter</code><span class="sig-paren">(</span><em>include_self=False</em>, <em>recurse=True</em>, <em>typ=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.system_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield a generator of local subsystems of this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>include_self</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, include this system in the iteration.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, iterate over the whole tree under this system.</p>
+</dd>
+<dt><strong>typ</strong> <span class="classifier-delimiter">:</span> <span class="classifier">type</span></dt>
+<dd><p class="first last">If not None, only yield Systems that match that are instances of the
+given type.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.use_fixed_coloring">
+<code class="descname">use_fixed_coloring</code><span class="sig-paren">(</span><em>coloring=&lt;object object&gt;</em>, <em>recurse=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.MetaModelStructuredComp.use_fixed_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use a precomputed coloring for this System.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">A coloring filename.  If no arg is passed, filename will be determined
+automatically.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, set fixed coloring in all subsystems that declare a coloring. Ignored
+if a specific coloring is passed in.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="openmdao.components.meta_model_structured_comp.OutOfBoundsError">
+<em class="property">exception </em><code class="descclassname">openmdao.components.meta_model_structured_comp.</code><code class="descname">OutOfBoundsError</code><span class="sig-paren">(</span><em>message</em>, <em>idx</em>, <em>value</em>, <em>lower</em>, <em>upper</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#OutOfBoundsError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.OutOfBoundsError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Handles error when interpolated values are requested outside of the domain of the input data.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="87%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>idx</strong></td>
+<td>(int) index of the variable that is out of bounds.</td>
+</tr>
+<tr class="row-even"><td><strong>value</strong></td>
+<td>(double) value of the variable that is out of bounds.</td>
+</tr>
+<tr class="row-odd"><td><strong>lower</strong></td>
+<td>(double) lower bounds of the variable that is out of bounds.</td>
+</tr>
+<tr class="row-even"><td><strong>upper</strong></td>
+<td>(double) upper bounds of the variable that is out of bounds.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.OutOfBoundsError.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>message</em>, <em>idx</em>, <em>value</em>, <em>lower</em>, <em>upper</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/meta_model_structured_comp.html#OutOfBoundsError.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.OutOfBoundsError.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize instance of OutOfBoundsError class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>message</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">description of error.</p>
+</dd>
+<dt><strong>idx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">index of the variable that is out of bounds.</p>
+</dd>
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double</span></dt>
+<dd><p class="first last">value of the variable that is out of bounds.</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double</span></dt>
+<dd><p class="first last">lower bounds of the variable that is out of bounds.</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double</span></dt>
+<dd><p class="first last">upper bounds of the variable that is out of bounds.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.components.meta_model_structured_comp.OutOfBoundsError.args">
+<code class="descname">args</code><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.OutOfBoundsError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.components.meta_model_structured_comp.OutOfBoundsError.with_traceback">
+<code class="descname">with_traceback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.components.meta_model_structured_comp.OutOfBoundsError.with_traceback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception.with_traceback(tb) –
+set self.__traceback__ to tb and return self.</p>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="meta_model_unstructured_comp.html" title="meta_model_unstructured_comp.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="matrix_vector_product_comp.html" title="matrix_vector_product_comp.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.components.html" >openmdao.components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

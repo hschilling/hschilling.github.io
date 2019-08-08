@@ -1,0 +1,16 @@
+.. index:: options_feature_function.py
+
+.. _openmdao.test_suite.components.options_feature_function.py:
+
+options_feature_function.py
+---------------------------
+
+.. automodule:: openmdao.test_suite.components.options_feature_function
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

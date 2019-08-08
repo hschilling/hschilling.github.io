@@ -1,0 +1,7 @@
+.. _EQConstraintComp: 
+
+=========================
+EQConstraintComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/eq_constraint_comp.rst

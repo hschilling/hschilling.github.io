@@ -1,0 +1,242 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Parallel Groups &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Modifying Children of a Group with Configure Method" href="configure_method.html" />
+    <link rel="prev" title="Accessing Subsystems Within a Group" href="get_subsystem.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="configure_method.html" title="Modifying Children of a Group with Configure Method"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="get_subsystem.html" title="Accessing Subsystems Within a Group"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Groups</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="parallel-groups">
+<span id="feature-parallel-group"></span><h1>Parallel Groups<a class="headerlink" href="#parallel-groups" title="Permalink to this headline">¶</a></h1>
+<p>When systems are added to a <code class="code docutils literal notranslate"><span class="pre">ParallelGroup</span></code>, they will be executed in parallel, assuming that the <code class="code docutils literal notranslate"><span class="pre">ParallelGroup</span></code> is
+given an MPI communicator of sufficient size.  Adding subsystems to a ParallelGroup is no different than adding them
+to a normal Group.  For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+
+<span class="n">parallel</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ParallelGroup</span><span class="p">())</span>
+<span class="n">parallel</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;c1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">([</span><span class="s1">&#39;y=-2.0*x&#39;</span><span class="p">]))</span>
+<span class="n">parallel</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;c2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">([</span><span class="s1">&#39;y=5.0*x&#39;</span><span class="p">]))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;c3&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">([</span><span class="s1">&#39;y=3.0*x1+7.0*x2&#39;</span><span class="p">]))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;parallel.c1.y&quot;</span><span class="p">,</span> <span class="s2">&quot;c3.x1&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;parallel.c2.y&quot;</span><span class="p">,</span> <span class="s2">&quot;c3.x2&quot;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;p1.x&quot;</span><span class="p">,</span> <span class="s2">&quot;parallel.c1.x&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;p2.x&quot;</span><span class="p">,</span> <span class="s2">&quot;parallel.c2.x&quot;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">check</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;fwd&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;c3.y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>(rank 0) [29.]
+(rank 1) [29.]
+</pre></div></div><p>In this example, components <em>c1</em> and <em>c2</em> will be executed in parallel, provided that the <code class="code docutils literal notranslate"><span class="pre">ParallelGroup</span></code> is given two
+MPI processes.  If the name of the python file containing our example were <cite>my_par_model.py</cite>, we could run it under
+MPI and give it two processes using the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mpirun -n 2 python my_par_model.py</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This will only work if you’ve installed the mpi4py and petsc4py python packages, which are not installed by default
+in OpenMDAO.</p>
+</div>
+<p>In the previous example, both components in the <code class="code docutils literal notranslate"><span class="pre">ParallelGroup</span></code> required just a single MPI process, but
+what happens if we want to add subsystems to a <code class="code docutils literal notranslate"><span class="pre">ParallelGroup</span></code> that has other processor requirements?
+In OpenMDAO, we control process allocation behavior by setting the <code class="code docutils literal notranslate"><span class="pre">min_procs</span></code> and/or <code class="code docutils literal notranslate"><span class="pre">max_procs</span></code> or
+<code class="code docutils literal notranslate"><span class="pre">proc_weight</span></code> args when we call the <code class="code docutils literal notranslate"><span class="pre">add_subsystem</span></code> function to add a particular subsystem to
+a <code class="code docutils literal notranslate"><span class="pre">ParallelGroup</span></code>.</p>
+<dl class="method">
+<dt>
+<code class="descclassname">Group.</code><code class="descname">add_subsystem</code><span class="sig-paren">(</span><em>name</em>, <em>subsys</em>, <em>promotes=None</em>, <em>promotes_inputs=None</em>, <em>promotes_outputs=None</em>, <em>min_procs=1</em>, <em>max_procs=None</em>, <em>proc_weight=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/core/group.html#Group.add_subsystem"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add a subsystem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of the subsystem being added</p>
+</dd>
+<dt><strong>subsys</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">An instantiated, but not-yet-set up system object.</p>
+</dd>
+<dt><strong>promotes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter of (str or tuple), optional</span></dt>
+<dd><p class="first last">A list of variable names specifying which subsystem variables
+to ‘promote’ up to this group. If an entry is a tuple of the
+form (old_name, new_name), this will rename the variable in
+the parent group.</p>
+</dd>
+<dt><strong>promotes_inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter of (str or tuple), optional</span></dt>
+<dd><p class="first last">A list of input variable names specifying which subsystem input
+variables to ‘promote’ up to this group. If an entry is a tuple of
+the form (old_name, new_name), this will rename the variable in
+the parent group.</p>
+</dd>
+<dt><strong>promotes_outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter of (str or tuple), optional</span></dt>
+<dd><p class="first last">A list of output variable names specifying which subsystem output
+variables to ‘promote’ up to this group. If an entry is a tuple of
+the form (old_name, new_name), this will rename the variable in
+the parent group.</p>
+</dd>
+<dt><strong>min_procs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Minimum number of MPI processes usable by the subsystem. Defaults to 1.</p>
+</dd>
+<dt><strong>max_procs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd><p class="first last">Maximum number of MPI processes usable by the subsystem.  A value
+of None (the default) indicates there is no maximum limit.</p>
+</dd>
+<dt><strong>proc_weight</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Weight given to the subsystem when allocating available MPI processes
+to all subsystems.  Default is 1.0.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>&lt;System&gt;</strong></dt>
+<dd><p class="first last">the subsystem that was passed in. This is returned to
+enable users to instantiate and add a subsystem at the
+same time, and get the reference back.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>If you use both <code class="code docutils literal notranslate"><span class="pre">min_procs/max_procs</span></code> and <code class="code docutils literal notranslate"><span class="pre">proc_weight</span></code>, it can become less obvious what the
+resulting process allocation will be, so you may want to stick to just using one or the other.
+The algorithm used for the allocation starts, assuming that the number of processes is greater than or
+equal to the number of subsystems, by assigning the <code class="code docutils literal notranslate"><span class="pre">min_procs</span></code> for each subsystem.  It then adds
+any remaining processes to subsystems based on their weights, being careful not to exceed their
+specified <code class="code docutils literal notranslate"><span class="pre">max_procs</span></code>, if any.</p>
+<p>If the number of processes is less than the number of subsystems, then each subsystem, one at a
+time, starting with the one with the highest <code class="code docutils literal notranslate"><span class="pre">proc_weight</span></code>, is allocated to the least-loaded process.
+An exception will be raised if any of the subsystems in this case have a <code class="code docutils literal notranslate"><span class="pre">min_procs</span></code> value greater than one.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="configure_method.html" title="Modifying Children of a Group with Configure Method"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="get_subsystem.html" title="Accessing Subsystems Within a Group"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Groups</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,882 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>genetic_algorithm_driver.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="pyoptsparse_driver.py" href="pyoptsparse_driver.html" />
+    <link rel="prev" title="doe_generators.py" href="doe_generators.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyoptsparse_driver.html" title="pyoptsparse_driver.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="doe_generators.html" title="doe_generators.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.drivers.html" accesskey="U">openmdao.drivers</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.drivers.genetic_algorithm_driver">
+<span id="genetic-algorithm-driver-py"></span><span id="openmdao-drivers-genetic-algorithm-driver-py"></span><span id="index-0"></span><h1>genetic_algorithm_driver.py<a class="headerlink" href="#module-openmdao.drivers.genetic_algorithm_driver" title="Permalink to this headline">¶</a></h1>
+<p>Driver for a simple genetic algorithm.</p>
+<p>This is the Simple Genetic Algorithm implementation based on 2009 AAE550: MDO Lecture notes of
+Prof. William A. Crossley.</p>
+<p>This basic GA algorithm is compartmentalized into the GeneticAlgorithm class so that it can be
+used in more complicated driver.</p>
+<p>The following reference is only for the automatic population sizing:
+Williams E.A., Crossley W.A. (1998) Empirically-Derived Population Size and Mutation Rate
+Guidelines for a Genetic Algorithm with Uniform Crossover. In: Chawdhry P.K., Roy R., Pant R.K.
+(eds) Soft Computing in Engineering Design and Manufacturing. Springer, London.</p>
+<p>The following reference is only for the penalty function:
+Smith, A. E., Coit, D. W. (1995) Penalty functions. In: Handbook of Evolutionary Computation, 97(1).</p>
+<p>The following reference is only for weighted sum multi-objective optimization:
+Sobieszczanski-Sobieski, J., Morris, A. J., van Tooren, M. J. L. (2015)
+Multidisciplinary Design Optimization Supported by Knowledge Based Engineering.
+John Wiley &amp; Sons, Ltd.</p>
+<dl class="class">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm">
+<em class="property">class </em><code class="descclassname">openmdao.drivers.genetic_algorithm_driver.</code><code class="descname">GeneticAlgorithm</code><span class="sig-paren">(</span><em>objfun</em>, <em>comm=None</em>, <em>model_mpi=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simple Genetic Algorithm.</p>
+<p>This is the Simple Genetic Algorithm implementation based on 2009 AAE550: MDO Lecture notes of
+Prof. William A. Crossley. It can be used standalone or as part of the OpenMDAO Driver.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="94%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>comm</strong></td>
+<td>(MPI communicator or None) The MPI communicator that will be used objective evaluation for each generation.</td>
+</tr>
+<tr class="row-even"><td><strong>elite</strong></td>
+<td>(bool) Elitism flag.</td>
+</tr>
+<tr class="row-odd"><td><strong>lchrom</strong></td>
+<td>(int) Chromosome length.</td>
+</tr>
+<tr class="row-even"><td><strong>model_mpi</strong></td>
+<td>(None or tuple) If the model in objfun is also parallel, then this will contain a tuple with the the total number of population points to evaluate concurrently, and the color of the point to evaluate on this rank.</td>
+</tr>
+<tr class="row-odd"><td><strong>npop</strong></td>
+<td>(int) Population size.</td>
+</tr>
+<tr class="row-even"><td><strong>objfun</strong></td>
+<td>(function) Objective function callback.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>objfun</em>, <em>comm=None</em>, <em>model_mpi=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize genetic algorithm object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>objfun</strong> <span class="classifier-delimiter">:</span> <span class="classifier">function</span></dt>
+<dd><p class="first last">Objective callback function.</p>
+</dd>
+<dt><strong>comm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">MPI communicator or None</span></dt>
+<dd><p class="first last">The MPI communicator that will be used objective evaluation for each generation.</p>
+</dd>
+<dt><strong>model_mpi</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None or tuple</span></dt>
+<dd><p class="first last">If the model in objfun is also parallel, then this will contain a tuple with the the
+total number of population points to evaluate concurrently, and the color of the point
+to evaluate on this rank.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.crossover">
+<code class="descname">crossover</code><span class="sig-paren">(</span><em>old_gen</em>, <em>Pc</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.crossover"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.crossover" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply crossover to the current generation.</p>
+<p>Crossover flips two adjacent genes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>old_gen</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Points in current generation</p>
+</dd>
+<dt><strong>Pc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Probability of crossover.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Current generation with crossovers applied.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.decode">
+<code class="descname">decode</code><span class="sig-paren">(</span><em>gen</em>, <em>vlb</em>, <em>vub</em>, <em>bits</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode from binary array to real value array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>gen</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Population of points, encoded.</p>
+</dd>
+<dt><strong>vlb</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Lower bound array.</p>
+</dd>
+<dt><strong>vub</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Upper bound array.</p>
+</dd>
+<dt><strong>bits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Number of bits for decoding.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Decoded design variable values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.encode">
+<code class="descname">encode</code><span class="sig-paren">(</span><em>x</em>, <em>vlb</em>, <em>vub</em>, <em>bits</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode array of real values to array of binary arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Design variable values.</p>
+</dd>
+<dt><strong>vlb</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Lower bound array.</p>
+</dd>
+<dt><strong>vub</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Upper bound array.</p>
+</dd>
+<dt><strong>bits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of bits for decoding.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Population of points, encoded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.execute_ga">
+<code class="descname">execute_ga</code><span class="sig-paren">(</span><em>x0</em>, <em>vlb</em>, <em>vub</em>, <em>vob</em>, <em>bits</em>, <em>pop_size</em>, <em>max_gen</em>, <em>random_state</em>, <em>Pm=None</em>, <em>Pc=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.execute_ga"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.execute_ga" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the genetic algorithm.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>x0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Initial design values</p>
+</dd>
+<dt><strong>vlb</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Lower bounds array.</p>
+</dd>
+<dt><strong>vub</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Upper bounds array. This includes over-allocation so that every point falls on an
+integer value.</p>
+</dd>
+<dt><strong>vob</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Outer bounds array. This is purely for bounds check.</p>
+</dd>
+<dt><strong>bits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Number of bits to encode the design space for each element of the design vector.</p>
+</dd>
+<dt><strong>pop_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of points in the population.</p>
+</dd>
+<dt><strong>max_gen</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of generations to run the GA.</p>
+</dd>
+<dt><strong>random_state</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.random.RandomState, int</span></dt>
+<dd><p class="first last">Random state (or seed-number) which controls the seed and random draws.</p>
+</dd>
+<dt><strong>Pm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or None</span></dt>
+<dd><p class="first last">Mutation rate</p>
+</dd>
+<dt><strong>Pc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Crossover rate</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Best design point</p>
+</dd>
+<dt><strong>float</strong></dt>
+<dd><p class="first last">Objective value at best design point.</p>
+</dd>
+<dt><strong>int</strong></dt>
+<dd><p class="first last">Number of successful function evaluations.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.mutate">
+<code class="descname">mutate</code><span class="sig-paren">(</span><em>current_gen</em>, <em>Pm</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.mutate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.mutate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply mutations to the current generation.</p>
+<p>A mutation flips the state of the gene from 0 to 1 or 1 to 0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>current_gen</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Points in current generation</p>
+</dd>
+<dt><strong>Pm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Probability of mutation.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Current generation with mutations applied.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.shuffle">
+<code class="descname">shuffle</code><span class="sig-paren">(</span><em>old_gen</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.shuffle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.shuffle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shuffle (reorder) the points in the population.</p>
+<p>Used in tournament selection.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>old_gen</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Old population.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">New shuffled population.</p>
+</dd>
+<dt><strong>ndarray(dtype=np.int)</strong></dt>
+<dd><p class="first last">Index array that maps the shuffle from old to new.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.tournament">
+<code class="descname">tournament</code><span class="sig-paren">(</span><em>old_gen</em>, <em>fitness</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#GeneticAlgorithm.tournament"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.tournament" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply tournament selection and keep the best points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>old_gen</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Points in current generation</p>
+</dd>
+<dt><strong>fitness</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Objective value of each point.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">New generation with best points.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver">
+<em class="property">class </em><code class="descclassname">openmdao.drivers.genetic_algorithm_driver.</code><code class="descname">SimpleGADriver</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#SimpleGADriver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../core/driver.html#openmdao.core.driver.Driver" title="openmdao.core.driver.Driver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.core.driver.Driver</span></code></a></p>
+<p>Driver for a simple genetic algorithm.</p>
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#SimpleGADriver.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the SimpleGADriver driver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict of keyword arguments</span></dt>
+<dd><p class="first last">Keyword arguments that will be mapped into the Driver options.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the driver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">CaseRecorder</span></dt>
+<dd><p class="first last">A recorder instance.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.declare_coloring">
+<code class="descname">declare_coloring</code><span class="sig-paren">(</span><em>num_full_jacs=3</em>, <em>tol=1e-25</em>, <em>orders=None</em>, <em>perturb_size=1e-09</em>, <em>show_summary=True</em>, <em>show_sparsity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.declare_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set options for total deriv coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>num_full_jacs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of times to repeat partial jacobian computation when computing sparsity.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Tolerance used to determine if an array entry is nonzero during sparsity determination.</p>
+</dd>
+<dt><strong>orders</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of orders above and below the tolerance to check during the tolerance sweep.</p>
+</dd>
+<dt><strong>perturb_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Size of input/output perturbation during generation of sparsity.</p>
+</dd>
+<dt><strong>show_summary</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display summary information after generating coloring.</p>
+</dd>
+<dt><strong>show_sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display sparsity with coloring info after generating coloring.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_constraint_values">
+<code class="descname">get_constraint_values</code><span class="sig-paren">(</span><em>ctype='all'</em>, <em>lintype='all'</em>, <em>driver_scaling=True</em>, <em>filter=None</em>, <em>ignore_indices=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_constraint_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return constraint values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>ctype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Default is ‘all’. Optionally return just the inequality constraints
+with ‘ineq’ or the equality constraints with ‘eq’.</p>
+</dd>
+<dt><strong>lintype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Default is ‘all’. Optionally return just the linear constraints
+with ‘linear’ or the nonlinear constraints with ‘nonlinear’.</p>
+</dd>
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return values that are scaled according to either the adder and scaler or
+the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is True.</p>
+</dd>
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of constraint names used by recorders.</p>
+</dd>
+<dt><strong>ignore_indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if the full array is desired, not just those indicated by indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each constraint.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_design_var_values">
+<code class="descname">get_design_var_values</code><span class="sig-paren">(</span><em>filter=None</em>, <em>driver_scaling=True</em>, <em>ignore_indices=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_design_var_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the design variable values.</p>
+<p>This is called to gather the initial design variable state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of desvar names used by recorders.</p>
+</dd>
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return values that are scaled according to either the adder and scaler or
+the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is True.</p>
+</dd>
+<dt><strong>ignore_indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if the full array is desired, not just those indicated by indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each design variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_objective_values">
+<code class="descname">get_objective_values</code><span class="sig-paren">(</span><em>driver_scaling=True</em>, <em>filter=None</em>, <em>ignore_indices=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_objective_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return objective values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return values that are scaled according to either the adder and scaler or
+the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is True.</p>
+</dd>
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of objective names used by recorders.</p>
+</dd>
+<dt><strong>ignore_indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if the full array is desired, not just those indicated by indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each objective.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_response_values">
+<code class="descname">get_response_values</code><span class="sig-paren">(</span><em>filter=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.get_response_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return response values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of response names used by recorders.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each response.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.objective_callback">
+<code class="descname">objective_callback</code><span class="sig-paren">(</span><em>x</em>, <em>icase</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#SimpleGADriver.objective_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.objective_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate problem objective at the requested point.</p>
+<p>In case of multi-objective optimization, a simple weighted sum method is used:</p>
+<div class="math notranslate nohighlight">
+\[f = (\sum_{k=1}^{N_f} w_k \cdot f_k)^a\]</div>
+<p>where <span class="math notranslate nohighlight">\(N_f\)</span> is the number of objectives and <span class="math notranslate nohighlight">\(a&gt;0\)</span> is an exponential
+weight. Choosing <span class="math notranslate nohighlight">\(a=1\)</span> is equivalent to the conventional weighted sum method.</p>
+<p>The weights given in the options are normalized, so:</p>
+<div class="math notranslate nohighlight">
+\[\sum_{k=1}^{N_f} w_k = 1\]</div>
+<p>If one of the objectives <span class="math notranslate nohighlight">\(f_k\)</span> is not a scalar, its elements will have the same
+weights, and it will be normed with length of the vector.</p>
+<p>Takes into account constraints with a penalty function.</p>
+<p>All constraints are converted to the form of <span class="math notranslate nohighlight">\(g_i(x) \leq 0\)</span> for
+inequality constraints and <span class="math notranslate nohighlight">\(h_i(x) = 0\)</span> for equality constraints.
+The constraint vector for inequality constraints is the following:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}g = [g_1, g_2  \dots g_N], g_i \in R^{N_{g_i}}\\h = [h_1, h_2  \dots h_N], h_i \in R^{N_{h_i}}\end{aligned}\end{align} \]</div>
+<p>The number of all constraints:</p>
+<div class="math notranslate nohighlight">
+\[N_g = \sum_{i=1}^N N_{g_i},  N_h = \sum_{i=1}^N N_{h_i}\]</div>
+<p>The fitness function is constructed with the penalty parameter <span class="math notranslate nohighlight">\(p\)</span>
+and the exponent <span class="math notranslate nohighlight">\(\kappa\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\Phi(x) = f(x) + p \cdot \sum_{k=1}^{N^g}(\delta_k \cdot g_k)^{\kappa}
++ p \cdot \sum_{k=1}^{N^h}|h_k|^{\kappa}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\delta_k = 0\)</span> if <span class="math notranslate nohighlight">\(g_k\)</span> is satisfied, 1 otherwise</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The values of <span class="math notranslate nohighlight">\(\kappa\)</span> and <span class="math notranslate nohighlight">\(p\)</span> can be defined as driver options.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Value of design variables.</p>
+</dd>
+<dt><strong>icase</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Case number, used for identification when run in parallel.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">Objective value</p>
+</dd>
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">Success flag, True if successful</p>
+</dd>
+<dt><strong>int</strong></dt>
+<dd><p class="first last">Case number, used for identification when run in parallel.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Driver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/genetic_algorithm_driver.html#SimpleGADriver.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the genetic algorithm.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>boolean</strong></dt>
+<dd><p class="first last">Failure flag; True if failed to converge, False is successful.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.set_design_var">
+<code class="descname">set_design_var</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.set_design_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value of a design variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Global pathname of the design variable.</p>
+</dd>
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
+<dd><p class="first last">Value for the design variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.set_simul_deriv_color">
+<code class="descname">set_simul_deriv_color</code><span class="sig-paren">(</span><em>coloring</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.set_simul_deriv_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>See use_fixed_coloring. This method is deprecated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or Coloring</span></dt>
+<dd><p class="first last">Information about simultaneous coloring for design vars and responses.  If a
+string, then coloring is assumed to be the name of a file that contains the
+coloring information in pickle format. Otherwise it must be a Coloring object.
+See the docstring for Coloring for details.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.set_total_jac_sparsity">
+<code class="descname">set_total_jac_sparsity</code><span class="sig-paren">(</span><em>sparsity</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.set_total_jac_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the sparsity of sub-jacobians of the total jacobian.</p>
+<p>Note: This currently will have no effect if you are not using the pyOptSparseDriver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict</span></dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sparsity is a nested dictionary where the outer keys are response</span>
+<span class="c1"># names, the inner keys are design variable names, and the value is a tuple of</span>
+<span class="c1"># the form (row_list, col_list, shape).</span>
+<span class="p">{</span>
+    <span class="n">resp1</span><span class="p">:</span> <span class="p">{</span>
+        <span class="n">dv1</span><span class="p">:</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shape</span><span class="p">),</span>  <span class="c1"># for sub-jac d_resp1/d_dv1</span>
+        <span class="n">dv2</span><span class="p">:</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shape</span><span class="p">),</span>
+          <span class="o">...</span>
+    <span class="p">},</span>
+    <span class="n">resp2</span><span class="p">:</span> <span class="p">{</span>
+        <span class="o">...</span>
+    <span class="p">}</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.use_fixed_coloring">
+<code class="descname">use_fixed_coloring</code><span class="sig-paren">(</span><em>coloring=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.use_fixed_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tell the driver to use a precomputed coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">A coloring filename.  If no arg is passed, filename will be determined
+automatically.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyoptsparse_driver.html" title="pyoptsparse_driver.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="doe_generators.html" title="doe_generators.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.drivers.html" >openmdao.drivers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,310 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.components.bsplines_comp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.components.bsplines_comp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Simple B-spline component for interpolation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">string_types</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">csc_matrix</span><span class="p">,</span> <span class="n">csr_matrix</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.explicitcomponent</span> <span class="k">import</span> <span class="n">ExplicitComponent</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.array_utils</span> <span class="k">import</span> <span class="n">tile_sparse_jac</span>
+
+<span class="n">CITATIONS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">@conference {Hwang2012c,</span>
+<span class="s2">        title = {GeoMACH: Geometry-Centric MDAO of Aircraft Configurations with High Fidelity},</span>
+<span class="s2">        booktitle = {Proceedings of the 14th AIAA/ISSMO Multidisciplinary Analysis Optimization</span>
+<span class="s2">                     Conference},</span>
+<span class="s2">        year = </span><span class="si">{2012}</span><span class="s2">,</span>
+<span class="s2">        note = {&lt;p&gt;AIAA 2012-5605&lt;/p&gt;},</span>
+<span class="s2">        month = </span><span class="si">{September}</span><span class="s2">,</span>
+<span class="s2">        address = {Indianapolis, IN},</span>
+<span class="s2">        author = {John T. Hwang and Joaquim R. R. A. Martins}</span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="get_bspline_mtx"><a class="viewcode-back" href="../../../_srcdocs/packages/components/bsplines_comp.html#openmdao.components.bsplines_comp.get_bspline_mtx">[docs]</a><span class="k">def</span> <span class="nf">get_bspline_mtx</span><span class="p">(</span><span class="n">num_cp</span><span class="p">,</span> <span class="n">num_pt</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="s1">&#39;sine&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute matrix of B-spline coefficients.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_cp : int</span>
+<span class="sd">        Number of control points.</span>
+<span class="sd">    num_pt : int</span>
+<span class="sd">        Number of interpolated points.</span>
+<span class="sd">    order : int(4)</span>
+<span class="sd">        B-spline order.</span>
+<span class="sd">    distribution : str</span>
+<span class="sd">        Choice of spatial distribution to use for placing the control points. It can be &#39;sine&#39; or</span>
+<span class="sd">        &#39;uniform&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    csr_matrix</span>
+<span class="sd">        Sparse matrix of B-spline coefficients.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_cp</span> <span class="o">+</span> <span class="n">order</span><span class="p">)</span>
+    <span class="n">knots</span><span class="p">[</span><span class="n">order</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span><span class="n">num_cp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_cp</span> <span class="o">-</span> <span class="n">order</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">knots</span><span class="p">[</span><span class="n">num_cp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="n">t_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_pt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s1">&#39;uniform&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s1">&#39;sine&#39;</span><span class="p">:</span>
+        <span class="n">t_vec</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">+</span> <span class="n">t_vec</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+
+    <span class="n">basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="n">arange</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_pt</span><span class="p">,</span> <span class="n">order</span><span class="p">))</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_pt</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_pt</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ipt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pt</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t_vec</span><span class="p">[</span><span class="n">ipt</span><span class="p">]</span>
+
+        <span class="n">i0</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">num_cp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">ind</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">knots</span><span class="p">[</span><span class="n">ind</span><span class="p">]):</span>
+                <span class="n">i0</span> <span class="o">=</span> <span class="n">ind</span> <span class="o">-</span> <span class="n">order</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">i0</span> <span class="o">=</span> <span class="n">num_cp</span> <span class="o">-</span> <span class="n">order</span>
+
+        <span class="n">basis</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="n">basis</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">ll</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">j1</span> <span class="o">=</span> <span class="n">order</span> <span class="o">-</span> <span class="n">ll</span>
+            <span class="n">j2</span> <span class="o">=</span> <span class="n">order</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">i0</span> <span class="o">+</span> <span class="n">j1</span>
+            <span class="k">if</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span><span class="p">]</span> <span class="o">!=</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span><span class="p">]:</span>
+                <span class="n">basis</span><span class="p">[</span><span class="n">j1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="o">*</span> <span class="n">basis</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">basis</span><span class="p">[</span><span class="n">j1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j2</span><span class="p">):</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="n">i0</span> <span class="o">+</span> <span class="n">j</span>
+                <span class="k">if</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">basis</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> \
+                        <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">basis</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">basis</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+                <span class="k">if</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span><span class="p">]</span> <span class="o">!=</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span><span class="p">]:</span>
+                    <span class="n">basis</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="o">*</span> <span class="n">basis</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">i0</span> <span class="o">+</span> <span class="n">j2</span>
+            <span class="k">if</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">basis</span><span class="p">[</span><span class="n">j2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> \
+                    <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">ll</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">basis</span><span class="p">[</span><span class="n">j2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">basis</span><span class="p">[</span><span class="n">j2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="n">data</span><span class="p">[</span><span class="n">ipt</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span>
+        <span class="n">rows</span><span class="p">[</span><span class="n">ipt</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ipt</span>
+        <span class="n">cols</span><span class="p">[</span><span class="n">ipt</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">i0</span> <span class="o">+</span> <span class="n">arange</span>
+
+    <span class="n">data</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">rows</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">cols</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">csr_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">num_pt</span><span class="p">,</span> <span class="n">num_cp</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="BsplinesComp"><a class="viewcode-back" href="../../../_srcdocs/packages/components/bsplines_comp.html#openmdao.components.bsplines_comp.BsplinesComp">[docs]</a><span class="k">class</span> <span class="nc">BsplinesComp</span><span class="p">(</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple B-spline component for interpolation.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cite : str</span>
+<span class="sd">        Listing of relevant citations that should be referenced when publishing</span>
+<span class="sd">        work that uses this class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BsplinesComp.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/components/bsplines_comp.html#openmdao.components.bsplines_comp.BsplinesComp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the BsplinesComp.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Component options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BsplinesComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cite</span> <span class="o">=</span> <span class="n">CITATIONS</span></div>
+
+<div class="viewcode-block" id="BsplinesComp.initialize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/bsplines_comp.html#openmdao.components.bsplines_comp.BsplinesComp.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Number of control points.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;num_points&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Number of interpolated points.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;vec_size&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;The number of independent rows to interpolate.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;bspline_order&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;B-spline order.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;in_name&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;h_cp&#39;</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Name to use for the input variable (control points).&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;out_name&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Name to use for the output variable (interpolated points).&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="n">string_types</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Units to use for the input and output variables.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;distribution&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;sine&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="s1">&#39;sine&#39;</span><span class="p">],</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Choice of spatial distribution to use for placing the control &quot;</span>
+                                  <span class="s2">&quot;points. It can be &#39;sine&#39; or &#39;uniform&#39;.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BsplinesComp.setup"><a class="viewcode-back" href="../../../_srcdocs/packages/components/bsplines_comp.html#openmdao.components.bsplines_comp.BsplinesComp.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up the B-spline component.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">num_control_points</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">]</span>
+        <span class="n">num_points</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_points&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+        <span class="n">in_name</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;in_name&#39;</span><span class="p">]</span>
+        <span class="n">out_name</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;out_name&#39;</span><span class="p">]</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">in_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">num_control_points</span><span class="p">),</span> <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">num_points</span><span class="p">),</span> <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">)</span>
+
+        <span class="n">jac</span> <span class="o">=</span> <span class="n">get_bspline_mtx</span><span class="p">(</span><span class="n">num_control_points</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span>
+                              <span class="n">order</span><span class="o">=</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;bspline_order&#39;</span><span class="p">],</span>
+                              <span class="n">distribution</span><span class="o">=</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span>
+
+        <span class="n">data</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">tile_sparse_jac</span><span class="p">(</span><span class="n">jac</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">jac</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="n">jac</span><span class="o">.</span><span class="n">col</span><span class="p">,</span>
+                                           <span class="n">num_points</span><span class="p">,</span> <span class="n">num_control_points</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">jac</span> <span class="o">=</span> <span class="n">csc_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
+                              <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">vec_size</span> <span class="o">*</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">vec_size</span> <span class="o">*</span> <span class="n">num_control_points</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">out_name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">in_name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_check_partial_options</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;cs&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BsplinesComp.compute"><a class="viewcode-back" href="../../../_srcdocs/packages/components/bsplines_comp.html#openmdao.components.bsplines_comp.BsplinesComp.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute values at the B-spline interpolation points.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : `Vector`</span>
+<span class="sd">            `Vector` containing inputs.</span>
+<span class="sd">        outputs : `Vector`</span>
+<span class="sd">            `Vector` containing outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">num_control_points</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_control_points&#39;</span><span class="p">]</span>
+        <span class="n">num_points</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;num_points&#39;</span><span class="p">]</span>
+        <span class="n">vec_size</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;vec_size&#39;</span><span class="p">]</span>
+
+        <span class="n">out_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">num_points</span><span class="p">)</span>
+        <span class="n">in_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">vec_size</span><span class="p">,</span> <span class="n">num_control_points</span><span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jac</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;in_name&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">in_shape</span><span class="p">))</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;out_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out_shape</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

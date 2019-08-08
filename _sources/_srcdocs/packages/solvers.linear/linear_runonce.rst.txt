@@ -1,0 +1,16 @@
+.. index:: linear_runonce.py
+
+.. _openmdao.solvers.linear.linear_runonce.py:
+
+linear_runonce.py
+-----------------
+
+.. automodule:: openmdao.solvers.linear.linear_runonce
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

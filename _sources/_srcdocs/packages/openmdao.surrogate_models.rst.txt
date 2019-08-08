@@ -1,0 +1,11 @@
+openmdao.surrogate_models
+-------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    surrogate_models/kriging
+    surrogate_models/multifi_cokriging
+    surrogate_models/nearest_neighbor
+    surrogate_models/response_surface
+    surrogate_models/surrogate_model

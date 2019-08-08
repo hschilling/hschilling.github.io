@@ -1,0 +1,328 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.recorders.recording_manager &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.recorders.recording_manager</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RecordingManager class definition.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">MPI</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="RecordingManager"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager">[docs]</a><span class="k">class</span> <span class="nc">RecordingManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object that routes function calls to all attached recorders.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _recorders : list of CaseRecorder</span>
+<span class="sd">        All of the recorders attached to the current object.</span>
+<span class="sd">    rank : int</span>
+<span class="sd">        Rank of the iteration coordinate.</span>
+<span class="sd">    _has_serial_recorders: bool</span>
+<span class="sd">        True if any of the recorders managed by this object are serial recorders.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RecordingManager.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        init.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_serial_recorders</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="RecordingManager.__getitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a particular recorder in the manager.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        index : int</span>
+<span class="sd">            an index into _recorders.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        recorder : CaseRecorder</span>
+<span class="sd">            a recorder from _recorders</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">[</span><span class="n">index</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="RecordingManager.__iter__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.__iter__">[docs]</a>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        iter : CaseRecorder</span>
+<span class="sd">            a recorder from _recorders.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecordingManager.append"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recorder</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a recorder for recording.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recorder : CaseRecorder</span>
+<span class="sd">           Recorder instance to be added to the manager.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecordingManager.startup"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.startup">[docs]</a>    <span class="k">def</span> <span class="nf">startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run startup on each recorder in the manager.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            The object that needs an iteration of itself recorded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Will only add parallel code for Drivers. Use the old method for System and Solver</span>
+        <span class="kn">from</span> <span class="nn">openmdao.core.driver</span> <span class="k">import</span> <span class="n">Driver</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">Driver</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+                <span class="n">recorder</span><span class="o">.</span><span class="n">startup</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># The remaining code only works for recording of Drivers</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">recording_requester</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+        <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+            <span class="c1"># TODO Eventually, we think we can get rid of this next check. But to be safe,</span>
+            <span class="c1">#       we are leaving it in there.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">is_active</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;RecordingManager.startup should never be called when &quot;</span>
+                                   <span class="s2">&quot;running in parallel on an inactive System&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="c1"># Each of the recorders determines its self._filtered_* list of vars</span>
+            <span class="c1">#   to record</span>
+            <span class="n">recorder</span><span class="o">.</span><span class="n">startup</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">recorder</span><span class="o">.</span><span class="n">_parallel</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_has_serial_recorders</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="RecordingManager.shutdown"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shut down and remove all recorders.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="n">recorder</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="RecordingManager.record_iteration"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.record_iteration">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Call record_iteration on all recorders.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            The object that needs an iteration of itself recorded.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing desvars, objectives, constraints, responses, and System vars.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Metadata for iteration coordinate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recorder</span><span class="o">.</span><span class="n">_parallel</span> <span class="ow">or</span> <span class="n">MPI</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">recorder</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecordingManager.record_metadata"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.record_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">record_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Call record_metadata for all recorders.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            The object that needs its metadata recorded.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="c1"># If the recorder does not support parallel recording</span>
+            <span class="c1"># we need to make sure we only record on rank 0.</span>
+            <span class="k">if</span> <span class="n">recorder</span><span class="o">.</span><span class="n">_parallel</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">recorder</span><span class="o">.</span><span class="n">record_metadata</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecordingManager.record_derivatives"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.record_derivatives">[docs]</a>    <span class="k">def</span> <span class="nf">record_derivatives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Call record_derivatives on all recorders.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_requester : object</span>
+<span class="sd">            The object that needs an iteration of itself recorded.</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            Dictionary containing derivatives keyed by &#39;of,wrt&#39; to be recorded.</span>
+<span class="sd">        metadata : dict</span>
+<span class="sd">            Metadata for iteration coordinate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recorder</span><span class="o">.</span><span class="n">_parallel</span> <span class="ow">or</span> <span class="n">MPI</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">recorder</span><span class="o">.</span><span class="n">record_derivatives</span><span class="p">(</span><span class="n">recording_requester</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecordingManager.has_recorders"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.RecordingManager.has_recorders">[docs]</a>    <span class="k">def</span> <span class="nf">has_recorders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Are there any recorders managed by this RecordingManager.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        True/False : bool</span>
+<span class="sd">            True if RecordingManager is managing at least one recorder</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span> <span class="k">else</span> <span class="kc">False</span></div></div>
+
+
+<div class="viewcode-block" id="record_viewer_data"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/recording_manager.html#openmdao.recorders.recording_manager.record_viewer_data">[docs]</a><span class="k">def</span> <span class="nf">record_viewer_data</span><span class="p">(</span><span class="n">problem</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Record model viewer data for all recorders that have that option enabled.</span>
+
+<span class="sd">    We don&#39;t want to collect the viewer data if it&#39;s not needed though,</span>
+<span class="sd">    so first we&#39;ll find all recorders that need the data (if any) and</span>
+<span class="sd">    then record it for those recorders.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    problem : Problem</span>
+<span class="sd">        The problem for which model viewer data is to be recorded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># assemble list of all objects that may have recorders</span>
+    <span class="n">systems</span> <span class="o">=</span> <span class="p">[</span><span class="n">system</span> <span class="k">for</span> <span class="n">system</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">system_iter</span><span class="p">(</span><span class="n">include_self</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">nl_solv</span> <span class="o">=</span> <span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">_nonlinear_solver</span> <span class="k">for</span> <span class="n">system</span> <span class="ow">in</span> <span class="n">systems</span> <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">_nonlinear_solver</span><span class="p">]</span>
+    <span class="n">ls_solv</span> <span class="o">=</span> <span class="p">[</span><span class="n">nl</span><span class="o">.</span><span class="n">linesearch</span> <span class="k">for</span> <span class="n">nl</span> <span class="ow">in</span> <span class="n">nl_solv</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">nl</span><span class="p">,</span> <span class="s1">&#39;linesearch&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nl</span><span class="o">.</span><span class="n">linesearch</span><span class="p">]</span>
+    <span class="n">rec_obj</span> <span class="o">=</span> <span class="p">[</span><span class="n">problem</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">driver</span><span class="p">]</span> <span class="o">+</span> <span class="n">systems</span> <span class="o">+</span> <span class="n">nl_solv</span> <span class="o">+</span> <span class="n">ls_solv</span>
+
+    <span class="c1"># get all recorders that need to record the viewer data</span>
+    <span class="n">recorders</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">rec_obj</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recorder</span><span class="o">.</span><span class="n">_record_viewer_data</span><span class="p">:</span>
+                <span class="n">recorders</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+
+    <span class="c1"># if any recorders were found, get the viewer data and record it</span>
+    <span class="k">if</span> <span class="n">recorders</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">openmdao.visualization.n2_viewer.n2_viewer</span> <span class="k">import</span> <span class="n">_get_viewer_data</span>
+        <span class="n">viewer_data</span> <span class="o">=</span> <span class="n">_get_viewer_data</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="n">recorders</span><span class="p">:</span>
+            <span class="n">recorder</span><span class="o">.</span><span class="n">record_viewer_data</span><span class="p">(</span><span class="n">viewer_data</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

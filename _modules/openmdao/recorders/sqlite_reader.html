@@ -1,0 +1,1539 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.recorders.sqlite_reader &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.recorders.sqlite_reader</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Definition of the SqliteCaseReader.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">PY2</span><span class="p">,</span> <span class="n">PY3</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">string_types</span>
+
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.recorders.base_case_reader</span> <span class="k">import</span> <span class="n">BaseCaseReader</span>
+<span class="kn">from</span> <span class="nn">openmdao.recorders.case</span> <span class="k">import</span> <span class="n">Case</span><span class="p">,</span> <span class="n">PromAbsDict</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">simple_warning</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.record_util</span> <span class="k">import</span> <span class="n">check_valid_sqlite3_db</span><span class="p">,</span> <span class="n">convert_to_np_array</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.recorders.sqlite_recorder</span> <span class="k">import</span> <span class="n">format_version</span>
+
+<span class="k">if</span> <span class="n">PY2</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">cPickle</span> <span class="k">as</span> <span class="nn">pickle</span>
+    <span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">json_loads_byteified</span> <span class="k">as</span> <span class="n">json_loads</span>
+<span class="k">elif</span> <span class="n">PY3</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pickle</span>
+    <span class="kn">from</span> <span class="nn">json</span> <span class="k">import</span> <span class="n">loads</span> <span class="k">as</span> <span class="n">json_loads</span>
+
+
+<span class="c1"># regular expression used to determine if a node in an iteration coordinate represents a system</span>
+<span class="n">_coord_system_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(_solve_nonlinear|_apply_nonlinear)$&#39;</span><span class="p">)</span>
+
+<span class="c1"># Regular expression used for splitting iteration coordinates, removes separator and iter counts</span>
+<span class="n">_coord_split_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">|</span><span class="se">\\</span><span class="s1">d+</span><span class="se">\\</span><span class="s1">|*&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_source_system</span><span class="p">(</span><span class="n">iteration_coordinate</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get pathname of system that is the source of the iteration.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    iteration_coordinate : str</span>
+<span class="sd">        The full unique identifier for this iteration.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        The pathname of the system that is the source of the iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">_coord_split_re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">iteration_coordinate</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_coord_system_re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">part</span><span class="p">:</span>
+                <span class="c1"># get rid of &#39;rank#:&#39;</span>
+                <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># return pathname of the system</span>
+    <span class="k">return</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SqliteCaseReader"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader">[docs]</a><span class="k">class</span> <span class="nc">SqliteCaseReader</span><span class="p">(</span><span class="n">BaseCaseReader</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A CaseReader specific to files created with SqliteRecorder.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    problem_metadata : dict</span>
+<span class="sd">        Metadata about the problem, including the system hierachy and connections.</span>
+<span class="sd">    solver_metadata : dict</span>
+<span class="sd">        The solver options for each solver in the recorded model.</span>
+<span class="sd">    system_metadata : dict</span>
+<span class="sd">        Metadata about each system in the recorded model, including options and scaling factors.</span>
+<span class="sd">    _format_version : int</span>
+<span class="sd">        The version of the format assumed when loading the file.</span>
+<span class="sd">    _solver_metadata : dict</span>
+<span class="sd">        Metadata for all the solvers in the model, including their type and options</span>
+<span class="sd">    _filename : str</span>
+<span class="sd">        The path to the filename containing the recorded data.</span>
+<span class="sd">    _abs2meta : dict</span>
+<span class="sd">        Dictionary mapping variables to their metadata</span>
+<span class="sd">    _abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">    _prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">    _output2meta : dict</span>
+<span class="sd">        Dictionary mapping output variables to their metadata</span>
+<span class="sd">    _input2meta : dict</span>
+<span class="sd">        Dictionary mapping input variables to their metadata</span>
+<span class="sd">    _driver_cases : DriverCases</span>
+<span class="sd">        Helper object for accessing cases from the driver_iterations table.</span>
+<span class="sd">    _deriv_cases : DerivCases</span>
+<span class="sd">        Helper object for accessing cases from the driver_derivatives table.</span>
+<span class="sd">    _system_cases : SystemCases</span>
+<span class="sd">        Helper object for accessing cases from the system_iterations table.</span>
+<span class="sd">    _solver_cases : SolverCases</span>
+<span class="sd">        Helper object for accessing cases from the solver_iterations table.</span>
+<span class="sd">    _problem_cases : ProblemCases</span>
+<span class="sd">        Helper object for accessing cases from the problem_cases table.</span>
+<span class="sd">    _global_iterations : list</span>
+<span class="sd">        List of iteration cases and the table and row in which they are found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SqliteCaseReader.__init__"><a class="viewcode-back" href="../../../features/recording/case_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">pre_load</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            The path to the filename containing the recorded data.</span>
+<span class="sd">        pre_load : bool</span>
+<span class="sd">            If True, load all the data into memory during initialization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SqliteCaseReader</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">pre_load</span><span class="p">)</span>
+
+        <span class="n">check_valid_sqlite3_db</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="c1"># initialize private attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output2meta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input2meta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># collect metadata from database</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+            <span class="c1"># collect data from the metadata table. this includes:</span>
+            <span class="c1">#   format_version</span>
+            <span class="c1">#   VOI metadata, which is added to problem_metadata</span>
+            <span class="c1">#   var name maps and metadata for all vars, which are saved as private attributes</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_collect_metadata</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+
+            <span class="c1"># collect data from the driver_metadata table. this includes:</span>
+            <span class="c1">#   model viewer data, which is added to problem_metadata</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_collect_driver_metadata</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+
+            <span class="c1"># collect data from the system_metadata table. this includes:</span>
+            <span class="c1">#   component metadata and scaling factors for each system,</span>
+            <span class="c1">#   which is added to system_metadata</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_collect_system_metadata</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+
+            <span class="c1"># collect data from the solver_metadata table. this includes:</span>
+            <span class="c1">#   solver class and options for each solver, which is saved as an attribute</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_collect_solver_metadata</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+
+            <span class="c1"># get the global iterations table, and save it as an attribute</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_global_iterations</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+
+        <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># create maps to facilitate accessing variable metadata using absolute or promoted name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output2meta</span> <span class="o">=</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input2meta</span> <span class="o">=</span> <span class="n">PromAbsDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># create helper objects for accessing cases from the three iteration tables and</span>
+        <span class="c1"># the problem cases table</span>
+        <span class="n">voi_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_metadata</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span> <span class="o">=</span> <span class="n">DriverCases</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span> <span class="o">=</span> <span class="n">SystemCases</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span> <span class="o">=</span> <span class="n">SolverCases</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span> <span class="o">=</span> <span class="n">ProblemCases</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span>
+                                               <span class="n">voi_meta</span><span class="p">)</span>
+
+        <span class="c1"># if requested, load all the iteration data into memory</span>
+        <span class="k">if</span> <span class="n">pre_load</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_cases</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_collect_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data from the metadata table.</span>
+
+<span class="sd">        Populates the `format_version` attribute and the `variables` data in</span>
+<span class="sd">        the `problem_metadata` attribute of this CaseReader. Also saves the</span>
+<span class="sd">        variable name maps and variable metadata to private attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cur : sqlite3.Cursor</span>
+<span class="sd">            Database cursor to use for reading the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;select * from metadata&#39;</span><span class="p">)</span>
+
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+        <span class="c1"># get format_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">=</span> <span class="n">version</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;format_version&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">format_version</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SQliteCaseReader encountered an unhandled &#39;</span>
+                             <span class="s1">&#39;format version: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">))</span>
+
+        <span class="c1"># add metadata for VOIs (des vars, objective, constraints) to problem metadata</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_metadata</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json_loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;var_settings&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_metadata</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># get variable name maps and metadata for all variables</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">json_loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;abs2prom&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">json_loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;prom2abs&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="n">json_loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;abs2meta&#39;</span><span class="p">])</span>
+
+            <span class="c1"># need to convert bounds to numpy arrays</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">):</span>
+                <span class="k">if</span> <span class="s1">&#39;lower&#39;</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+                    <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_to_np_array</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">],</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="s1">&#39;upper&#39;</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+                    <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_to_np_array</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">],</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">])</span>
+
+        <span class="k">elif</span> <span class="n">version</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">abs2prom</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;abs2prom&#39;</span><span class="p">]</span>
+            <span class="n">prom2abs</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;prom2abs&#39;</span><span class="p">]</span>
+            <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;abs2meta&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">PY2</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">prom2abs</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">abs2meta</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;unsupported pickle protocol&#39;</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This data appears to have been recorded with &quot;</span>
+                                         <span class="s2">&quot;Python 3 and cannot be read with Python 2 &quot;</span>
+                                         <span class="s2">&quot;(</span><span class="si">%s</span><span class="s2">).&quot;</span> <span class="o">%</span> <span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">err</span>
+
+            <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">prom2abs</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">abs2meta</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                    <span class="c1"># Reading in a python 2 pickle recorded pre-OpenMDAO 2.4.</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">abs2prom</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">prom2abs</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">abs2meta</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_collect_driver_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data from the driver_metadata table.</span>
+
+<span class="sd">        Populates the `problem_metadata` attribute of this CaseReader.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cur : sqlite3.Cursor</span>
+<span class="sd">            Database cursor to use for reading the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT model_viewer_data FROM driver_metadata&quot;</span><span class="p">)</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">driver_metadata</span> <span class="o">=</span> <span class="n">json_loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">PY2</span><span class="p">:</span>
+                    <span class="n">driver_metadata</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+                    <span class="n">driver_metadata</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">driver_metadata</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_collect_system_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data from the system table.</span>
+
+<span class="sd">        Populates the `system_metadata` attribute of this CaseReader.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cur : sqlite3.Cursor</span>
+<span class="sd">            Database cursor to use for reading the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id, scaling_factors, component_metadata FROM system_metadata&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">system_metadata</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">if</span> <span class="n">PY2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">system_metadata</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="s1">&#39;scaling_factors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">system_metadata</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="s1">&#39;component_options&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">system_metadata</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="s1">&#39;scaling_factors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">system_metadata</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="s1">&#39;component_options&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_collect_solver_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data from the solver_metadata table.</span>
+
+<span class="sd">        Populates the `solver_metadata` attribute of this CaseReader.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cur : sqlite3.Cursor</span>
+<span class="sd">            Database cursor to use for reading the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id, solver_options, solver_class FROM solver_metadata&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">PY2</span><span class="p">:</span>
+                <span class="n">solver_options</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+                <span class="n">solver_options</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">solver_class</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver_metadata</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;solver_options&#39;</span><span class="p">:</span> <span class="n">solver_options</span><span class="p">,</span>
+                <span class="s1">&#39;solver_class&#39;</span><span class="p">:</span> <span class="n">solver_class</span><span class="p">,</span>
+            <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_get_global_iterations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the global iterations table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cur : sqlite3.Cursor</span>
+<span class="sd">            Database cursor to use for reading the data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of global iterations and the table and row where the associated case is found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;select * from global_iterations&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_load_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load all driver, solver, and system cases into memory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">_load_cases</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">_load_cases</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">_load_cases</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="o">.</span><span class="n">_load_cases</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SqliteCaseReader.list_sources"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader.list_sources">[docs]</a>    <span class="k">def</span> <span class="nf">list_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List of all the different recording sources for which there is recorded data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            One or more of: `problem`, `driver`, `&lt;component hierarchy location&gt;`,</span>
+<span class="sd">            `&lt;solver hierarchy location&gt;`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">sources</span></div>
+
+<div class="viewcode-block" id="SqliteCaseReader.list_source_vars"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader.list_source_vars">[docs]</a>    <span class="k">def</span> <span class="nf">list_source_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List of all inputs and outputs recorded by the specified source.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : {&#39;problem&#39;, &#39;driver&#39;, `&lt;component hierarchy location&gt;`,</span>
+<span class="sd">            `&lt;solver hierarchy location&gt;`}</span>
+<span class="sd">            Identifies the source for which to return information.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            {&#39;inputs&#39;:[list of keys], &#39;outputs&#39;:[list of keys]}. Does not recurse.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dct</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;outputs&#39;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span>
+
+        <span class="n">case</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;problem&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;driver&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">():</span>
+            <span class="n">source_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">source_cases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">():</span>
+            <span class="n">source_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">source_cases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Source not found: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">source</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">case</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;No cases recorded for </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">source</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">case</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">case</span><span class="o">.</span><span class="n">outputs</span><span class="p">:</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dct</span></div>
+
+<div class="viewcode-block" id="SqliteCaseReader.list_cases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader.list_cases">[docs]</a>    <span class="k">def</span> <span class="nf">list_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over Driver, Solver and System cases in order.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : {&#39;problem&#39;, &#39;driver&#39;, component pathname, solver pathname, case_name}</span>
+<span class="sd">            If not None, only cases originating from the specified source or case are returned.</span>
+<span class="sd">        recurse : bool, optional</span>
+<span class="sd">            If True, will enable iterating over all successors in case hierarchy.</span>
+<span class="sd">        flat : bool, optional</span>
+<span class="sd">            If False and there are child cases, then a nested ordered dictionary</span>
+<span class="sd">            is returned rather than an iterator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        iterator or dict</span>
+<span class="sd">            An iterator or a nested dictionary of identified cases.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># if source was not specified, return all cases</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">flat</span><span class="p">:</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">source</span> <span class="o">=</span> <span class="s1">&#39;driver&#39;</span>
+                <span class="k">elif</span> <span class="s1">&#39;root&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">():</span>
+                    <span class="n">source</span> <span class="o">=</span> <span class="s1">&#39;root&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># if there are no driver or model cases, then we need</span>
+                    <span class="c1"># another starting point to build the nested dict.</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;A nested dictionary of all cases was requested, but &quot;</span>
+                                       <span class="s2">&quot;neither the driver or the model was recorded. Please &quot;</span>
+                                       <span class="s2">&quot;specify another source (system or solver) for the cases &quot;</span>
+                                       <span class="s2">&quot;you want to see.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Source parameter must be a string, </span><span class="si">%s</span><span class="s2"> is type </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span>
+                            <span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">source</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_flat</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;problem&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;No problem cases recorded (data format = </span><span class="si">%d</span><span class="s1">).&#39;</span> <span class="o">%</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># figure out which table has cases from the source</span>
+            <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;driver&#39;</span><span class="p">:</span>
+                <span class="n">case_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span>
+            <span class="k">elif</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">():</span>
+                <span class="n">case_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span>
+            <span class="k">elif</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_sources</span><span class="p">():</span>
+                <span class="n">case_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">case_table</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">case_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">recurse</span><span class="p">:</span>
+                    <span class="c1"># return list of cases from the source alone</span>
+                    <span class="k">return</span> <span class="n">case_table</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">flat</span><span class="p">:</span>
+                    <span class="c1"># return list of cases from the source plus child cases</span>
+                    <span class="n">cases</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">source_cases</span> <span class="o">=</span> <span class="n">case_table</span><span class="o">.</span><span class="n">get_cases</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">source_cases</span><span class="p">:</span>
+                        <span class="n">cases</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_flat</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">cases</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># return nested dict of cases from the source and child cases</span>
+                    <span class="n">cases</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                    <span class="n">source_cases</span> <span class="o">=</span> <span class="n">case_table</span><span class="o">.</span><span class="n">get_cases</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">source_cases</span><span class="p">:</span>
+                        <span class="n">cases</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_nested</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="n">cases</span>
+            <span class="k">elif</span> <span class="s1">&#39;|&#39;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+                <span class="c1"># source is a coordinate</span>
+                <span class="k">if</span> <span class="n">recurse</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">flat</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_flat</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_nested</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Source not found: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">source</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_list_cases_recurse_flat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate recursively over Driver, Solver and System cases in order.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coord : an iteration coordinate</span>
+<span class="sd">            Identifies the parent of the cases to return.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A nested dictionary of identified cases.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">solver_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+        <span class="n">system_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+        <span class="n">driver_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+        <span class="n">global_iters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">coord</span><span class="p">:</span>
+            <span class="c1"># will return all cases</span>
+            <span class="n">coord</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">parent_case_counter</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">global_iters</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">driver_cases</span><span class="p">:</span>
+            <span class="n">parent_case_counter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span><span class="o">.</span><span class="n">counter</span>
+        <span class="k">elif</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">system_cases</span><span class="p">:</span>
+            <span class="n">parent_case_counter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span><span class="o">.</span><span class="n">counter</span>
+        <span class="k">elif</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">solver_cases</span><span class="p">:</span>
+            <span class="n">parent_case_counter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span><span class="o">.</span><span class="n">counter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Case not found for coordinate:&#39;</span><span class="p">,</span> <span class="n">coord</span><span class="p">)</span>
+
+        <span class="n">cases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># return all cases in the global iteration table that precede the given case</span>
+        <span class="c1"># and whose coordinate is prefixed by the given coordinate</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">parent_case_counter</span><span class="p">):</span>
+            <span class="n">global_iter</span> <span class="o">=</span> <span class="n">global_iters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">table</span><span class="p">,</span> <span class="n">row</span> <span class="o">=</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;solver&#39;</span><span class="p">:</span>
+                <span class="n">case_coord</span> <span class="o">=</span> <span class="n">solver_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;system&#39;</span><span class="p">:</span>
+                <span class="n">case_coord</span> <span class="o">=</span> <span class="n">system_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;driver&#39;</span><span class="p">:</span>
+                <span class="n">case_coord</span> <span class="o">=</span> <span class="n">driver_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Unexpected table name in global iterations:&#39;</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">case_coord</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                <span class="n">cases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">case_coord</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cases</span>
+
+    <span class="k">def</span> <span class="nf">_list_cases_recurse_nested</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate recursively over Driver, Solver and System cases in order.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coord : an iteration coordinate</span>
+<span class="sd">            Identifies the parent of the cases to return.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A nested dictionary of identified cases.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">solver_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+        <span class="n">system_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+        <span class="n">driver_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+        <span class="n">global_iters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span>
+
+        <span class="k">if</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">driver_cases</span><span class="p">:</span>
+            <span class="n">parent_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">system_cases</span><span class="p">:</span>
+            <span class="n">parent_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">solver_cases</span><span class="p">:</span>
+            <span class="n">parent_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Case not found for coordinate:&#39;</span><span class="p">,</span> <span class="n">coord</span><span class="p">)</span>
+
+        <span class="n">cases</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">cases</span><span class="p">[</span><span class="n">parent_case</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">children</span>
+
+        <span class="c1"># return all cases in the global iteration table that precede the given case</span>
+        <span class="c1"># and whose coordinate is prefixed by the given coordinate</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">parent_case</span><span class="o">.</span><span class="n">counter</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">global_iter</span> <span class="o">=</span> <span class="n">global_iters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">table</span><span class="p">,</span> <span class="n">row</span> <span class="o">=</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;solver&#39;</span><span class="p">:</span>
+                <span class="n">case_coord</span> <span class="o">=</span> <span class="n">solver_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">case_coord</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                    <span class="n">parent_coord</span> <span class="o">=</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_coord</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">parent_coord</span> <span class="o">==</span> <span class="n">coord</span><span class="p">:</span>
+                        <span class="n">children</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_nested</span><span class="p">(</span><span class="n">case_coord</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;system&#39;</span><span class="p">:</span>
+                <span class="n">case_coord</span> <span class="o">=</span> <span class="n">system_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">case_coord</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                    <span class="n">parent_coord</span> <span class="o">=</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_coord</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">parent_coord</span> <span class="o">==</span> <span class="n">coord</span><span class="p">:</span>
+                        <span class="n">children</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_list_cases_recurse_nested</span><span class="p">(</span><span class="n">case_coord</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">cases</span>
+
+<div class="viewcode-block" id="SqliteCaseReader.get_cases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader.get_cases">[docs]</a>    <span class="k">def</span> <span class="nf">get_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over the cases.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : {&#39;problem&#39;, &#39;driver&#39;, component pathname, solver pathname, case_name}</span>
+<span class="sd">            Identifies which cases to return.</span>
+<span class="sd">        recurse : bool, optional</span>
+<span class="sd">            If True, will enable iterating over all successors in case hierarchy</span>
+<span class="sd">        flat : bool, optional</span>
+<span class="sd">            If False and there are child cases, then a nested ordered dictionary</span>
+<span class="sd">            is returned rather than an iterator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list or dict</span>
+<span class="sd">            The cases identified by source</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">case_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">recurse</span><span class="p">,</span> <span class="n">flat</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">case_ids</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">case_id</span> <span class="ow">in</span> <span class="n">case_ids</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cases_nested</span><span class="p">(</span><span class="n">case_ids</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_cases_nested</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_ids</span><span class="p">,</span> <span class="n">cases</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Populate a nested dictionary of cases matching the provided dictionary of case IDs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_ids : OrderedDict</span>
+<span class="sd">            The nested dictionary of case IDs.</span>
+<span class="sd">        cases : OrderedDict</span>
+<span class="sd">            The nested dictionary of cases.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        OrderedDict</span>
+<span class="sd">            The nested dictionary of cases with cases added from case_ids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">case_id</span> <span class="ow">in</span> <span class="n">case_ids</span><span class="p">:</span>
+            <span class="n">case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span>
+            <span class="n">children</span> <span class="o">=</span> <span class="n">case_ids</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">cases</span><span class="p">[</span><span class="n">case</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cases_nested</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cases</span><span class="p">[</span><span class="n">case</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">cases</span>
+
+<div class="viewcode-block" id="SqliteCaseReader.get_case"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SqliteCaseReader.get_case">[docs]</a>    <span class="k">def</span> <span class="nf">get_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get case identified by case_id.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_id : str or int</span>
+<span class="sd">            The unique identifier of the case to return or an index into all cases.</span>
+<span class="sd">        recurse : bool, optional</span>
+<span class="sd">            If True, will return all successors to the case as well.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The case identified by case_id</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">case_id</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="c1"># it&#39;s a global index rather than a coordinate</span>
+            <span class="n">global_iters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span>
+            <span class="k">if</span> <span class="n">case_id</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">global_iters</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Invalid index into available cases:&quot;</span><span class="p">,</span> <span class="n">case_id</span><span class="p">)</span>
+            <span class="n">global_iter</span> <span class="o">=</span> <span class="n">global_iters</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span>
+            <span class="n">table</span><span class="p">,</span> <span class="n">row</span> <span class="o">=</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;solver&#39;</span><span class="p">:</span>
+                <span class="n">solver_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+                <span class="n">case_id</span> <span class="o">=</span> <span class="n">solver_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;system&#39;</span><span class="p">:</span>
+                <span class="n">system_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+                <span class="n">case_id</span> <span class="o">=</span> <span class="n">system_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">table</span> <span class="o">==</span> <span class="s1">&#39;driver&#39;</span><span class="p">:</span>
+                <span class="n">driver_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+                <span class="n">case_id</span> <span class="o">=</span> <span class="n">driver_cases</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">recurse</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cases</span><span class="p">(</span><span class="n">case_id</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">tables</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_driver_cases</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_cases</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_cases</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem_cases</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+            <span class="n">case</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">case</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">case</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Case not found:&#39;</span><span class="p">,</span> <span class="n">case_id</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CaseTable"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable">[docs]</a><span class="k">class</span> <span class="nc">CaseTable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for wrapping case tables in a recording database.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _filename : str</span>
+<span class="sd">        The name of the recording file from which to instantiate the case reader.</span>
+<span class="sd">    _format_version : int</span>
+<span class="sd">        The version of the format assumed when loading the file.</span>
+<span class="sd">    _table_name : str</span>
+<span class="sd">        The name of the table in the database.</span>
+<span class="sd">    _index_name : str</span>
+<span class="sd">        The name of the case index column in the table.</span>
+<span class="sd">    _global_iterations : list</span>
+<span class="sd">        List of iteration cases and the table and row in which they are found.</span>
+<span class="sd">    _abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">    _abs2meta : dict</span>
+<span class="sd">        Dictionary mapping absolute variable names to variable metadata.</span>
+<span class="sd">    _prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">        Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">    _voi_meta : dict</span>
+<span class="sd">        Dictionary mapping absolute variable names to variable settings.</span>
+<span class="sd">    _sources : list</span>
+<span class="sd">        List of sources of cases in the table.</span>
+<span class="sd">    _keys : list</span>
+<span class="sd">        List of keys of cases in the table.</span>
+<span class="sd">    _cases : dict</span>
+<span class="sd">        Dictionary mapping keys to cases that have already been loaded.</span>
+<span class="sd">    _global_iterations : list</span>
+<span class="sd">        List of iteration cases and the table and row in which they are found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CaseTable.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">ver</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fname : str</span>
+<span class="sd">            The name of the recording file from which to instantiate the case reader.</span>
+<span class="sd">        ver : int</span>
+<span class="sd">            The version of the format assumed when loading the file.</span>
+<span class="sd">        table : str</span>
+<span class="sd">            The name of the table in the database.</span>
+<span class="sd">        index : str</span>
+<span class="sd">            The name of the case index column in the table.</span>
+<span class="sd">        giter : list of tuple</span>
+<span class="sd">            The global iterations table.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">        abs2meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable metadata.</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">        voi_meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">fname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">=</span> <span class="n">ver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span> <span class="o">=</span> <span class="n">table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span> <span class="o">=</span> <span class="n">giter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span> <span class="o">=</span> <span class="n">prom2abs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span> <span class="o">=</span> <span class="n">abs2prom</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span> <span class="o">=</span> <span class="n">abs2meta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span> <span class="o">=</span> <span class="n">voi_meta</span>
+
+        <span class="c1"># cached keys/cases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+<div class="viewcode-block" id="CaseTable.count"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the number of cases recorded in the table.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            The number of cases recorded in the table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT count(*) FROM </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+        <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="CaseTable.list_cases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.list_cases">[docs]</a>    <span class="k">def</span> <span class="nf">list_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get list of case IDs for cases in the table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : str, optional</span>
+<span class="sd">            A source of cases or the iteration coordinate of a case.</span>
+<span class="sd">            If not None, only cases originating from the specified source or case are returned.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            The cases from the table from the specified source or parent case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT </span><span class="si">%s</span><span class="s2"> FROM </span><span class="si">%s</span><span class="s2"> ORDER BY id ASC&quot;</span> <span class="o">%</span>
+                            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="p">))</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+            <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="c1"># cache case list for future use</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">source</span><span class="p">:</span>
+            <span class="c1"># return all cases</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span>
+        <span class="k">elif</span> <span class="s1">&#39;|&#39;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="c1"># source is a coordinate</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">source</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># source is a system or solver</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="n">source</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="CaseTable.get_cases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.get_cases">[docs]</a>    <span class="k">def</span> <span class="nf">get_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get list of case names for cases in the table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : str, optional</span>
+<span class="sd">            If not None, only cases that have the specified source will be returned</span>
+<span class="sd">        recurse : bool, optional</span>
+<span class="sd">            If True, will enable iterating over all successors in case hierarchy</span>
+<span class="sd">        flat : bool, optional</span>
+<span class="sd">            If False and there are child cases, then a nested ordered dictionary</span>
+<span class="sd">            is returned rather than an iterator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list or dict</span>
+<span class="sd">            The cases from the table that have the specified source.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">source</span><span class="p">:</span>
+            <span class="c1"># return all cases</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="s1">&#39;|&#39;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="c1"># source is a coordinate</span>
+            <span class="k">if</span> <span class="n">recurse</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">flat</span><span class="p">:</span>
+                <span class="n">cases</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+                        <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cases</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">recurse</span><span class="p">,</span> <span class="n">flat</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">cases</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">list</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">source</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># source is a system or solver</span>
+            <span class="k">if</span> <span class="n">recurse</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">flat</span><span class="p">:</span>
+                    <span class="c1"># return all cases under the source system</span>
+                    <span class="n">source_sys</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.nonlinear_solver&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="nb">list</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span>
+                                 <span class="k">if</span> <span class="n">_get_source_system</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">source_sys</span><span class="p">)])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cases</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+                        <span class="n">case_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">case_source</span> <span class="o">==</span> <span class="n">source</span><span class="p">:</span>
+                            <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cases</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">recurse</span><span class="p">,</span> <span class="n">flat</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">cases</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="n">source</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="CaseTable.get_case"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.get_case">[docs]</a>    <span class="k">def</span> <span class="nf">get_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a case from the database.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_id : str or int</span>
+<span class="sd">            The string-identifier of the case to be retrieved or the index of the case.</span>
+<span class="sd">        cache : bool</span>
+<span class="sd">            If True, case will be cached for faster access by key.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Case</span>
+<span class="sd">            The specified case from the table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># check to see if we&#39;ve already cached this case</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">case_id</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">case_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_iteration_coordinate</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span>
+
+        <span class="c1"># if we&#39;ve already cached this case, return the cached instance</span>
+        <span class="k">if</span> <span class="n">case_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span>
+
+        <span class="c1"># we don&#39;t have it, so fetch it</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM </span><span class="si">%s</span><span class="s2"> WHERE </span><span class="si">%s</span><span class="s2">=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span><span class="p">,</span> <span class="n">case_id</span><span class="p">))</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+        <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># if found, extract the data and optionally cache the Case</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_row_source</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+
+                <span class="c1"># check for situations where parsing the iter coord doesn&#39;t work correctly</span>
+                <span class="n">iter_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">iter_source</span> <span class="o">!=</span> <span class="n">source</span><span class="p">:</span>
+                    <span class="n">simple_warning</span><span class="p">(</span><span class="s1">&#39;Mismatched source for </span><span class="si">%d</span><span class="s1">: </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1"> vs </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                                   <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span><span class="p">],</span> <span class="n">iter_source</span><span class="p">,</span> <span class="n">source</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span><span class="p">])</span>
+
+            <span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">)</span>
+
+            <span class="c1"># cache it if requested</span>
+            <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">case</span>
+
+            <span class="k">return</span> <span class="n">case</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_iteration_coordinate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_idx</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the iteration coordinate for the indexed case (handles negative indices, etc.).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_idx : int</span>
+<span class="sd">            The case number that we want the iteration coordinate for.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        iteration_coordinate : str</span>
+<span class="sd">            The iteration coordinate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># if keys have not been cached yet, get them now</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">case_idx</span><span class="p">]</span>
+
+<div class="viewcode-block" id="CaseTable.cases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.cases">[docs]</a>    <span class="k">def</span> <span class="nf">cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over all cases, optionally caching them into memory.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cache : bool</span>
+<span class="sd">            If True, cases will be cached for faster access by key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM </span><span class="si">%s</span><span class="s2"> ORDER BY id ASC&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="p">)</span>
+            <span class="c1"># rows = cur.fetchall()</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+                <span class="n">case_id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_name</span><span class="p">]</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span>
+                <span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">case</span>
+                <span class="k">yield</span> <span class="n">case</span>
+
+        <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_load_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load all cases into memory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">pass</span>
+
+<div class="viewcode-block" id="CaseTable.list_sources"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.CaseTable.list_sources">[docs]</a>    <span class="k">def</span> <span class="nf">list_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the list of sources that recorded data in this table.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of sources.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># remove &quot;_iterations&quot; from table name</span>
+                <span class="n">sources</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">global_iter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span><span class="p">:</span>
+                    <span class="n">record_type</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">record_type</span> <span class="o">==</span> <span class="n">table</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">source</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">):</span>
+                            <span class="n">sources</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;root.&#39;</span> <span class="o">+</span> <span class="n">source</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">sources</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span> <span class="o">=</span> <span class="n">sources</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">(</span><span class="n">case</span><span class="p">)</span> <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_cases</span><span class="p">()])</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration_coordinate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source of the iteration.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iteration_coordinate : str</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The source of the iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_get_source_system</span><span class="p">(</span><span class="n">iteration_coordinate</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_row_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source of the case at the specified row of this table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        row_id : int</span>
+<span class="sd">            The row_id of the case in the table.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The source of the case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># remove &quot;_iterations&quot; from table name</span>
+
+        <span class="k">for</span> <span class="n">global_iter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_iterations</span><span class="p">:</span>
+            <span class="n">record_type</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">global_iter</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">record_type</span> <span class="o">==</span> <span class="n">table</span> <span class="ow">and</span> <span class="n">row</span> <span class="o">==</span> <span class="n">row_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">source</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_first</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the first case from the specified source.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : str</span>
+<span class="sd">            The source.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Case</span>
+<span class="sd">            The first case from the specified source.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">case</span><span class="o">.</span><span class="n">source</span> <span class="o">==</span> <span class="n">source</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">case</span>
+
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="DriverCases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.DriverCases">[docs]</a><span class="k">class</span> <span class="nc">DriverCases</span><span class="p">(</span><span class="n">CaseTable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cases specific to the entries that might be recorded in a Driver iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DriverCases.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.DriverCases.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            The name of the recording file from which to instantiate the case reader.</span>
+<span class="sd">        format_version : int</span>
+<span class="sd">            The version of the format assumed when loading the file.</span>
+<span class="sd">        giter : list of tuple</span>
+<span class="sd">            The global iterations table.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">        abs2meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable metadata.</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">        voi_meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DriverCases</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span>
+                                          <span class="s1">&#39;driver_iterations&#39;</span><span class="p">,</span> <span class="s1">&#39;iteration_coordinate&#39;</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span>
+                                          <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span> <span class="o">=</span> <span class="n">voi_meta</span></div>
+
+<div class="viewcode-block" id="DriverCases.cases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.DriverCases.cases">[docs]</a>    <span class="k">def</span> <span class="nf">cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over all cases, optionally caching them into memory.</span>
+
+<span class="sd">        Override base class to add derivatives from the derivatives table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cache : bool</span>
+<span class="sd">            If True, cases will be cached for faster access by key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM </span><span class="si">%s</span><span class="s2"> ORDER BY id ASC&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table_name</span><span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># fetch associated derivative data, if available</span>
+                    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM driver_derivatives WHERE iteration_coordinate=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span>
+                                <span class="o">%</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;iteration_coordinate&#39;</span><span class="p">])</span>
+                    <span class="n">derivs_row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+                    <span class="k">if</span> <span class="n">derivs_row</span><span class="p">:</span>
+                        <span class="c1"># convert row to a regular dict and add jacobian</span>
+                        <span class="n">row</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">row</span><span class="p">))</span>
+                        <span class="n">row</span><span class="p">[</span><span class="s1">&#39;jacobian&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">derivs_row</span><span class="p">[</span><span class="s1">&#39;derivatives&#39;</span><span class="p">]</span>
+
+                <span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">[</span><span class="n">case</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">case</span>
+
+                <span class="k">yield</span> <span class="n">case</span>
+
+        <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="DriverCases.get_case"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.DriverCases.get_case">[docs]</a>    <span class="k">def</span> <span class="nf">get_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a case from the database.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_id : int or str</span>
+<span class="sd">            The integer index or string-identifier of the case to be retrieved.</span>
+<span class="sd">        cache : bool</span>
+<span class="sd">            If True, cache the case so it does not have to be fetched on next access.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Case</span>
+<span class="sd">            The specified case from the driver_iterations and driver_derivatives tables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># check to see if we&#39;ve already cached this case</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">case_id</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">case_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_iteration_coordinate</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span>
+
+        <span class="c1"># return cached case if present, else fetch it</span>
+        <span class="k">if</span> <span class="n">case_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span>
+
+        <span class="c1"># Get an unscaled case if does not already exist in _cases</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+            <span class="c1"># fetch driver iteration data</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM driver_iterations WHERE &quot;</span>
+                        <span class="s2">&quot;iteration_coordinate=:iteration_coordinate&quot;</span><span class="p">,</span>
+                        <span class="p">{</span><span class="s2">&quot;iteration_coordinate&quot;</span><span class="p">:</span> <span class="n">case_id</span><span class="p">})</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+            <span class="c1"># fetch associated derivative data, if available</span>
+            <span class="k">if</span> <span class="n">row</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM driver_derivatives WHERE &quot;</span>
+                            <span class="s2">&quot;iteration_coordinate=:iteration_coordinate&quot;</span><span class="p">,</span>
+                            <span class="p">{</span><span class="s2">&quot;iteration_coordinate&quot;</span><span class="p">:</span> <span class="n">case_id</span><span class="p">})</span>
+                <span class="n">derivs_row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">derivs_row</span><span class="p">:</span>
+                    <span class="c1"># convert row to a regular dict and add jacobian</span>
+                    <span class="n">row</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">row</span><span class="p">))</span>
+                    <span class="n">row</span><span class="p">[</span><span class="s1">&#39;jacobian&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">derivs_row</span><span class="p">[</span><span class="s1">&#39;derivatives&#39;</span><span class="p">]</span>
+        <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># if found, create Case object (and cache it if requested) else return None</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
+            <span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_prom2abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2prom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs2meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_voi_meta</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_format_version</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cases</span><span class="p">[</span><span class="n">case_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">case</span>
+            <span class="k">return</span> <span class="n">case</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="DriverCases.list_sources"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.DriverCases.list_sources">[docs]</a>    <span class="k">def</span> <span class="nf">list_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the list of sources that recorded data in this table (just the driver).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of sources.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;driver&#39;</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration_coordinate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source of the iteration.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iteration_coordinate : str</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            &#39;driver&#39; (all cases in this table come from the driver).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;driver&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_row_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source of the case at the specified row of this table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        row_id : int</span>
+<span class="sd">            The row_id of the case in the table.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The source of the case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;driver&#39;</span></div>
+
+
+<div class="viewcode-block" id="SystemCases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SystemCases">[docs]</a><span class="k">class</span> <span class="nc">SystemCases</span><span class="p">(</span><span class="n">CaseTable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cases specific to the entries that might be recorded in a System iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SystemCases.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SystemCases.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            The name of the recording file from which to instantiate the case reader.</span>
+<span class="sd">        format_version : int</span>
+<span class="sd">            The version of the format assumed when loading the file.</span>
+<span class="sd">        giter : list of tuple</span>
+<span class="sd">            The global iterations table.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">        abs2meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable metadata.</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">        voi_meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SystemCases</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span>
+                                          <span class="s1">&#39;system_iterations&#39;</span><span class="p">,</span> <span class="s1">&#39;iteration_coordinate&#39;</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span>
+                                          <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SolverCases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SolverCases">[docs]</a><span class="k">class</span> <span class="nc">SolverCases</span><span class="p">(</span><span class="n">CaseTable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cases specific to the entries that might be recorded in a Solver iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SolverCases.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.SolverCases.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            The name of the recording file from which to instantiate the case reader.</span>
+<span class="sd">        format_version : int</span>
+<span class="sd">            The version of the format assumed when loading the file.</span>
+<span class="sd">        giter : list of tuple</span>
+<span class="sd">            The global iterations table.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">        abs2meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable metadata.</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">        voi_meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SolverCases</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span>
+                                          <span class="s1">&#39;solver_iterations&#39;</span><span class="p">,</span> <span class="s1">&#39;iteration_coordinate&#39;</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span>
+                                          <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration_coordinate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get pathname of solver that is the source of the iteration.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iteration_coordinate : str</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The pathname of the solver that is the source of the iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">source_system</span> <span class="o">=</span> <span class="n">_get_source_system</span><span class="p">(</span><span class="n">iteration_coordinate</span><span class="p">)</span>
+
+        <span class="n">system_solve</span> <span class="o">=</span> <span class="n">source_system</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;._solve_nonlinear&#39;</span>
+        <span class="n">system_coord_len</span> <span class="o">=</span> <span class="n">iteration_coordinate</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">system_solve</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">system_solve</span><span class="p">)</span>
+        <span class="n">system_coord_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">iteration_coordinate</span><span class="p">[:</span><span class="n">system_coord_len</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">iter_coord_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">iteration_coordinate</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">iter_coord_nodes</span> <span class="o">==</span> <span class="n">system_coord_nodes</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">source_system</span> <span class="o">+</span> <span class="s1">&#39;.nonlinear_solver&#39;</span>
+        <span class="k">elif</span> <span class="n">iter_coord_nodes</span> <span class="o">==</span> <span class="n">system_coord_nodes</span> <span class="o">+</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">source_system</span> <span class="o">+</span> <span class="s1">&#39;.nonlinear_solver.linesearch&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t parse solver iteration coordinate: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">iteration_coordinate</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProblemCases"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.ProblemCases">[docs]</a><span class="k">class</span> <span class="nc">ProblemCases</span><span class="p">(</span><span class="n">CaseTable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cases specific to the entries that might be recorded in a Driver iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProblemCases.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.ProblemCases.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span> <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            The name of the recording file from which to instantiate the case reader.</span>
+<span class="sd">        format_version : int</span>
+<span class="sd">            The version of the format assumed when loading the file.</span>
+<span class="sd">        giter : list of tuple</span>
+<span class="sd">            The global iterations table.</span>
+<span class="sd">        abs2prom : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping absolute names to promoted names.</span>
+<span class="sd">        abs2meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable metadata.</span>
+<span class="sd">        prom2abs : {&#39;input&#39;: dict, &#39;output&#39;: dict}</span>
+<span class="sd">            Dictionary mapping promoted names to absolute names.</span>
+<span class="sd">        voi_meta : dict</span>
+<span class="sd">            Dictionary mapping absolute variable names to variable settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ProblemCases</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">format_version</span><span class="p">,</span>
+                                           <span class="s1">&#39;problem_cases&#39;</span><span class="p">,</span> <span class="s1">&#39;case_name&#39;</span><span class="p">,</span> <span class="n">giter</span><span class="p">,</span>
+                                           <span class="n">prom2abs</span><span class="p">,</span> <span class="n">abs2prom</span><span class="p">,</span> <span class="n">abs2meta</span><span class="p">,</span> <span class="n">voi_meta</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ProblemCases.list_sources"><a class="viewcode-back" href="../../../_srcdocs/packages/recorders/sqlite_reader.html#openmdao.recorders.sqlite_reader.ProblemCases.list_sources">[docs]</a>    <span class="k">def</span> <span class="nf">list_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the list of sources that recorded data in this table (just the problem).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of sources.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;problem&#39;</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration_coordinate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source of the iteration.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iteration_coordinate : str</span>
+<span class="sd">            The full unique identifier for this iteration.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            &#39;problem&#39; (all cases in this table come from the problem).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;problem&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_row_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source of the case at the specified row of this table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        row_id : int</span>
+<span class="sd">            The row_id of the case in the table.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The source of the case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;problem&#39;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

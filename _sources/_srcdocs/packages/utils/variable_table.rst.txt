@@ -1,0 +1,16 @@
+.. index:: variable_table.py
+
+.. _openmdao.utils.variable_table.py:
+
+variable_table.py
+-----------------
+
+.. automodule:: openmdao.utils.variable_table
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

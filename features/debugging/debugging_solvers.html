@@ -1,0 +1,306 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Solver Debug Printing &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Profiling and Tracing" href="profiling/index.html" />
+    <link rel="prev" title="Driver Debug Printing" href="debugging_drivers.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="profiling/index.html" title="Profiling and Tracing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="debugging_drivers.html" title="Driver Debug Printing"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Debugging</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="solver-debug-printing">
+<span id="debugging-solvers"></span><h1>Solver Debug Printing<a class="headerlink" href="#solver-debug-printing" title="Permalink to this headline">¶</a></h1>
+<p>When working with a model and you have a situation where a nonlinear solver is
+not converging, it may be helpful to know the complete set of input and output
+values from the initialization of the failing case so that it can be recreated
+for debugging purposes. <code class="code docutils literal notranslate"><span class="pre">NonlinearSolver</span></code> provides the <code class="code docutils literal notranslate"><span class="pre">debug_print</span></code>
+option for this purpose:</p>
+<div class="section" id="nonlinearsolver-options">
+<h2>NonlinearSolver Options<a class="headerlink" href="#nonlinearsolver-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="4%" />
+<col width="9%" />
+<col width="8%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>atol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>absolute error tolerance</td>
+</tr>
+<tr class="row-odd"><td>debug_print</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>If true, the values of input and output variables at the start of iteration are printed and written to a file after a failure to converge.</td>
+</tr>
+<tr class="row-even"><td>err_on_maxiter</td>
+<td>None</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Deprecated. Use ‘err_on_non_converge’.</td>
+</tr>
+<tr class="row-odd"><td>err_on_non_converge</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>When True, AnalysisError will be raised if we don’t converge.</td>
+</tr>
+<tr class="row-even"><td>iprint</td>
+<td>1</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>whether to print output</td>
+</tr>
+<tr class="row-odd"><td>maxiter</td>
+<td>10</td>
+<td>N/A</td>
+<td>[‘int’]</td>
+<td>maximum number of iterations</td>
+</tr>
+<tr class="row-even"><td>rtol</td>
+<td>1e-10</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>relative error tolerance</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
+<p>This example shows how to use the <code class="code docutils literal notranslate"><span class="pre">debug_print</span></code> option for a <code class="code docutils literal notranslate"><span class="pre">NonlinearSolver</span></code>.
+When this option is set to <code class="code docutils literal notranslate"><span class="pre">True</span></code>, the values of the input and output variables will
+be displayed and written to a file if the solver fails to converge.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">distutils.version</span> <span class="kn">import</span> <span class="n">LooseVersion</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.scripts.circuit_analysis</span> <span class="kn">import</span> <span class="n">Circuit</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="kn">import</span> <span class="n">printoptions</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;circuit&#39;</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;source.I&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.I_in&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ground.V&#39;</span><span class="p">,</span> <span class="s1">&#39;circuit.Vg&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">nl</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">()</span>
+
+<span class="n">nl</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">nl</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">nl</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;err_on_non_converge&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="c1"># set some poor initial guesses so that we don&#39;t converge</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n1.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">p</span><span class="p">[</span><span class="s1">&#39;circuit.n2.V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span>
+
+<span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="c1"># formatting has changed in numpy 1.14 and beyond.</span>
+<span class="k">if</span> <span class="n">LooseVersion</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">LooseVersion</span><span class="p">(</span><span class="s2">&quot;1.14&quot;</span><span class="p">):</span>
+    <span class="n">opts</span><span class="p">[</span><span class="s2">&quot;legacy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1.13&#39;</span>
+
+<span class="k">with</span> <span class="n">printoptions</span><span class="p">(</span><span class="o">**</span><span class="n">opts</span><span class="p">):</span>
+    <span class="c1"># run the model</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">om</span><span class="o">.</span><span class="n">AnalysisError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>=======
+circuit
+=======
+NL: Newton 0 ; 2.53337743 1
+NL: Newton 1 ; 6.97216645e+152 2.75212306e+152
+NL: Newton 2 ; 2.56496626e+152 1.01246906e+152
+NL: Newton 3 ; 9.43616587e+151 3.72473748e+151
+NL: Newton 4 ; 3.4714385e+151 1.37028082e+151
+NL: Newton 5 ; 1.27709553e+151 5.04107883e+150
+NL: Newton 6 ; 4.6982627e+150 1.8545451e+150
+NL: Newton 7 ; 1.72842765e+150 6.82262198e+149
+NL: Newton 8 ; 6.35865285e+149 2.50995086e+149
+NL: Newton 9 ; 2.33926286e+149 9.23377161e+148
+NL: Newton 10 ; 8.60583343e+148 3.39698038e+148
+NL: NewtonSolver &#x27;NL: Newton&#x27; on system &#x27;circuit&#x27; failed to converge in 10 iterations.
+
+# Inputs and outputs at start of iteration &#x27;rank0:root._solve_nonlinear|0|NLRunOnce|0|circuit._solve_nonlinear|0&#x27;:
+
+# nonlinear inputs
+{&#x27;circuit.D1.V_in&#x27;: array([ 1.]),
+ &#x27;circuit.D1.V_out&#x27;: array([ 0.]),
+ &#x27;circuit.R1.V_in&#x27;: array([ 1.]),
+ &#x27;circuit.R1.V_out&#x27;: array([ 0.]),
+ &#x27;circuit.R2.V_in&#x27;: array([ 1.]),
+ &#x27;circuit.R2.V_out&#x27;: array([ 1.]),
+ &#x27;circuit.n1.I_in:0&#x27;: array([ 0.1]),
+ &#x27;circuit.n1.I_out:0&#x27;: array([ 1.]),
+ &#x27;circuit.n1.I_out:1&#x27;: array([ 1.]),
+ &#x27;circuit.n2.I_in:0&#x27;: array([ 1.]),
+ &#x27;circuit.n2.I_out:0&#x27;: array([ 1.])}
+
+# nonlinear outputs
+{&#x27;circuit.D1.I&#x27;: array([ 1.]),
+ &#x27;circuit.R1.I&#x27;: array([ 1.]),
+ &#x27;circuit.R2.I&#x27;: array([ 1.]),
+ &#x27;circuit.n1.V&#x27;: array([ 10.]),
+ &#x27;circuit.n2.V&#x27;: array([ 0.001])}
+
+Inputs and outputs at start of iteration have been saved to &#x27;solver_errors.0.out&#x27;.
+
+# Inputs and outputs at start of iteration &#x27;rank0:root._solve_nonlinear|0|NLRunOnce|0|circuit._solve_nonlinear|0&#x27;:
+
+# nonlinear inputs
+{&#x27;circuit.D1.V_in&#x27;: array([ 1.]),
+ &#x27;circuit.D1.V_out&#x27;: array([ 0.]),
+ &#x27;circuit.R1.V_in&#x27;: array([ 1.]),
+ &#x27;circuit.R1.V_out&#x27;: array([ 0.]),
+ &#x27;circuit.R2.V_in&#x27;: array([ 1.]),
+ &#x27;circuit.R2.V_out&#x27;: array([ 1.]),
+ &#x27;circuit.n1.I_in:0&#x27;: array([ 0.1]),
+ &#x27;circuit.n1.I_out:0&#x27;: array([ 1.]),
+ &#x27;circuit.n1.I_out:1&#x27;: array([ 1.]),
+ &#x27;circuit.n2.I_in:0&#x27;: array([ 1.]),
+ &#x27;circuit.n2.I_out:0&#x27;: array([ 1.])}
+
+# nonlinear outputs
+{&#x27;circuit.D1.I&#x27;: array([ 1.]),
+ &#x27;circuit.R1.I&#x27;: array([ 1.]),
+ &#x27;circuit.R2.I&#x27;: array([ 1.]),
+ &#x27;circuit.n1.V&#x27;: array([ 10.]),
+ &#x27;circuit.n2.V&#x27;: array([ 0.001])}</pre></div></div></div></blockquote>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="profiling/index.html" title="Profiling and Tracing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="debugging_drivers.html" title="Driver Debug Printing"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Debugging</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

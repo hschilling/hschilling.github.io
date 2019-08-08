@@ -1,0 +1,173 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OpenMDAO Class Structure &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Understanding How Variables Work" href="implicit_transformation_of_vars.html" />
+    <link rel="prev" title="Theory Manual" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="implicit_transformation_of_vars.html" title="Understanding How Variables Work"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Theory Manual"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="openmdao-class-structure">
+<h1>OpenMDAO Class Structure<a class="headerlink" href="#openmdao-class-structure" title="Permalink to this headline">¶</a></h1>
+<p>In the <a class="reference internal" href="../basic_guide/index.html#basicuserguide"><span class="std std-ref">Basic User Guide</span></a>, you have seen how to define a problem composed of
+a model and a driver. You saw how a model can be built from components of different types and how
+a driver is used to perform an optimization. Then in the <a class="reference internal" href="../advanced_guide/index.html#advanceduserguide"><span class="std std-ref">Advanced User Guide</span></a>,
+you learned about solvers and methods for computing derivatives.</p>
+<p>The following diagram shows the relationship between these various object types (classes) and the
+functionality that is assigned to each.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/openmdao_class_structure.jpg"><img alt="OpenMDAO Class Structure" src="../_images/openmdao_class_structure.jpg" style="width: 100%;" /></a>
+</div>
+<div class="section" id="problem">
+<h2>Problem<a class="headerlink" href="#problem" title="Permalink to this headline">¶</a></h2>
+<p>The Problem class defines a top-level container, holding all other objects. A problem instance
+contains the system and its subsystems that constitute the model hierarchy, and also contains a
+single driver instance. In addition to serving as a container, the problem also provides the user
+interface for model setup and execution.</p>
+</div>
+<div class="section" id="system">
+<h2>System<a class="headerlink" href="#system" title="Permalink to this headline">¶</a></h2>
+<p>A <code class="code docutils literal notranslate"><span class="pre">System</span></code> can be a <code class="code docutils literal notranslate"><span class="pre">Group</span></code> or a <code class="code docutils literal notranslate"><span class="pre">Component</span></code>.</p>
+<p>A <code class="code docutils literal notranslate"><span class="pre">Group</span></code> contains components, other groups, or a mix of both. The containment relationships
+between groups and components form a hierarchy tree, where a top-level group contains other groups,
+which contain other groups, and so on, until we reach the bottom of the tree, which is composed
+only of components. In addition to managing the data dependencies between its subsystems, groups
+serve three purposes:</p>
+<ol class="arabic simple">
+<li>They help to package sets of components together, e.g., the components for a given discipline.</li>
+<li>They help create namespaces (since all components and variables are named based on their ancestors
+in the tree).</li>
+<li>They facilitate the use of hierarchical nonlinear and linear solvers.</li>
+</ol>
+<p>Instances of the <code class="code docutils literal notranslate"><span class="pre">Component</span></code> class provide the lowest-level functionality representing basic calculations.
+Each component instance maps input values to output values via some calculation. A component instance
+must be one of two component types: <code class="code docutils literal notranslate"><span class="pre">ExplicitComponent</span></code> or <code class="code docutils literal notranslate"><span class="pre">ImplicitComponent</span></code>. The difference
+between these component types is explained in the section on <a class="reference internal" href="../basic_guide/component_types.html#building-components"><span class="std std-ref">How OpenMDAO Represents Variables</span></a>.</p>
+<p>The hierarchy of groups and components collectively form the model.</p>
+</div>
+<div class="section" id="solver">
+<h2>Solver<a class="headerlink" href="#solver" title="Permalink to this headline">¶</a></h2>
+<p>Every system may contain two solvers, a <code class="code docutils literal notranslate"><span class="pre">NonlinearSolver</span></code> and a <code class="code docutils literal notranslate"><span class="pre">LinearSolver</span></code>, which share
+a common <code class="code docutils literal notranslate"><span class="pre">Solver</span></code> base class. Nonlinear solvers are used to converge implicit components or groups
+with cycles and linear solvers are used when computing derivatives across the model (see <a class="reference internal" href="../features/core_features/controlling_solvers/set_solvers.html#set-solvers"><span class="std std-ref">Setting
+Nonlinear and Linear Solvers</span></a>). Additional details about the different kinds of solvers
+can be found in the <a class="reference internal" href="solver_api.html#theory-solver-api"><span class="std std-ref">OpenMDAO Solvers</span></a> section.</p>
+</div>
+<div class="section" id="driver">
+<h2>Driver<a class="headerlink" href="#driver" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="code docutils literal notranslate"><span class="pre">Driver</span></code> class defines algorithms that iteratively call the model. There are different types
+of drivers, for example one driver might implement an optimization algorithm while another would execute
+a design of experiments (DOE). The driver types that are included with OpenMDAO are described in
+<a class="reference internal" href="../features/building_blocks/drivers/index.html#drivers"><span class="std std-ref">Drivers</span></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="implicit_transformation_of_vars.html" title="Understanding How Variables Work"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Theory Manual"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

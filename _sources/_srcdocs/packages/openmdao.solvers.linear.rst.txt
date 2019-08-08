@@ -1,0 +1,13 @@
+openmdao.solvers.linear
+-----------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    solvers.linear/direct
+    solvers.linear/linear_block_gs
+    solvers.linear/linear_block_jac
+    solvers.linear/linear_runonce
+    solvers.linear/petsc_ksp
+    solvers.linear/scipy_iter_solver
+    solvers.linear/user_defined

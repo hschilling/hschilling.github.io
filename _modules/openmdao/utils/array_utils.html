@@ -1,0 +1,494 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.utils.array_utils &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.utils.array_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utils for dealing with arrays.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">copy</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="evenly_distrib_idxs"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.evenly_distrib_idxs">[docs]</a><span class="k">def</span> <span class="nf">evenly_distrib_idxs</span><span class="p">(</span><span class="n">num_divisions</span><span class="p">,</span> <span class="n">arr_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return evenly distributed entries for the given array size.</span>
+
+<span class="sd">    Given a number of divisions and the size of an array, chop the array up</span>
+<span class="sd">    into pieces according to number of divisions, keeping the distribution</span>
+<span class="sd">    of entries as even as possible.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_divisions : int</span>
+<span class="sd">        Number of parts to divide the array into.</span>
+<span class="sd">    arr_size : int</span>
+<span class="sd">        Number of entries in the array.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        a tuple of (sizes, offsets), where sizes and offsets contain values for all</span>
+<span class="sd">        divisions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">arr_size</span> <span class="o">//</span> <span class="n">num_divisions</span>
+    <span class="n">leftover</span> <span class="o">=</span> <span class="n">arr_size</span> <span class="o">%</span> <span class="n">num_divisions</span>
+    <span class="n">sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">num_divisions</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="c1"># evenly distribute the remainder across size-leftover procs,</span>
+    <span class="c1"># instead of giving the whole remainder to one proc</span>
+    <span class="n">sizes</span><span class="p">[:</span><span class="n">leftover</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_divisions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">sizes</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">offsets</span></div>
+
+
+<div class="viewcode-block" id="take_nth"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.take_nth">[docs]</a><span class="k">def</span> <span class="nf">take_nth</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">seq</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterate returning every nth value.</span>
+
+<span class="sd">    Return an iterator over the sequence that returns every</span>
+<span class="sd">    nth element of seq based on the given rank within a group of</span>
+<span class="sd">    the given size.  For example, if size = 2, a rank of 0 returns</span>
+<span class="sd">    even indexed elements and a rank of 1 returns odd indexed elements.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rank : int</span>
+<span class="sd">        MPI rank of this process.</span>
+<span class="sd">    size : int</span>
+<span class="sd">        Size of the array we&#39;re taking nth entries from.</span>
+<span class="sd">    seq : iter</span>
+<span class="sd">        Iterator containing the values being returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">rank</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="n">proc</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">six</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">six</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="convert_neg"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.convert_neg">[docs]</a><span class="k">def</span> <span class="nf">convert_neg</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert any negative indices into their positive equivalent.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arr : ndarray</span>
+<span class="sd">        Array having negative indices converted.</span>
+<span class="sd">    dim : int</span>
+<span class="sd">        Dimension of the array.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">        The converted array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arr</span><span class="p">[</span><span class="n">arr</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dim</span>
+    <span class="k">return</span> <span class="n">arr</span></div>
+
+
+<div class="viewcode-block" id="array_viz"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.array_viz">[docs]</a><span class="k">def</span> <span class="nf">array_viz</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">of</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Display the structure of a boolean array in a compact form.</span>
+
+<span class="sd">    If prob, of, and wrt are supplied, print the name of the response alongside</span>
+<span class="sd">    each row and print the names of the design vars, aligned with each column, at</span>
+<span class="sd">    the bottom.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arr : ndarray</span>
+<span class="sd">        Array being visualized.</span>
+<span class="sd">    prob : Problem or None</span>
+<span class="sd">        Problem object.</span>
+<span class="sd">    of : list of str or None</span>
+<span class="sd">        Names of response variables used in derivative calculation.</span>
+<span class="sd">    wrt : list of str or None</span>
+<span class="sd">        Names of design variables used in derivative calculation.</span>
+<span class="sd">    stream : file-like</span>
+<span class="sd">        Stream where output will be written.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;array_viz only works for 2d arrays.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prob</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">of</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">of</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">_get_ordered_nl_responses</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">wrt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">wrt</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">_designvars</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prob</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">of</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">wrt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">arr</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]:</span>
+                    <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">%d</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">r</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="n">row</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">of</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">row</span> <span class="o">+</span> <span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">_responses</span><span class="p">[</span><span class="n">res</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]):</span>
+                <span class="n">col</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">wrt</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">col</span> <span class="o">+</span> <span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">_designvars</span><span class="p">[</span><span class="n">dv</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]):</span>
+                        <span class="k">if</span> <span class="n">arr</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]:</span>
+                            <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                    <span class="n">col</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">%d</span><span class="s1">  </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">res</span><span class="p">))</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">wrt</span><span class="p">:</span>
+            <span class="n">tab</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="n">start</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">|</span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tab</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+            <span class="n">start</span> <span class="o">+=</span> <span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">_designvars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="array_connection_compatible"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.array_connection_compatible">[docs]</a><span class="k">def</span> <span class="nf">array_connection_compatible</span><span class="p">(</span><span class="n">shape1</span><span class="p">,</span> <span class="n">shape2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return True if the two arrays shapes are compatible.</span>
+
+<span class="sd">    Array shapes are compatible if the underlying data has the same size and is</span>
+<span class="sd">    stored in the same contiguous order for the two shapes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shape1 : tuple of int</span>
+<span class="sd">        Shape of the first array.</span>
+<span class="sd">    shape2 : tuple of int</span>
+<span class="sd">        Shape of the second array.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        True if the two shapes are compatible for connection, else False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ashape1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shape1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">ashape2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shape2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">size1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">ashape1</span><span class="p">)</span>
+    <span class="n">size2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">ashape2</span><span class="p">)</span>
+
+    <span class="c1"># Shapes are not connection-compatible if size is different</span>
+    <span class="k">if</span> <span class="n">size1</span> <span class="o">!=</span> <span class="n">size2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">nz1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ashape1</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nz2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ashape2</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nz1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">fundamental_shape1</span> <span class="o">=</span> <span class="n">ashape1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">nz1</span><span class="p">):</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">nz1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fundamental_shape1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,))</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nz2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">fundamental_shape2</span> <span class="o">=</span> <span class="n">ashape2</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">nz2</span><span class="p">):</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">nz2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fundamental_shape2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fundamental_shape1</span> <span class="o">==</span> <span class="n">fundamental_shape2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tile_sparse_jac"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.tile_sparse_jac">[docs]</a><span class="k">def</span> <span class="nf">tile_sparse_jac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">nrow</span><span class="p">,</span> <span class="n">ncol</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble arrays necessary to define a COO sparse jacobian for a vectorized component.</span>
+
+<span class="sd">    These arrays can also be passed to csc_matrix or csr_matrix to create CSC and CSR sparse</span>
+<span class="sd">    matrices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ndarray</span>
+<span class="sd">        Array of values</span>
+<span class="sd">    rows : index array</span>
+<span class="sd">        Array of row indices.</span>
+<span class="sd">    cols : index array</span>
+<span class="sd">        Array of column indices.</span>
+<span class="sd">    nrow : int</span>
+<span class="sd">        Number of rows in sub jacobian.</span>
+<span class="sd">    ncol : int</span>
+<span class="sd">        Number of columns in sub jacobian.</span>
+<span class="sd">    num_nodes : int</span>
+<span class="sd">        Number of vectorized copies to tile.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray, ndarray, ndarray</span>
+<span class="sd">        Arrays to define a COO sparse jacobian of size num_nodes*nrow by num_nodes*ncol</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nnz</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nnz</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">nrow</span><span class="p">):</span>
+        <span class="n">nrow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">nrow</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">ncol</span><span class="p">):</span>
+        <span class="n">ncol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">ncol</span><span class="p">)</span>
+
+    <span class="n">repeat_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">),</span> <span class="n">nnz</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="n">repeat_arr</span> <span class="o">*</span> <span class="n">nrow</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="n">repeat_arr</span> <span class="o">*</span> <span class="n">ncol</span>
+
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span></div>
+
+
+<span class="k">def</span> <span class="nf">_global2local_offsets</span><span class="p">(</span><span class="n">global_offsets</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given existing global offsets, return a copy with offsets localized to each process.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    global_offsets : dict</span>
+<span class="sd">        Arrays of global offsets keyed by vec_name and deriv direction.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Arrays of local offsets keyed by vec_name and deriv direction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">offsets</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">vec_name</span> <span class="ow">in</span> <span class="n">global_offsets</span><span class="p">:</span>
+        <span class="n">offsets</span><span class="p">[</span><span class="n">vec_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">off_vn</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">global_offsets</span><span class="p">[</span><span class="n">vec_name</span><span class="p">]:</span>
+            <span class="n">goff</span> <span class="o">=</span> <span class="n">global_offsets</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]</span>
+            <span class="n">off_vn</span><span class="p">[</span><span class="n">type_</span><span class="p">]</span> <span class="o">=</span> <span class="n">goff</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">goff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># adjust offsets to be local in each process</span>
+                <span class="n">off_vn</span><span class="p">[</span><span class="n">type_</span><span class="p">]</span> <span class="o">-=</span> <span class="n">goff</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">goff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">offsets</span>
+
+
+<div class="viewcode-block" id="sub2full_indices"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.sub2full_indices">[docs]</a><span class="k">def</span> <span class="nf">sub2full_indices</span><span class="p">(</span><span class="n">all_names</span><span class="p">,</span> <span class="n">matching_names</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">idx_map</span><span class="o">=</span><span class="p">()):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the given indices converted into indices into the full vector.</span>
+
+<span class="sd">    This routine is used to compute how column indices computed during coloring of a subset</span>
+<span class="sd">    of the jacobian map to column indices corresponding to the full jacobian.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    all_names : ordered iter of str</span>
+<span class="sd">        An ordered list of variable names containing all variables of the appropriate type.</span>
+<span class="sd">    matching_names : set of str</span>
+<span class="sd">        Subset of all_names that make up the reduced index set.</span>
+<span class="sd">    sizes : ndarray of int</span>
+<span class="sd">        Array of variable sizes.</span>
+<span class="sd">    idx_map : dict</span>
+<span class="sd">        Mapping of var name to some subset of its full indices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">        Full array indices that map to the provided subset of variables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">global_idxs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">size</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">all_names</span><span class="p">,</span> <span class="n">sizes</span><span class="p">):</span>
+        <span class="n">end</span> <span class="o">+=</span> <span class="n">size</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">matching_names</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">matching_names</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">idx_map</span><span class="p">:</span>
+                <span class="n">global_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)[</span><span class="n">idx_map</span><span class="p">[</span><span class="n">name</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">global_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
+
+    <span class="k">if</span> <span class="n">global_idxs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">global_idxs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_input_idx_split"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/array_utils.html#openmdao.utils.array_utils.get_input_idx_split">[docs]</a><span class="k">def</span> <span class="nf">get_input_idx_split</span><span class="p">(</span><span class="n">full_idxs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">use_full_cols</span><span class="p">,</span> <span class="n">is_total</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split an array of indices into vec outs + ins into two arrays of indices into outs and ins.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    full_idxs : ndarray</span>
+<span class="sd">        Indices into the full array (which could be outs + ins or just ins)</span>
+<span class="sd">    inputs : Vector</span>
+<span class="sd">        Inputs vector.</span>
+<span class="sd">    outputs : Vector</span>
+<span class="sd">        Outputs vector.</span>
+<span class="sd">    use_full_cols : bool</span>
+<span class="sd">        If True,  full idxs are into the full outs + ins vector.</span>
+<span class="sd">    is_total : bool</span>
+<span class="sd">        If True, total derivatives are being computed and wrt vector is the outputs vector.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list of tuples</span>
+<span class="sd">        Each tuple is of the form (array, idxs).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_idxs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Empty index array passed to get_input_idx_split.&quot;</span>
+    <span class="n">full_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">full_idxs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_full_cols</span><span class="p">:</span>
+        <span class="n">out_size</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">out_idxs</span> <span class="o">=</span> <span class="n">full_idxs</span><span class="p">[</span><span class="n">full_idxs</span> <span class="o">&lt;</span> <span class="n">out_size</span><span class="p">]</span>
+        <span class="n">in_idxs</span> <span class="o">=</span> <span class="n">full_idxs</span><span class="p">[</span><span class="n">full_idxs</span> <span class="o">&gt;=</span> <span class="n">out_size</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">out_idxs</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">in_idxs</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">in_idxs</span> <span class="o">-</span> <span class="n">out_size</span><span class="p">),</span> <span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">out_idxs</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="n">in_idxs</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">in_idxs</span> <span class="o">-</span> <span class="n">out_size</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">out_idxs</span><span class="p">)]</span>
+    <span class="k">elif</span> <span class="n">is_total</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">full_idxs</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">full_idxs</span><span class="p">)]</span></div>
+
+
+<span class="k">def</span> <span class="nf">_flatten_src_indices</span><span class="p">(</span><span class="n">src_indices</span><span class="p">,</span> <span class="n">shape_in</span><span class="p">,</span> <span class="n">shape_out</span><span class="p">,</span> <span class="n">size_out</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert src_indices into a flat, non-negative form.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    src_indices : ndarray</span>
+<span class="sd">        Array of src_indices.  Can be flat or multi-dimensional.</span>
+<span class="sd">    shape_in : tuple</span>
+<span class="sd">        Shape of the input variable.</span>
+<span class="sd">    shape_out : tuple</span>
+<span class="sd">        Shape of the output variable.</span>
+<span class="sd">    size_out : int</span>
+<span class="sd">        Size of the output variable.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">        The flattened src_indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">shape_in</span> <span class="o">==</span> <span class="n">src_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">convert_neg</span><span class="p">(</span><span class="n">src_indices</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">size_out</span><span class="p">)</span>
+
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">shape_in</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">src_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">entries</span><span class="p">))</span>
+    <span class="n">dimidxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_neg</span><span class="p">(</span><span class="n">cols</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">shape_out</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span><span class="n">dimidxs</span><span class="p">,</span> <span class="n">shape_out</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

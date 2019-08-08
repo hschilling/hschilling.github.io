@@ -1,0 +1,374 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>name_maps.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="om.py" href="om.html" />
+    <link rel="prev" title="mpi.py" href="mpi.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="om.html" title="om.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpi.html" title="mpi.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.name_maps">
+<span id="name-maps-py"></span><span id="openmdao-utils-name-maps-py"></span><span id="index-0"></span><h1>name_maps.py<a class="headerlink" href="#module-openmdao.utils.name_maps" title="Permalink to this headline">¶</a></h1>
+<p>Maps between promoted/relative/absolute names and name pairs.</p>
+<dl class="function">
+<dt id="openmdao.utils.name_maps.abs_key2rel_key">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">abs_key2rel_key</code><span class="sig-paren">(</span><em>system</em>, <em>abs_key</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#abs_key2rel_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.abs_key2rel_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map relative variable name pair to absolute variable name pair.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which the given key is relative.</p>
+</dd>
+<dt><strong>abs_key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(str, str)</span></dt>
+<dd><p class="first last">Given absolute variable name pair.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(str, str)</strong></dt>
+<dd><p class="first last">Relative variable name pair.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.abs_name2rel_name">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">abs_name2rel_name</code><span class="sig-paren">(</span><em>system</em>, <em>abs_name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#abs_name2rel_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.abs_name2rel_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map relative variable name to absolute variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which the given name is relative.</p>
+</dd>
+<dt><strong>abs_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Given absolute variable name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Relative variable name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.key2abs_key">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">key2abs_key</code><span class="sig-paren">(</span><em>system</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#key2abs_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.key2abs_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map the given absolute, promoted or relative name pair to the absolute name pair.</p>
+<p>The first name is an output, and the second name can be an output or an input.
+If the second name is non-unique, a KeyError is thrown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which prom_key is relative.</p>
+</dd>
+<dt><strong>key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(str, str)</span></dt>
+<dd><p class="first last">Promoted or relative name pair of sub-Jacobian.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(str, str) or None</strong></dt>
+<dd><p class="first last">Absolute name pair of sub-Jacobian if unique abs_key found or None otherwise.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.name2abs_name">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">name2abs_name</code><span class="sig-paren">(</span><em>system</em>, <em>name</em>, <em>names</em>, <em>type_</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#name2abs_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.name2abs_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map the given promoted or relative name to the absolute name.</p>
+<p>This is only valid when the name is unique; otherwise, a KeyError is thrown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which name is relative.</p>
+</dd>
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Promoted or relative variable name in the owning system’s namespace.</p>
+</dd>
+<dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or list of str</span></dt>
+<dd><p class="first last">List of valid names.</p>
+</dd>
+<dt><strong>type_</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Either ‘input’ or ‘output’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str or None</strong></dt>
+<dd><p class="first last">Absolute variable name if unique abs_name found or None otherwise.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.prom_key2abs_key">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">prom_key2abs_key</code><span class="sig-paren">(</span><em>system</em>, <em>prom_key</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#prom_key2abs_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.prom_key2abs_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map the given promoted name pair to the absolute name pair.</p>
+<p>The first name is an output, and the second name can be an output or an input.
+If the second name is non-unique, a KeyError is thrown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which prom_key is relative.</p>
+</dd>
+<dt><strong>prom_key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(str, str)</span></dt>
+<dd><p class="first last">Promoted name pair of sub-Jacobian.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(str, str) or None</strong></dt>
+<dd><p class="first last">Absolute name pair of sub-Jacobian or None is prom_key is invalid.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.prom_name2abs_name">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">prom_name2abs_name</code><span class="sig-paren">(</span><em>system</em>, <em>prom_name</em>, <em>type_</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#prom_name2abs_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.prom_name2abs_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map the given promoted name to the absolute name.</p>
+<p>This is only valid when the name is unique; otherwise, a KeyError is thrown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which prom_name is relative.</p>
+</dd>
+<dt><strong>prom_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Promoted variable name in the owning system’s namespace.</p>
+</dd>
+<dt><strong>type_</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Either ‘input’ or ‘output’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str or None</strong></dt>
+<dd><p class="first last">Absolute variable name or None if prom_name is invalid.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.rel_key2abs_key">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">rel_key2abs_key</code><span class="sig-paren">(</span><em>system</em>, <em>rel_key</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#rel_key2abs_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.rel_key2abs_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map relative variable name pair to absolute variable name pair.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which the given key is relative.</p>
+</dd>
+<dt><strong>rel_key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(str, str)</span></dt>
+<dd><p class="first last">Given relative variable name pair.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(str, str)</strong></dt>
+<dd><p class="first last">Absolute variable name pair.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.name_maps.rel_name2abs_name">
+<code class="descclassname">openmdao.utils.name_maps.</code><code class="descname">rel_name2abs_name</code><span class="sig-paren">(</span><em>system</em>, <em>rel_name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/name_maps.html#rel_name2abs_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.name_maps.rel_name2abs_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map relative variable name to absolute variable name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">System to which the given name is relative.</p>
+</dd>
+<dt><strong>rel_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Given relative variable name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Absolute variable name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="om.html" title="om.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpi.html" title="mpi.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

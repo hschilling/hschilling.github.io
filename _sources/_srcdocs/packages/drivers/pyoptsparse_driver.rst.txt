@@ -1,0 +1,16 @@
+.. index:: pyoptsparse_driver.py
+
+.. _openmdao.drivers.pyoptsparse_driver.py:
+
+pyoptsparse_driver.py
+---------------------
+
+.. automodule:: openmdao.drivers.pyoptsparse_driver
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

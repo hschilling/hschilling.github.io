@@ -1,0 +1,14 @@
+.. index:: file_wrap.py
+
+.. _openmdao.utils.file_wrap.py:
+
+file_wrap.py
+------------
+
+.. automodule:: openmdao.utils.file_wrap
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+
+.. toctree::
+   :maxdepth: 1

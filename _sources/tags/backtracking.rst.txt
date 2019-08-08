@@ -1,0 +1,7 @@
+.. _backtracking: 
+
+=========================
+backtracking
+=========================
+  .. toctree::
+     ../features/building_blocks/solvers/backtracking/armijo_goldstein.rst

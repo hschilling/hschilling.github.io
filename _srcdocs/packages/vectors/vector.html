@@ -1,0 +1,477 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>vector.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="openmdao.utils" href="../openmdao.utils.html" />
+    <link rel="prev" title="transfer.py" href="transfer.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.utils.html" title="openmdao.utils"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="transfer.html" title="transfer.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.vectors.html" accesskey="U">openmdao.vectors</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.vectors.vector">
+<span id="vector-py"></span><span id="openmdao-vectors-vector-py"></span><span id="index-0"></span><h1>vector.py<a class="headerlink" href="#module-openmdao.vectors.vector" title="Permalink to this headline">¶</a></h1>
+<p>Define the base Vector and Transfer classes.</p>
+<dl class="class">
+<dt id="openmdao.vectors.vector.Vector">
+<em class="property">class </em><code class="descclassname">openmdao.vectors.vector.</code><code class="descname">Vector</code><span class="sig-paren">(</span><em>name</em>, <em>kind</em>, <em>system</em>, <em>root_vector=None</em>, <em>resize=False</em>, <em>alloc_complex=False</em>, <em>ncol=1</em>, <em>relevant=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base Vector class.</p>
+<p>This class is instantiated for inputs, outputs, and residuals.
+It provides a dictionary interface and an arithmetic operations interface.
+Implementations:</p>
+<ul class="simple">
+<li>&lt;DefaultVector&gt;</li>
+<li>&lt;PETScVector&gt;</li>
+</ul>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="87%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>read_only</strong></td>
+<td>(bool) When True, values in the vector cannot be changed via the user __setitem__ API.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.__contains__">
+<code class="descname">__contains__</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.__contains__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.__contains__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the variable is involved in the current mat-vec product.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Promoted or relative variable name in the owning system’s namespace.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>boolean</strong></dt>
+<dd><p class="first last">True or False.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the variable value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Promoted or relative variable name in the owning system’s namespace.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float or ndarray</strong></dt>
+<dd><p class="first last">variable value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>name</em>, <em>kind</em>, <em>system</em>, <em>root_vector=None</em>, <em>resize=False</em>, <em>alloc_complex=False</em>, <em>ncol=1</em>, <em>relevant=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the vector: ‘nonlinear’, ‘linear’, or right-hand side name.</p>
+</dd>
+<dt><strong>kind</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The kind of vector, ‘input’, ‘output’, or ‘residual’.</p>
+</dd>
+<dt><strong>system</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;System&gt;</span></dt>
+<dd><p class="first last">Pointer to the owning system.</p>
+</dd>
+<dt><strong>root_vector</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;Vector&gt;</span></dt>
+<dd><p class="first last">Pointer to the vector owned by the root system.</p>
+</dd>
+<dt><strong>resize</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If true, resize the root vector.</p>
+</dd>
+<dt><strong>alloc_complex</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Whether to allocate any imaginary storage to perform complex step. Default is False.</p>
+</dd>
+<dt><strong>ncol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of columns for multi-vectors.</p>
+</dd>
+<dt><strong>relevant</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Mapping of a VOI to a tuple containing dependent inputs, dependent outputs,
+and dependent systems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield an iterator over variables involved in the current mat-vec product (relative names).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>listiterator</strong></dt>
+<dd><p class="first last">iterator over the variable names.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.__setitem__">
+<code class="descname">__setitem__</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.__setitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.__setitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the variable value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Promoted or relative variable name in the owning system’s namespace.</p>
+</dd>
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or list or tuple or ndarray</span></dt>
+<dd><p class="first last">variable value to set</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.add_scal_vec">
+<code class="descname">add_scal_vec</code><span class="sig-paren">(</span><em>val</em>, <em>vec</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.add_scal_vec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.add_scal_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform in-place addition of a vector times a scalar.</p>
+<p>Must be implemented by the subclass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or float</span></dt>
+<dd><p class="first last">scalar.</p>
+</dd>
+<dt><strong>vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;Vector&gt;</span></dt>
+<dd><p class="first last">this vector times val is added to self.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.vectors.vector.Vector.cite">
+<code class="descname">cite</code><em class="property"> = ''</em><a class="headerlink" href="#openmdao.vectors.vector.Vector.cite" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.dot">
+<code class="descname">dot</code><span class="sig-paren">(</span><em>vec</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.dot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.dot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the dot product of the current vec and the incoming vec.</p>
+<p>Must be implemented by the subclass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;Vector&gt;</span></dt>
+<dd><p class="first last">The incoming vector being dotted with self.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.get_norm">
+<code class="descname">get_norm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.get_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.get_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the norm of this vector.</p>
+<p>Must be implemented by the subclass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">norm of this vector.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return variable names of variables contained in this vector (relative names).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>listiterator (Python 3.x) or list (Python 2.x)</strong></dt>
+<dd><p class="first last">the variable names.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.scale">
+<code class="descname">scale</code><span class="sig-paren">(</span><em>scale_to</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale this vector to normalized or physical form.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>scale_to</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Values are “phys” or “norm” to scale to physical or normalized.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.set_complex_step_mode">
+<code class="descname">set_complex_step_mode</code><span class="sig-paren">(</span><em>active</em>, <em>keep_real=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.set_complex_step_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.set_complex_step_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turn on or off complex stepping mode.</p>
+<p>When turned on, the default real ndarray is replaced with a complex ndarray and all
+pointers are updated to point to it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>active</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Complex mode flag; set to True prior to commencing complex step.</p>
+</dd>
+<dt><strong>keep_real</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When this flag is True, keep the real value when turning off complex step. You only
+need to do this when temporarily disabling complex step for guess_nonlinear.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.set_const">
+<code class="descname">set_const</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.set_const"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.set_const" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value of this vector to a constant scalar value.</p>
+<p>Must be implemented by the subclass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or float</span></dt>
+<dd><p class="first last">scalar to set self to.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.set_vec">
+<code class="descname">set_vec</code><span class="sig-paren">(</span><em>vec</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.set_vec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.set_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value of this vector to that of the incoming vector.</p>
+<p>Must be implemented by the subclass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>vec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;Vector&gt;</span></dt>
+<dd><p class="first last">the vector whose values self is set to.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.vectors.vector.Vector.values">
+<code class="descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/vectors/vector.html#Vector.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.vectors.vector.Vector.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return values of variables contained in this vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">the variable values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.utils.html" title="openmdao.utils"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="transfer.html" title="transfer.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.vectors.html" >openmdao.vectors</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

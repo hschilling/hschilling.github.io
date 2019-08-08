@@ -1,0 +1,538 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>BalanceComp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="EQConstraintComp" href="eq_constraint_comp.html" />
+    <link rel="prev" title="ExecComp" href="exec_comp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="eq_constraint_comp.html" title="EQConstraintComp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="exec_comp.html" title="ExecComp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="balancecomp">
+<span id="balancecomp-feature"></span><span id="index-0"></span><h1>BalanceComp<a class="headerlink" href="#balancecomp" title="Permalink to this headline">¶</a></h1>
+<p><cite>BalanceComp</cite> is a specialized implementation of <a class="reference internal" href="../../core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a>
+that is intended to provide a simple way to implement most implicit equations without the need to
+define your own residuals.</p>
+<div class="section" id="balancecomp-options">
+<h2>BalanceComp Options<a class="headerlink" href="#balancecomp-options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="3%" />
+<col width="7%" />
+<col width="7%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>assembled_jac_type</td>
+<td>csc</td>
+<td>[‘csc’, ‘dense’]</td>
+<td>N/A</td>
+<td>Linear solver(s) in this group, if using an assembled jacobian, will use this type.</td>
+</tr>
+<tr class="row-odd"><td>distributed</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>True if the component has variables that are distributed across multiple processes.</td>
+</tr>
+<tr class="row-even"><td>guess_func</td>
+<td>None</td>
+<td>N/A</td>
+<td>[‘function’]</td>
+<td>A callable function in the form f(inputs, outputs, residuals) that can provide an initial “guess” value of the state variable(s) based on the inputs, outputs and residuals.</td>
+</tr>
+</tbody>
+</table>
+<p><cite>BalanceComp</cite> allows you to add one or more state variables and its associated
+implicit equations.  For each <code class="docutils literal notranslate"><span class="pre">balance</span></code> added to the component it
+solves the following equation:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}_{name} =
+\frac{f_{mult}(x,...) \times f_{lhs}(x,...) - f_{rhs}(x,...)}{f_{norm}(f_{rhs}(x,...))}\]</div>
+<p>The optional normalization function <span class="math notranslate nohighlight">\(f_{norm}(f_{rhs})\)</span> is computed as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}f_{norm}(f_{rhs}(x,...)) =
+\begin{cases}
+ \left| f_{rhs} \right|, &amp; \text{if normalize and } \left| f_{rhs} \right| \geq 2 \\
+ 0.25 f_{rhs}^2 + 1,     &amp; \text{if normalize and } \left| f_{rhs} \right| &lt; 2 \\
+ 1,                      &amp; \text{if not normalize}
+\end{cases}\end{split}\]</div>
+<p>The following inputs and outputs are associated with each implicit state.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="10%" />
+<col width="74%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">I/O</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>{name}</td>
+<td>output</td>
+<td>implicit state variable</td>
+</tr>
+<tr class="row-odd"><td>lhs:{name}</td>
+<td>input</td>
+<td>left-hand side of equation to be balanced</td>
+</tr>
+<tr class="row-even"><td>rhs:{name}</td>
+<td>input</td>
+<td>right-hand side of equation to be balanced</td>
+</tr>
+<tr class="row-odd"><td>mult:{name}</td>
+<td>input</td>
+<td>left-hand side multiplier of equation to be balanced</td>
+</tr>
+</tbody>
+</table>
+<p>The default value for the <code class="code docutils literal notranslate"><span class="pre">rhs:{name}</span></code> input can be set to via the
+<code class="code docutils literal notranslate"><span class="pre">rhs_val</span></code> argument (see arguments below). If the rhs value is fixed (e.g. 0),
+then the input can be left unconnected. The <code class="code docutils literal notranslate"><span class="pre">lhs:{name}</span></code> input must always have
+something connected to it and should be dependent upon the value of the implicit state variable.</p>
+<p>The multiplier is optional and will default to 1.0 if not connected.</p>
+<p><cite>BalanceComp</cite> supports vectorized implicit states. Simply provide a default
+value or shape when adding the balance that reflects the correct shape.</p>
+<p>You can provide the arguments to create a balance when instantiating a <cite>BalanceComp</cite>
+or you can use the <code class="docutils literal notranslate"><span class="pre">add_balance</span></code> method to create one or more state variables after
+instantiation.  The constructor accepts all the same arguments as the <code class="docutils literal notranslate"><span class="pre">add_balance</span></code>
+method:</p>
+<dl class="method">
+<dt>
+<code class="descclassname">BalanceComp.</code><code class="descname">add_balance</code><span class="sig-paren">(</span><em>name</em>, <em>eq_units=None</em>, <em>lhs_name=None</em>, <em>rhs_name=None</em>, <em>rhs_val=0.0</em>, <em>use_mult=False</em>, <em>mult_name=None</em>, <em>mult_val=1.0</em>, <em>normalize=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/components/balance_comp.html#BalanceComp.add_balance"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add a new state variable and associated equation to be balanced.</p>
+<p>This will create new inputs <cite>lhs:name</cite>, <cite>rhs:name</cite>, and <cite>mult:name</cite> that will
+define the left and right sides of the equation to be balanced, and a
+multiplier for the left-hand-side.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the state variable to be created.</p>
+</dd>
+<dt><strong>eq_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Units for the left-hand-side and right-hand-side of the equation to be balanced.</p>
+</dd>
+<dt><strong>lhs_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Optional name for the LHS variable associated with the implicit state variable.  If
+None, the default will be used:  ‘lhs:{name}’.</p>
+</dd>
+<dt><strong>rhs_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Optional name for the RHS variable associated with the implicit state variable.  If
+None, the default will be used:  ‘rhs:{name}’.</p>
+</dd>
+<dt><strong>rhs_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, float, or np.array</span></dt>
+<dd><p class="first last">Default value for the RHS.  Must be compatible with the shape (optionally)
+given by the val or shape option in kwargs.</p>
+</dd>
+<dt><strong>use_mult</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Specifies whether the LHS multiplier is to be used.  If True, then an additional
+input <cite>mult_name</cite> is created, with the default value given by <cite>mult_val</cite>, that
+multiplies lhs.  Default is False.</p>
+</dd>
+<dt><strong>mult_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Optional name for the LHS multiplier variable associated with the implicit state
+variable. If None, the default will be used: ‘mult:{name}’.</p>
+</dd>
+<dt><strong>mult_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, float, or np.array</span></dt>
+<dd><p class="first last">Default value for the LHS multiplier.  Must be compatible with the shape (optionally)
+given by the val or shape option in kwargs.</p>
+</dd>
+<dt><strong>normalize</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Specifies whether or not the resulting residual should be normalized by a quadratic
+function of the RHS.</p>
+</dd>
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Additional arguments to be passed for the creation of the implicit state variable.
+(see <cite>add_output</cite> method).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>Note that the <cite>kwargs</cite> arguments can include any of the keyword arguments normally available
+when creating an output variable with the
+<a class="reference internal" href="../../../_srcdocs/packages/core/component.html#openmdao.core.component.Component.add_output" title="openmdao.core.component.Component.add_output"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_output</span></code></a> method of a <cite>Component</cite>.</p>
+</div>
+<div class="section" id="example-scalar-root-finding">
+<h2>Example:  Scalar Root Finding<a class="headerlink" href="#example-scalar-root-finding" title="Permalink to this headline">¶</a></h2>
+<p>The following example uses a BalanceComp to implicitly solve the
+equation:</p>
+<div class="math notranslate nohighlight">
+\[2 \cdot x^2 = 4\]</div>
+<p>Here, our LHS is connected to a computed value for <span class="math notranslate nohighlight">\(x^2\)</span>, the multiplier is 2, and the RHS
+is 4.  The expected solution is <span class="math notranslate nohighlight">\(x=\sqrt{2}\)</span>.  We initialize <span class="math notranslate nohighlight">\(x\)</span> with a value of 1 so that
+it finds the positive root.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_almost_equal</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">bal</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BalanceComp</span><span class="p">()</span>
+<span class="n">bal</span><span class="o">.</span><span class="n">add_balance</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">use_mult</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">tgt</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;y_tgt&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="n">mult_ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mult&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="n">exec_comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=x**2&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="n">y</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;target&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">tgt</span><span class="p">,</span> <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y_tgt&#39;</span><span class="p">])</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mult_comp&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">mult_ivc</span><span class="p">,</span> <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mult&#39;</span><span class="p">])</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">exec_comp</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;balance&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">bal</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;y_tgt&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.rhs:x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;mult&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.mult:x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;balance.x&#39;</span><span class="p">,</span> <span class="s1">&#39;exec.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;exec.y&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.lhs:x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">(</span><span class="n">assemble_jac</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">iprint</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># A reasonable initial guess to find the positive root.</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;balance.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;balance.x&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.41421356]</pre></div></div><p>Alternatively, we could simplify the code by using the <code class="code docutils literal notranslate"><span class="pre">mult_val</span></code> argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_almost_equal</span>
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">bal</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BalanceComp</span><span class="p">()</span>
+<span class="n">bal</span><span class="o">.</span><span class="n">add_balance</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">use_mult</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">mult_val</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="n">tgt</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;y_tgt&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="n">exec_comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=x**2&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="n">y</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;target&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">tgt</span><span class="p">,</span> <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y_tgt&#39;</span><span class="p">])</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">exec_comp</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;balance&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">bal</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;y_tgt&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.rhs:x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;balance.x&#39;</span><span class="p">,</span> <span class="s1">&#39;exec.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;exec.y&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.lhs:x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">(</span><span class="n">assemble_jac</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">iprint</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># A reasonable initial guess to find the positive root.</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;balance.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;balance.x&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[1.41421356]</pre></div></div></div>
+<div class="section" id="example-vectorized-root-finding">
+<h2>Example:  Vectorized Root Finding<a class="headerlink" href="#example-vectorized-root-finding" title="Permalink to this headline">¶</a></h2>
+<p>The following example uses a BalanceComp to implicitly solve the equation:</p>
+<div class="math notranslate nohighlight">
+\[b \cdot x + c  = 0\]</div>
+<p>for various values of <span class="math notranslate nohighlight">\(b\)</span>, and <span class="math notranslate nohighlight">\(c\)</span>.  Here, our LHS is connected to a computed value of
+the linear equation.  The multiplier is one and the RHS is zero (the defaults), and thus
+they need not be connected.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_almost_equal</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">exec_comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;y=b*x+c&#39;</span><span class="p">,</span>
+                        <span class="n">b</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)},</span>
+                        <span class="n">c</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)},</span>
+                        <span class="n">x</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)},</span>
+                        <span class="n">y</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)})</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">exec_comp</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;balance&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">om</span><span class="o">.</span><span class="n">BalanceComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)))</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;balance.x&#39;</span><span class="p">,</span> <span class="s1">&#39;exec.x&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;exec.y&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.lhs:x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">(</span><span class="n">assemble_jac</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">iprint</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;balance.x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;exec.b&#39;</span><span class="p">]</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;exec.c&#39;</span><span class="p">]</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;balance.x&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[-1.20486658e-02 -7.59172736e-03 -2.04210087e-02 -2.33126649e-02
+ -5.32370873e-03 -4.84682425e-03 -1.58104390e-03 -1.32615703e-02
+ -1.13094880e-02 -6.96140104e-04 -1.51756160e-02 -1.26574691e-02
+ -2.23296531e-03 -7.64178746e-03 -7.71640828e-03 -4.73645401e-02
+ -3.44824057e-02 -4.33626282e-02 -3.00046243e-03 -5.94697257e-03
+ -1.10195310e-02 -4.43294170e-02 -4.14270016e-03 -6.88018661e-04
+ -1.30820324e-02 -1.38584882e-03 -5.61342526e-03 -2.09045418e-02
+ -2.65616866e-03 -1.08640123e-03 -1.25982983e-02 -1.47898650e-01
+ -2.29273876e-02 -7.93408527e-03 -9.67423137e-03 -2.12372602e-03
+ -9.30151184e-03 -9.07155170e-04 -4.61082364e-03 -2.39478390e-02
+ -6.53555983e-02 -2.06470304e-02 -5.47147681e-03 -7.79071262e-03
+ -8.51316532e-03 -1.17369248e-02 -5.10580513e-04 -1.27715724e-02
+ -8.13264496e-03 -5.71993589e-03 -4.42806808e-03 -7.84571611e-03
+ -8.26710567e-03 -3.30114724e-03 -1.23336407e-02 -4.69647223e-03
+ -1.66940549e-02 -6.37509122e-02 -4.98090791e-03 -9.75010688e-02
+ -3.71383677e-03 -1.46313554e-02 -6.77630432e-03 -1.39687281e-02
+ -1.02653717e-01 -2.15897321e-02 -1.48065881e-02 -6.36761913e-03
+ -1.27573404e-02 -1.98395652e-04 -2.36997995e-03 -2.44511237e-03
+ -3.60148073e-02 -8.46013079e-03 -7.37103128e-03 -6.73507670e-03
+ -6.76642271e-04 -2.70946659e-02 -6.46763708e-04 -2.32869256e-03
+ -3.29616069e-03 -3.35747352e-03 -1.62614062e-02 -4.83153932e-03
+ -1.03701623e-03 -4.72750115e-04 -7.76347721e-03 -1.79917636e-02
+ -3.52075795e-02 -1.92455059e-02 -2.42132617e-02 -6.46228045e-03
+ -3.08809418e-03 -4.79028822e-03 -1.26330929e-02 -3.05629471e-01
+ -1.61131073e-02 -1.89993915e-02 -4.88251046e-02 -1.97858103e-03]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="o">-</span><span class="n">c</span><span class="o">/</span><span class="n">b</span><span class="p">)</span>  <span class="c1"># expected</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[-1.20486658e-02 -7.59172736e-03 -2.04210087e-02 -2.33126649e-02
+ -5.32370873e-03 -4.84682425e-03 -1.58104390e-03 -1.32615703e-02
+ -1.13094880e-02 -6.96140104e-04 -1.51756160e-02 -1.26574691e-02
+ -2.23296531e-03 -7.64178746e-03 -7.71640828e-03 -4.73645401e-02
+ -3.44824057e-02 -4.33626282e-02 -3.00046243e-03 -5.94697257e-03
+ -1.10195310e-02 -4.43294170e-02 -4.14270016e-03 -6.88018661e-04
+ -1.30820324e-02 -1.38584882e-03 -5.61342526e-03 -2.09045418e-02
+ -2.65616866e-03 -1.08640123e-03 -1.25982983e-02 -1.47898650e-01
+ -2.29273876e-02 -7.93408527e-03 -9.67423137e-03 -2.12372602e-03
+ -9.30151184e-03 -9.07155170e-04 -4.61082364e-03 -2.39478390e-02
+ -6.53555983e-02 -2.06470304e-02 -5.47147681e-03 -7.79071262e-03
+ -8.51316532e-03 -1.17369248e-02 -5.10580513e-04 -1.27715724e-02
+ -8.13264496e-03 -5.71993589e-03 -4.42806808e-03 -7.84571611e-03
+ -8.26710567e-03 -3.30114724e-03 -1.23336407e-02 -4.69647223e-03
+ -1.66940549e-02 -6.37509122e-02 -4.98090791e-03 -9.75010688e-02
+ -3.71383677e-03 -1.46313554e-02 -6.77630432e-03 -1.39687281e-02
+ -1.02653717e-01 -2.15897321e-02 -1.48065881e-02 -6.36761913e-03
+ -1.27573404e-02 -1.98395652e-04 -2.36997995e-03 -2.44511237e-03
+ -3.60148073e-02 -8.46013079e-03 -7.37103128e-03 -6.73507670e-03
+ -6.76642271e-04 -2.70946659e-02 -6.46763708e-04 -2.32869256e-03
+ -3.29616069e-03 -3.35747352e-03 -1.62614062e-02 -4.83153932e-03
+ -1.03701623e-03 -4.72750115e-04 -7.76347721e-03 -1.79917636e-02
+ -3.52075795e-02 -1.92455059e-02 -2.42132617e-02 -6.46228045e-03
+ -3.08809418e-03 -4.79028822e-03 -1.26330929e-02 -3.05629471e-01
+ -1.61131073e-02 -1.89993915e-02 -4.88251046e-02 -1.97858103e-03]</pre></div></div></div>
+<div class="section" id="example-providing-an-initial-guess-for-a-state-variable">
+<h2>Example:  Providing an Initial Guess for a State Variable<a class="headerlink" href="#example-providing-an-initial-guess-for-a-state-variable" title="Permalink to this headline">¶</a></h2>
+<p><cite>BalanceComp</cite> has a <code class="code docutils literal notranslate"><span class="pre">guess_func</span></code> option that can be used to supply an initial guess
+value for the state variables.  This option provides the same functionality as the
+<a class="reference internal" href="../../../_srcdocs/packages/core/implicitcomponent.html#openmdao.core.implicitcomponent.ImplicitComponent.guess_nonlinear" title="openmdao.core.implicitcomponent.ImplicitComponent.guess_nonlinear"><code class="xref py py-meth docutils literal notranslate"><span class="pre">guess_nonlinear</span></code></a>
+method of <cite>ImplicitComponent</cite>.</p>
+<p>The Kepler example script shows how <code class="code docutils literal notranslate"><span class="pre">guess_func</span></code> can be used.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_almost_equal</span>
+
+<span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">ivc</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">()</span>
+
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">,</span>
+               <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+               <span class="n">units</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">,</span>
+               <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Mean anomaly&#39;</span><span class="p">)</span>
+
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ecc&#39;</span><span class="p">,</span>
+               <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+               <span class="n">units</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+               <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;orbit eccentricity&#39;</span><span class="p">)</span>
+
+<span class="n">bal</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">BalanceComp</span><span class="p">()</span>
+
+<span class="n">bal</span><span class="o">.</span><span class="n">add_balance</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">eq_units</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">rhs_name</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">)</span>
+
+<span class="c1"># Use M (mean anomaly) as the initial guess for E (eccentric anomaly)</span>
+<span class="k">def</span> <span class="nf">guess_function</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+    <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">]</span>
+
+<span class="n">bal</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;guess_func&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">guess_function</span>
+
+<span class="c1"># ExecComp used to compute the LHS of Kepler&#39;s equation.</span>
+<span class="n">lhs_comp</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;lhs=E - ecc * sin(E)&#39;</span><span class="p">,</span>
+                       <span class="n">lhs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;rad&#39;</span><span class="p">},</span>
+                       <span class="n">E</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;rad&#39;</span><span class="p">},</span>
+                       <span class="n">ecc</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ivc&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">ivc</span><span class="p">,</span>
+                         <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;ecc&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;balance&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">bal</span><span class="p">,</span>
+                         <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">],</span>
+                         <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;lhs_comp&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">lhs_comp</span><span class="p">,</span>
+                         <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;ecc&#39;</span><span class="p">])</span>
+
+<span class="c1"># Explicit connections</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;lhs_comp.lhs&#39;</span><span class="p">,</span> <span class="s1">&#39;balance.lhs:E&#39;</span><span class="p">)</span>
+
+<span class="c1"># Set up solvers</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">DirectSolver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NewtonSolver</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">iprint</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">85.0</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;ecc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[115.91942563]</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/BalanceComp.html#balancecomp"><span class="std std-ref">BalanceComp</span></a>, <a class="reference internal" href="../../../tags/Component.html#component"><span class="std std-ref">Component</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="eq_constraint_comp.html" title="EQConstraintComp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="exec_comp.html" title="ExecComp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Building Blocks</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

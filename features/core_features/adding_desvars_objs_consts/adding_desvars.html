@@ -1,0 +1,190 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Adding Design Variables &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Adding an Objective" href="adding_objectives.html" />
+    <link rel="prev" title="Adding Design Variables, Constraints &amp; Objectives" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="adding_objectives.html" title="Adding an Objective"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Adding Design Variables, Constraints &amp; Objectives"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Adding Design Variables, Constraints &amp; Objectives</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="adding-design-variables">
+<span id="feature-add-design-var"></span><h1>Adding Design Variables<a class="headerlink" href="#adding-design-variables" title="Permalink to this headline">¶</a></h1>
+<p>To add a design variable to an optimization, use the <em>add_design_var</em> method
+on System.</p>
+<dl class="method">
+<dt>
+<code class="descclassname">System.</code><code class="descname">add_design_var</code><span class="sig-paren">(</span><em>name</em>, <em>lower=None</em>, <em>upper=None</em>, <em>ref=None</em>, <em>ref0=None</em>, <em>indices=None</em>, <em>adder=None</em>, <em>scaler=None</em>, <em>parallel_deriv_color=None</em>, <em>vectorize_derivs=False</em>, <em>cache_linear_solution=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/core/system.html#System.add_design_var"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add a design variable to this system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Name of the design variable in the system.</p>
+</dd>
+<dt><strong>lower</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Lower boundary for the param</p>
+</dd>
+<dt><strong>upper</strong> <span class="classifier-delimiter">:</span> <span class="classifier">upper or ndarray, optional</span></dt>
+<dd><p class="first last">Upper boundary for the param</p>
+</dd>
+<dt><strong>ref</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of design var that scales to 1.0 in the driver.</p>
+</dd>
+<dt><strong>ref0</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value of design var that scales to 0.0 in the driver.</p>
+</dd>
+<dt><strong>indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter of int, optional</span></dt>
+<dd><p class="first last">If a param is an array, these indicate which entries are of
+interest for this particular design variable.  These may be
+positive or negative integers.</p>
+</dd>
+<dt><strong>adder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">Value to add to the model value to get the scaled value for the driver. adder
+is first in precedence.  adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>scaler</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray, optional</span></dt>
+<dd><p class="first last">value to multiply the model value to get the scaled value for the driver. scaler
+is second in precedence. adder and scaler are an alterantive to using ref
+and ref0.</p>
+</dd>
+<dt><strong>parallel_deriv_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">If specified, this design var will be grouped for parallel derivative
+calculations with other variables sharing the same parallel_deriv_color.</p>
+</dd>
+<dt><strong>vectorize_derivs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, vectorize derivative calculations.</p>
+</dd>
+<dt><strong>cache_linear_solution</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, store the linear solution vectors for this variable so they can
+be used to start the next linear solution with an initial guess equal to the
+solution from the previous linear solve.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The response can be scaled using ref and ref0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.
+The argument <code class="code docutils literal notranslate"><span class="pre">ref</span></code> represents the physical value when the scaled value is 1.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="adding_objectives.html" title="Adding an Objective"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Adding Design Variables, Constraints &amp; Objectives"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Adding Design Variables, Constraints &amp; Objectives</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

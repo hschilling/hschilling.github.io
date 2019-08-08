@@ -1,0 +1,413 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Setting Up Project Documentation in Sphinx &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Hosting Documentation on github-pages" href="github-pages.html" />
+    <link rel="prev" title="Repository Structure" href="repository_structure.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="github-pages.html" title="Hosting Documentation on github-pages"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="repository_structure.html" title="Repository Structure"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Building a Tool on Top of OpenMDAO</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setting-up-project-documentation-in-sphinx">
+<span id="docs-with-sphinx"></span><h1>Setting Up Project Documentation in Sphinx<a class="headerlink" href="#setting-up-project-documentation-in-sphinx" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="importing-tools-from-openmdao">
+<h2>Importing Tools from OpenMDAO<a class="headerlink" href="#importing-tools-from-openmdao" title="Permalink to this headline">¶</a></h2>
+<p>During this process, to get your docs to build properly, you may need access to a couple of things from within OpenMDAO:</p>
+<p><cite>openmdao.docutils</cite> will get you things like our sourcedoc-building script, <cite>generate_docs</cite>, which will be called from conf.py, to create an organized set of source documentation. This package will also get you access to our powerful custom extensions, such as our Sphinx embedding library, including <cite>embed_code</cite>, and <cite>embed_options</cite>.  Our code-embedding tool will help you to include things into your documentation that will stay dynamically updated with the code in your project and/or in the OpenMDAO project.  To get access to these items, both in your local install
+and on CI, you can just import them from <cite>openmdao.docutils</cite>.</p>
+<p>Here’s how you might bring in an OpenMDAO extension, by importing it, and then adding it to your other extensions in conf.py:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">openmdao.docutils</span> <span class="kn">import</span> <span class="n">embed_code</span><span class="p">,</span> <span class="n">embed_options</span>
+
+<span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;sphinx.ext.autodoc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.autosummary&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.doctest&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.todo&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.coverage&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.mathjax&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.viewcode&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;numpydoc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_code&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_options&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For more information on some of OpenMDAO’s custom embed extensions, please see <a class="reference internal" href="../../developer_docs/style_guide/doc_style_guide.html#custom-directives"><span class="std std-ref">Custom Directives in OpenMDAO</span></a></p>
+</div>
+<div class="section" id="general-docs-settings">
+<h3>General Docs Settings<a class="headerlink" href="#general-docs-settings" title="Permalink to this headline">¶</a></h3>
+<p>Your Sphinx documentation will need its own <cite>docs/conf.py</cite>, theme directory, and style.css so that you may customize the docs
+into something that will make them their own. You can use OpenMDAO’s <cite>docs/conf.py</cite>, <cite>docs/_theme/theme.conf</cite> and
+<cite>docs/_theme/static/style.css</cite> as a starting point.</p>
+<p>OpenMDAO’s <cite>docs/conf.py</cite> file looks like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># This file is execfile()d with the current directory set to its</span>
+<span class="c1"># containing dir.</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="kn">from</span> <span class="nn">mock</span> <span class="kn">import</span> <span class="n">Mock</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.docs.config_params</span> <span class="kn">import</span> <span class="n">MOCK_MODULES</span>
+<span class="kn">from</span> <span class="nn">openmdao.docs._utils.patch</span> <span class="kn">import</span> <span class="n">do_monkeypatch</span>
+<span class="kn">from</span> <span class="nn">openmdao.docs._utils.upload_doc_version</span> <span class="kn">import</span> <span class="n">get_doc_version</span>
+
+<span class="c1"># Only mock the ones that don&#39;t import.</span>
+<span class="k">for</span> <span class="n">mod_name</span> <span class="ow">in</span> <span class="n">MOCK_MODULES</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">mod_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Mock</span><span class="p">()</span>
+
+<span class="c1"># start off running the monkeypatch to keep options/parameters</span>
+<span class="c1"># usable in docstring for autodoc.</span>
+<span class="n">do_monkeypatch</span><span class="p">()</span>
+
+<span class="c1"># If extensions (or modules to document with autodoc) are in another directory,</span>
+<span class="c1"># add these directories to sys.path here. If the directory is relative to the</span>
+<span class="c1"># documentation root, use os.path.abspath to make it absolute, like shown here.</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">))</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;./_exts&#39;</span><span class="p">))</span>
+
+<span class="c1"># -- General configuration ------------------------------------------------</span>
+
+<span class="c1"># If your documentation needs a minimal Sphinx version, state it here.</span>
+<span class="n">needs_sphinx</span> <span class="o">=</span> <span class="s1">&#39;1.5&#39;</span>
+
+<span class="c1"># Add any Sphinx extension module names here, as strings. They can be</span>
+<span class="c1"># extensions coming with Sphinx (named &#39;sphinx.ext.*&#39;) or your custom</span>
+<span class="c1"># ones.</span>
+<span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;sphinx.ext.autodoc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.autosummary&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.doctest&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.todo&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.coverage&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.mathjax&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.viewcode&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;numpydoc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_code&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_options&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_compare&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_shell_cmd&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_bibtex&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;embed_n2&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tags&#39;</span>
+<span class="p">]</span>
+
+<span class="n">numpydoc_show_class_members</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="c1"># autodoc_default_flags = [&#39;members&#39;]</span>
+
+<span class="c1"># Add any paths that contain templates here, relative to this directory.</span>
+<span class="n">templates_path</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_templates&#39;</span><span class="p">]</span>
+
+<span class="c1"># The suffix(es) of source filenames.</span>
+<span class="c1"># You can specify multiple suffix as a list of string:</span>
+<span class="c1"># source_suffix = [&#39;.rst&#39;, &#39;.md&#39;]</span>
+<span class="n">source_suffix</span> <span class="o">=</span> <span class="s1">&#39;.rst&#39;</span>
+
+<span class="c1"># The master toctree document.</span>
+<span class="n">master_doc</span> <span class="o">=</span> <span class="s1">&#39;index&#39;</span>
+
+<span class="c1"># General information about the project.</span>
+<span class="n">project</span> <span class="o">=</span> <span class="sa">u</span><span class="s1">&#39;OpenMDAO&#39;</span>
+<span class="n">copyright</span> <span class="o">=</span> <span class="sa">u</span><span class="s1">&#39;2016, openmdao.org&#39;</span>
+<span class="n">author</span> <span class="o">=</span> <span class="sa">u</span><span class="s1">&#39;openmdao.org&#39;</span>
+
+<span class="c1"># The version info for the project you&#39;re documenting, acts as replacement for</span>
+<span class="c1"># |version| and |release|, also used in various other places throughout the</span>
+<span class="c1"># built documents.</span>
+<span class="c1">#</span>
+
+<span class="c1"># The full version, including alpha/beta/rc tags.</span>
+<span class="kn">import</span> <span class="nn">openmdao</span>
+<span class="n">release</span> <span class="o">=</span> <span class="n">openmdao</span><span class="o">.</span><span class="n">__version__</span> <span class="o">+</span> <span class="s1">&#39; Beta&#39;</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Release: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">release</span><span class="p">)</span>
+
+<span class="c1"># Will be the Release version (x.y.z) or the commit ID if not a release build.</span>
+<span class="n">name</span><span class="p">,</span> <span class="n">rel</span> <span class="o">=</span> <span class="n">get_doc_version</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">rel</span><span class="p">:</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;Version: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;Commit ID: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+<span class="k">print</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+
+
+<span class="c1"># The language for content autogenerated by Sphinx. Refer to documentation</span>
+<span class="c1"># for a list of supported languages.</span>
+<span class="c1">#</span>
+<span class="c1"># This is also used if you do content translation via gettext catalogs.</span>
+<span class="c1"># Usually you set &quot;language&quot; from the command line for these cases.</span>
+<span class="n">language</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+<span class="c1"># exclude_patterns is a list of patterns, relative to source directory, that match files and</span>
+<span class="c1"># directories to ignore when looking for source files.</span>
+<span class="n">exclude_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_build&#39;</span><span class="p">,</span> <span class="s1">&#39;_srcdocs/dev&#39;</span><span class="p">]</span>
+<span class="n">absp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_srcdocs&#39;</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">absp</span><span class="p">))</span>
+
+<span class="n">packages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;approximation_schemes&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;core&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;components&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;drivers&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;error_checking&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;jacobians&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;matrices&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;proc_allocators&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;recorders&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;solvers&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;surrogate_models&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;solvers.linear&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;solvers.nonlinear&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;solvers.linesearch&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;test_suite.components&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;test_suite.scripts&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vectors&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;utils&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;make_sourcedocs&quot;</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">openmdao.docs._utils.generate_sourcedocs</span> <span class="kn">import</span> <span class="n">generate_docs</span>
+    <span class="n">generate_docs</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;../..&quot;</span><span class="p">,</span> <span class="n">packages</span><span class="p">)</span>
+
+<span class="c1"># The name of the Pygments (syntax highlighting) style to use.</span>
+<span class="n">pygments_style</span> <span class="o">=</span> <span class="s1">&#39;sphinx&#39;</span>
+
+<span class="c1"># If true, `todo` and `todoList` produce output, else they produce nothing.</span>
+<span class="n">todo_include_todos</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="c1"># -- Options for HTML output ----------------------------------------------</span>
+
+<span class="c1"># The theme to use for HTML and HTML Help pages.  See the documentation for</span>
+<span class="c1"># a list of builtin themes.</span>
+<span class="n">html_theme</span> <span class="o">=</span> <span class="s1">&#39;_theme&#39;</span>
+
+<span class="c1"># Add any paths that contain custom themes here, relative to this directory.</span>
+<span class="n">html_theme_path</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">]</span>
+
+<span class="c1"># The name of an image file (relative to this directory) to place at the top</span>
+<span class="c1"># of the sidebar.</span>
+<span class="n">html_logo</span> <span class="o">=</span> <span class="s1">&#39;_static/OpenMDAO_Logo.png&#39;</span>
+
+<span class="c1"># The name of an image file (within the static path) to use as favicon of the</span>
+<span class="c1"># docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32</span>
+<span class="c1"># pixels large.</span>
+<span class="n">html_favicon</span> <span class="o">=</span> <span class="s1">&#39;_static/OpenMDAO_Favicon.ico&#39;</span>
+
+<span class="c1"># If not &#39;&#39;, a &#39;Last updated on:&#39; timestamp is inserted at every page bottom,</span>
+<span class="c1"># using the given strftime format.</span>
+<span class="n">html_last_updated_fmt</span> <span class="o">=</span> <span class="s1">&#39;%b </span><span class="si">%d</span><span class="s1">, %Y&#39;</span>
+
+<span class="c1"># Output file base name for HTML help builder.</span>
+<span class="n">htmlhelp_basename</span> <span class="o">=</span> <span class="s1">&#39;OpenMDAOdoc&#39;</span>
+
+<span class="c1">#Customize sidebar</span>
+<span class="n">html_sidebars</span> <span class="o">=</span> <span class="p">{</span>
+   <span class="s1">&#39;**&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;globaltoc.html&#39;</span><span class="p">,</span> <span class="s1">&#39;searchbox.html&#39;</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="c1"># -- Options for manual page output ---------------------------------------</span>
+
+<span class="c1"># One entry per manual page. List of tuples</span>
+<span class="c1"># (source start file, name, description, authors, manual section).</span>
+<span class="n">man_pages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">master_doc</span><span class="p">,</span> <span class="s1">&#39;openmdao&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;OpenMDAO Documentation&#39;</span><span class="p">,</span>
+     <span class="p">[</span><span class="n">author</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="openmdao-numpydoc-monkeypatch">
+<h3>OpenMDAO numpydoc monkeypatch<a class="headerlink" href="#openmdao-numpydoc-monkeypatch" title="Permalink to this headline">¶</a></h3>
+<p>OpenMDAO uses a monkeypatch to the numpydoc standard that allows extra fields in docstrings such as <cite>Options</cite> and <cite>Parameters</cite>.
+It also removes private Attributes (those beginning with an underscore) from the auto-documentation pages. To import this:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">from</span> <span class="pre">openmdao.docutils</span> <span class="pre">import</span> <span class="pre">do_monkeypatch</span></code></p>
+<p>Then simply calling the <code class="code docutils literal notranslate"><span class="pre">do_monkeypatch()</span></code> from within your conf.py would set your docstrings up to behave similarly to OpenMDAO’s.</p>
+</div>
+<div class="section" id="openmdao-docs-makefile">
+<h3>OpenMDAO docs Makefile<a class="headerlink" href="#openmdao-docs-makefile" title="Permalink to this headline">¶</a></h3>
+<p>The OpenMDAO <cite>docs/Makefile</cite> can’t be imported, per se, but can be used as a template for your own Sphinx docs Makefile, and can accomplish several things that
+the default Sphinx Makefile falls short of (e.g. our Makefile can build only files that have recently changed, rather than the whole project; e.g. our makefile
+can rebuild an .rst file whose embed-code dependency has changed, though the .rst file hasn’t) Here are the commands from OpenMDAO’s Makefile:</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c">###################################</span>
+<span class="c"># COMMANDS</span>
+
+<span class="c"># to remake only recently-changed files, not the entire document base.</span>
+<span class="c">#  note - first item in makefile is default action of &quot;make&quot;</span>
+<span class="nf">html-update</span><span class="o">:</span> <span class="n">mock</span> <span class="n">redbaron</span> <span class="n">matplotlib</span> <span class="n">build</span>
+
+<span class="c"># to force the rebuild a file when its dependecy (e.g. code-embed) changes, not its rst file</span>
+<span class="nf">single</span><span class="o">:</span> <span class="n">mock</span> <span class="n">redbaron</span> <span class="n">matplotlib</span> <span class="n">touch</span> <span class="n">build</span>
+
+<span class="c"># build it all over again (note: make all == make html)</span>
+<span class="nf">all html</span><span class="o">:</span> <span class="n">make_srcdocs</span> <span class="n">mock</span> <span class="n">redbaron</span> <span class="n">matplotlib</span> <span class="n">tagg</span> <span class="n">buildall</span> <span class="n">post_remove</span>
+
+<span class="c"># build it all on CI machines; all warnings are raised as errors.</span>
+<span class="nf">travis</span><span class="o">:</span> <span class="n">make_srcdocs</span> <span class="n">mock</span> <span class="n">redbaron</span> <span class="n">matplotlib</span> <span class="n">tagg</span> <span class="n">buildalltravis</span> <span class="n">post_remove</span>
+
+<span class="nf">clean</span><span class="o">:</span>
+    rm -rf <span class="k">$(</span>BUILDDIR<span class="k">)</span>/*
+    rm -rf _srcdocs/*
+    rm -rf tags
+    rm -rf tmp
+    rm -rf make_sourcedocs
+    rm -rf doc_plot_*.png
+</pre></div>
+</div>
+</div>
+<div class="section" id="openmdao-auto-documentation-generator">
+<h3>OpenMDAO Auto-documentation Generator<a class="headerlink" href="#openmdao-auto-documentation-generator" title="Permalink to this headline">¶</a></h3>
+<p>OpenMDAO’s docs have a custom script, <cite>generate_sourcedocs</cite>, that creates an organized subdirectory of source documentation that is sorted by
+subpackage.  To import this tool:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">from</span> <span class="pre">openmdao.docutils</span> <span class="pre">import</span> <span class="pre">generate_docs</span></code></p>
+<p>Then, from your <cite>docs/conf.py</cite>, invoke it with arguments of:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Where to find packages (relative to where it’s being called).</li>
+<li>Root of the project (relative to where it’s being called).</li>
+<li>Which packages to include–omit things like “test” that don’t make sense to document.</li>
+</ol>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">packages</span> <span class="o">=</span> <span class="p">[</span>
+<span class="s1">&#39;subpackage1&#39;</span><span class="p">,</span>
+<span class="s1">&#39;subpackage2&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.docutils</span> <span class="kn">import</span> <span class="n">generate_docs</span>
+<span class="n">generate_docs</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;../..&quot;</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">project_name</span><span class="o">=</span><span class="s1">&#39;yourproject&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="openmdao-tagging-tool">
+<h3>OpenMDAO Tagging Tool<a class="headerlink" href="#openmdao-tagging-tool" title="Permalink to this headline">¶</a></h3>
+<p>OpenMDAO’s docs have a custom script that pre-processes all the .rst files found within a set of Sphinx documentation, and creates
+a custom blog-like tagging system that helps organize and cross-reference docs.</p>
+<p>The script finds occurrences of the .. tags:: directive and sets up the structure of the tags directory.  One file
+is created for each subject tag, and that file contains links to each instance of the tag throughout the docs.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">from</span> <span class="pre">openmdao.docutils</span> <span class="pre">import</span> <span class="pre">preprocess_tags</span></code></p>
+<p>In OpenMDAO, we run preprocess_tags.py, (which calls the <cite>tag()</cite> function) from our <cite>docs/Makefile</cite>, prior to the building of the docs, so that all the proper
+files and links can be set up in advance of the actual Sphinx docbuild. Your project could benefit from a similar procedure. Use of tags is
+a completely optional step, your docs will work with or without tags.</p>
+</div>
+</div>
+<div class="section" id="getting-docs-for-your-plugin-transferred-to-github-pages">
+<h2>Getting Docs For Your Plugin Transferred to github-pages<a class="headerlink" href="#getting-docs-for-your-plugin-transferred-to-github-pages" title="Permalink to this headline">¶</a></h2>
+<p>Once you have your documents organized and building locally, and building without errors on Travis CI, then we can explore transferring those
+built docs from Travis to github-pages. This is discussed in detail in the next doc on <a class="reference internal" href="github-pages.html#github-pages"><span class="std std-ref">github-pages setup</span></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="github-pages.html" title="Hosting Documentation on github-pages"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="repository_structure.html" title="Repository Structure"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Building a Tool on Top of OpenMDAO</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,347 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Instance-Based Call Tracing &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Controlling MPI Detection" href="../controlling_mpi.html" />
+    <link rel="prev" title="Memory Profiling" href="inst_mem_profile.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../controlling_mpi.html" title="Controlling MPI Detection"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="inst_mem_profile.html" title="Memory Profiling"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Debugging</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Profiling and Tracing</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="instance-based-call-tracing">
+<span id="instbasedtrace"></span><h1>Instance-Based Call Tracing<a class="headerlink" href="#instance-based-call-tracing" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="code docutils literal notranslate"><span class="pre">openmdao</span> <span class="pre">trace</span></code> command can be used to print a trace of each instance method call.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao trace &lt;your_python_script_here&gt;
+</pre></div>
+</div>
+<p>Whenever a method is called that matches the search criteria, the following will be written to the console,
+indented based on its location in the call stack. :</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Pathname of the object instance (if available)</li>
+<li>Class</li>
+<li>Instance ID</li>
+<li>Method name</li>
+</ol>
+<p>For example:</p>
+</div></blockquote>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> Problem#1.Problem.__init__
+     Group#1.Group.__init__
+         Group#1.System.__init__
+             DictionaryJacobian#1.Jacobian.__init__
+             Group#1().System.initialize
+         NonlinearRunOnce#1.Solver.__init__
+             NonlinearRunOnce#1.Solver._declare_options
+         LinearRunOnce#1.LinearSolver.__init__
+             LinearRunOnce#1.Solver.__init__
+                 LinearRunOnce#1.Solver._declare_options
+     Driver#1.Driver.__init__
+ IndepVarComp#1.IndepVarComp.__init__
+     IndepVarComp#1.ExplicitComponent.__init__
+         IndepVarComp#1.Component.__init__
+             IndepVarComp#1.System.__init__
+                 DictionaryJacobian#2.Jacobian.__init__
+                 IndepVarComp#1().System.initialize
+ Propulsor#1.Group.__init__
+     Propulsor#1.System.__init__
+         DictionaryJacobian#3.Jacobian.__init__
+         Propulsor#1().System.initialize
+     NonlinearRunOnce#2.Solver.__init__
+         NonlinearRunOnce#2.Solver._declare_options
+     LinearRunOnce#2.LinearSolver.__init__
+         LinearRunOnce#2.Solver.__init__
+             LinearRunOnce#2.Solver._declare_options
+ Problem#1.Problem.set_solver_print
+     Group#1().System._set_solver_print
+         LinearRunOnce#2.Solver._set_solver_print
+         NonlinearRunOnce#2.Solver._set_solver_print
+ Problem#1.Problem.setup
+     Group#1().System._setup
+         Group#1().System._get_initial_procs
+         Group#1().Group._setup_procs
+             IndepVarComp#1().System._setup_procs
+             Propulsor#1().Group._setup_procs
+                 FlightConditions#1.Group.__init__
+                     FlightConditions#1.System.__init__
+                         DictionaryJacobian#4.Jacobian.__init__
+                         FlightConditions#1().FlightConditions.initialize
+                     NonlinearRunOnce#3.Solver.__init__
+                         NonlinearRunOnce#3.Solver._declare_options
+                     LinearRunOnce#3.LinearSolver.__init__
+                         LinearRunOnce#3.Solver.__init__
+                             LinearRunOnce#3.Solver._declare_options
+
+...
+</pre></div>
+</div>
+<p>Note that we must always include the class name and instance ID, even when the instance has a pathname
+attribute, because there are times early in execution where either the pathname attribute doesn’t exist
+yet, as in the beginning of <code class="code docutils literal notranslate"><span class="pre">__init__</span></code> method, or pathname exists but still has the default value of “”
+instead of its eventual value, as in the <code class="code docutils literal notranslate"><span class="pre">_setup_procs</span></code> method.</p>
+<p>For more verbose output, which includes values of function locals and return values, as well as
+the number of times a function has been called, use the <cite>-v</cite> arg. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao trace -v &lt;your_python_script_here&gt;
+</pre></div>
+</div>
+<p>Which will result in output that looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Problem#1.Problem.__init__ (1)
+  comm=None
+  model=None
+  root=None
+  self=&lt;openmdao.core.problem.Problem object&gt;
+    Group#1.Group.__init__ (1)
+      kwargs={}
+      self=&lt;openmdao.core.group.Group object&gt;
+        Group#1.System.__init__ (1)
+          kwargs={}
+          self=&lt;openmdao.core.group.Group object&gt;
+            DictionaryJacobian#1.Jacobian.__init__ (1)
+              kwargs={}
+              self=&lt;openmdao.jacobians.dictionary_jacobian.DictionaryJacobian object&gt;
+            &lt;-- DictionaryJacobian#1.Jacobian.__init__
+            Group#1().System.initialize (1)
+              self=&lt;openmdao.core.group.Group object&gt;
+            &lt;-- Group#1().System.initialize
+        &lt;-- Group#1().System.__init__
+        NonlinearRunOnce#1.Solver.__init__ (1)
+          kwargs={}
+          self=NL: RUNONCE
+            NonlinearRunOnce#1.Solver._declare_options (1)
+              self=NL: RUNONCE
+            &lt;-- NonlinearRunOnce#1.Solver._declare_options
+        &lt;-- NonlinearRunOnce#1.Solver.__init__
+        LinearRunOnce#1.LinearSolver.__init__ (1)
+          kwargs={}
+          self=LN: RUNONCE
+            LinearRunOnce#1.Solver.__init__ (1)
+              kwargs={}
+              self=LN: RUNONCE
+                LinearRunOnce#1.Solver._declare_options (1)
+                  self=LN: RUNONCE
+                &lt;-- LinearRunOnce#1.Solver._declare_options
+            &lt;-- LinearRunOnce#1.Solver.__init__
+        &lt;-- LinearRunOnce#1.LinearSolver.__init__
+    &lt;-- Group#1().Group.__init__
+    Driver#1.Driver.__init__ (1)
+      self=&lt;openmdao.core.driver.Driver object&gt;
+    &lt;-- Driver#1.Driver.__init__
+&lt;-- Problem#1.Problem.__init__
+
+...
+</pre></div>
+</div>
+<p>By default, a pre-defined set of general OpenMDAO functions will be included in the trace,
+but that can be changed using the <cite>-g</cite> option.  For example, in order to trace only
+<code class="code docutils literal notranslate"><span class="pre">setup</span></code>-related functions, do the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao trace -v &lt;your_python_script_here&gt; -g setup
+</pre></div>
+</div>
+<p>The tracer can also display the change in memory usage from the time a function is called to the
+time it returns.  To show memory usage, use the <cite>-m</cite> option, for example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao trace -m &lt;your_python_script_here&gt;
+</pre></div>
+</div>
+<p>will result in output like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>...
+
+Group#1().Group._setup_procs
+    DistribOuptutImplicit#0().System._setup_procs
+        PETScKrylov#0.PETScKrylov.__init__
+            PETScKrylov#0.LinearSolver.__init__
+                PETScKrylov#0.Solver.__init__
+                    PETScKrylov#0.PETScKrylov._declare_options
+                    &lt;-- PETScKrylov#0.PETScKrylov._declare_options (time:  0.06384) (total: 75.445 MB)
+                &lt;-- PETScKrylov#0.Solver.__init__ (time:  0.06391) (total: 75.445 MB)
+            &lt;-- PETScKrylov#0.LinearSolver.__init__ (time:  0.06397) (total: 75.445 MB)
+        &lt;-- PETScKrylov#0.PETScKrylov.__init__ (time:  0.06402) (total: 75.445 MB)
+    &lt;-- DistribOuptutImplicit#0(aero.icomp).System._setup_procs (time:  0.06519) (total: 77.371 MB) (diff: +4772 KB)
+    DistribInputExplicit#0().System._setup_procs
+    &lt;-- DistribInputExplicit#0(aero.ecomp).System._setup_procs (time:  0.06738) (total: 79.281 MB) (diff: +1956 KB)
+&lt;-- Group#1(aero).Group._setup_procs (time:  0.06746) (total: 79.281 MB)
+
+...
+</pre></div>
+</div>
+<p>Note that total memory usage and elapsed time is shown on each function return line.  Those function
+returns where a difference in memory was found will display the difference at the end of the line.</p>
+<p>The tracer can also be used to help track down memory leaks.  Using the <cite>-l</cite> option, it will display
+a list of object types and their counts that were created since the function was called and not
+garbage collected after the function returned.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao trace -l &lt;your_python_script_here&gt; -g solver
+</pre></div>
+</div>
+<p>will result in output like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>...
+
+LinearRunOnce#0.LinearRunOnce.solve
+    LinearRunOnce#0.LinearBlockGS._iter_execute
+        LinearRunOnce#1.LinearRunOnce.solve
+            LinearRunOnce#1.LinearBlockGS._iter_execute
+                PETScKrylov#0.PETScKrylov.solve
+                &lt;-- PETScKrylov#0.PETScKrylov.solve
+            &lt;-- LinearRunOnce#1.LinearBlockGS._iter_execute
+        &lt;-- LinearRunOnce#1.LinearRunOnce.solve
+           Recording +1
+    &lt;-- LinearRunOnce#0.LinearBlockGS._iter_execute
+&lt;-- LinearRunOnce#0.LinearRunOnce.solve
+   Recording +1
+
+...
+</pre></div>
+</div>
+<p>This output shows that in LinearRunOnce#1.LinearRunOnce.solve, a Recording object was created
+and not garbage collected.  Note that this does not always indicate a memory leak, as there
+are some functions that intentionally create new objects that are intended to last beyond the
+life of the function.  This tool merely gives you a place to look in the code where a memory
+leak <em>might</em> exist.</p>
+<p>To see a list of the available pre-defined sets of functions to trace, look at the usage info
+for the <cite>-g</cite> command that can be obtained as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao trace -h
+</pre></div>
+</div>
+
+    <div class="cell border-box-sizing code_cell rendered">
+       <div class="output_area"><pre>usage: openmdao trace [-h] [-g METHODS] [-v] [--ptrs] [-m] [-l] [-r RANK]
+                      [-o OUTFILE] [-f FILTERS]
+                      file
+
+positional arguments:
+  file                  Python file to be traced.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -g METHODS, --group METHODS
+                        Determines which group of methods will be traced.
+                        Default is &quot;openmdao&quot;. Options are: [&#x27;coloring&#x27;,
+                        &#x27;dataflow&#x27;, &#x27;driver&#x27;, &#x27;jac&#x27;, &#x27;linear&#x27;, &#x27;mpi&#x27;,
+                        &#x27;openmdao&#x27;, &#x27;openmdao_all&#x27;, &#x27;setup&#x27;, &#x27;solver&#x27;,
+                        &#x27;transfer&#x27;]
+  -v, --verbose         Show function locals and return values.
+  --ptrs                Show addresses of printed objects.
+  -m, --memory          Show memory usage.
+  -l, --leaks           Show objects that are not garbage collected after each
+                        function call.
+  -r RANK, --rank RANK  MPI rank where output is desired. Default is all
+                        ranks.
+  -o OUTFILE, --outfile OUTFILE
+                        Output file. Defaults to stdout.
+  -f FILTERS, --filter FILTERS
+                        An expression. If it evaluates to True for any
+                        matching trace function, that function will be
+                        displayed in the trace. One expression can be added
+                        for each class.
+</pre></div>
+    </div></div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../controlling_mpi.html" title="Controlling MPI Detection"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="inst_mem_profile.html" title="Memory Profiling"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Debugging</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Profiling and Tracing</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,311 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sellar - A Two-Discipline Problem with a Nonlinear Solver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Linking Variables with Promotion vs. Connection" href="promote_vs_connect.html" />
+    <link rel="prev" title="Optimization of Paraboloid" href="first_optimization.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="promote_vs_connect.html" title="Linking Variables with Promotion vs. Connection"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="first_optimization.html" title="Optimization of Paraboloid"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p>In the monodisciplinary tutorials, we built and optimized models comprised of only a single component.
+Now, we’ll work through a slightly more complex problem that involves two disciplines, and hence two main components.
+You’ll learn how to group components together into a larger model and how to use
+a <a class="reference internal" href="../features/building_blocks/solvers/nonlinear/nonlinear_block_gs.html#nlbgs"><span class="std std-ref">NonlinearBlockGaussSeidel</span></a> nonlinear solver to converge a group with coupled components.</p>
+<div class="section" id="sellar-a-two-discipline-problem-with-a-nonlinear-solver">
+<span id="sellar"></span><h1>Sellar - A Two-Discipline Problem with a Nonlinear Solver<a class="headerlink" href="#sellar-a-two-discipline-problem-with-a-nonlinear-solver" title="Permalink to this headline">¶</a></h1>
+<p>The Sellar problem is a two-discipline toy problem with each discipline described by a single equation.
+There isn’t any physical significance to the equations, it’s just a compact example to use as a means of understanding
+simple coupled models.
+The output of each component feeds into the input of the other, which creates a coupled model that needs to
+be converged in order for the outputs to be valid.
+You can see the coupling between the two disciplines show up through the <span class="math notranslate nohighlight">\(y_1\)</span> and <span class="math notranslate nohighlight">\(y_2\)</span> variables in the following
+<a class="reference external" href="http://mdolab.engin.umich.edu/content/xdsm-overview">XDSM</a> diagram that describes the problem structure:</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/sellar_xdsm.png"><img alt="XDSM diagram of the Sellar problem" src="../_images/sellar_xdsm.png" style="width: 50%;" /></a>
+</div>
+<hr class="docutils" />
+<div class="section" id="building-the-disciplinary-components">
+<h2>Building the Disciplinary Components<a class="headerlink" href="#building-the-disciplinary-components" title="Permalink to this headline">¶</a></h2>
+<p>In the following component definitions, there is a call to <a class="reference internal" href="../features/core_features/working_with_derivatives/approximating_partials.html#feature-declare-partials-approx"><span class="std std-ref">declare_partials</span></a> in the <code class="code docutils literal notranslate"><span class="pre">setup</span></code> method that looks like this:</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This command tells OpenMDAO to approximate all the partial derivatives of that component using finite difference.
+The default settings will use forward difference with an absolute step size of 1e-6, but you can change the <a class="reference internal" href="../features/core_features/working_with_derivatives/approximating_partials.html#feature-declare-partials-approx"><span class="std std-ref">FD settings</span></a> to work well for your component.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SellarDis1</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Component containing Discipline 1 -- no derivatives version.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Global Design Variable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+        <span class="c1"># Local Design Variable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+
+        <span class="c1"># Coupling parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Coupling output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Finite difference all partials.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluates the equation</span>
+<span class="sd">        y1 = z1**2 + z2 + x1 - 0.2*y2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">z2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">z1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z2</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">-</span> <span class="mf">0.2</span><span class="o">*</span><span class="n">y2</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SellarDis2</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Component containing Discipline 2 -- no derivatives version.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Global Design Variable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+        <span class="c1"># Coupling parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Coupling output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Finite difference all partials.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluates the equation</span>
+<span class="sd">        y2 = y1**(.5) + z1 + z2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">z2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Note: this may cause some issues. However, y1 is constrained to be</span>
+        <span class="c1"># above 3.16, so lets just let it converge, and the optimizer will</span>
+        <span class="c1"># throw it out</span>
+        <span class="k">if</span> <span class="n">y1</span><span class="o">.</span><span class="n">real</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y1</span><span class="o">**.</span><span class="mi">5</span> <span class="o">+</span> <span class="n">z1</span> <span class="o">+</span> <span class="n">z2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="grouping-and-connecting-components">
+<h2>Grouping and Connecting Components<a class="headerlink" href="#grouping-and-connecting-components" title="Permalink to this headline">¶</a></h2>
+<p>We now want to build in OpenMDAO the model that is represented by the XDSM diagram above.
+We’ve defined the two disciplinary components, but there are still the three outputs of the model that need to be computed.
+Additionally, since we have the computations split up into multiple components, we need to group them all together and tell
+OpenMDAO how to pass data between them.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SellarMDA</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Group containing the Sellar MDA.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">indeps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;indeps&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+        <span class="n">indeps</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">indeps</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]))</span>
+
+        <span class="n">cycle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;cycle&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+        <span class="n">cycle</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1</span><span class="p">(),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">],</span>
+                            <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+        <span class="n">cycle</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2</span><span class="p">(),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">],</span>
+                            <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Nonlinear Block Gauss Seidel is a gradient free solver</span>
+        <span class="n">cycle</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;obj_cmp&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;obj = x**2 + z[1] + y1 + exp(-y2)&#39;</span><span class="p">,</span>
+                                                  <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                           <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="s1">&#39;obj&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con1 = 3.16 - y1&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con_cmp2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;con2 = y2 - 24.0&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>We’re working with a new class: <a class="reference internal" href="../features/core_features/grouping_components/index.html#feature-grouping-components"><span class="std std-ref">Group</span></a>.
+This is the container that lets you build up complex model hierarchies.
+Groups can contain other groups, components, or combinations of groups and components.</p>
+<p>You can directly create instances of <code class="code docutils literal notranslate"><span class="pre">Group</span></code> to work with, or you can subclass from it to define your own custom
+groups. We’re doing both of these things above. First, we defined our own custom <code class="code docutils literal notranslate"><span class="pre">Group</span></code> subclass called <code class="code docutils literal notranslate"><span class="pre">SellarMDA</span></code>.
+In our run script, we created an instance of <code class="code docutils literal notranslate"><span class="pre">SellarMDA</span></code> to actually run it.
+Then, inside the <code class="code docutils literal notranslate"><span class="pre">setup</span></code> method of <code class="code docutils literal notranslate"><span class="pre">SellarMDA</span></code> we’re also working directly with a <code class="code docutils literal notranslate"><span class="pre">Group</span></code> instance by adding the subsystem <code class="code docutils literal notranslate"><span class="pre">cycle</span></code>:</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cycle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;cycle&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">Group</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">cycle</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">SellarDis1</span><span class="p">(),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y2&#39;</span><span class="p">],</span> <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">])</span>
+<span class="n">cycle</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">SellarDis2</span><span class="p">(),</span> <span class="n">promotes_inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;y1&#39;</span><span class="p">],</span> <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">])</span>
+
+<span class="c1"># Nonlinear Block Gauss-Seidel is a gradient-free solver</span>
+<span class="n">cycle</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">NonlinearBlockGS</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Our <code class="code docutils literal notranslate"><span class="pre">SellarMDA</span></code> Group, when instantiated, will have a three-level hierarchy, with itself as the topmost level, as
+illustrated in the following figure:</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/sellar_tree.png"><img alt="Hierarchy tree for the Sellar group" src="../_images/sellar_tree.png" style="width: 50%;" /></a>
+</div>
+<div class="section" id="why-do-we-create-the-cycle-subgroup">
+<h3>Why do we create the <em>cycle</em> subgroup?<a class="headerlink" href="#why-do-we-create-the-cycle-subgroup" title="Permalink to this headline">¶</a></h3>
+<p>There is a circular data dependency between <em>d1</em> and <em>d2</em> that needs to be converged with a nonlinear solver in order to get a valid answer.
+It’s a bit more efficient to put these two components into their own subgroup, so that we can iteratively converge them by themselves,
+before moving on to the rest of the calculations in the model.
+Models with cycles in them are often referred to as “Multidisciplinary Analyses” or <strong>MDA</strong> for short.
+You can pick which kind of solver you would like to use to converge the MDA. The most common choices are:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><a class="reference internal" href="../features/building_blocks/solvers/nonlinear/nonlinear_block_gs.html#nlbgs"><span class="std std-ref">NonlinearBlockGaussSeidel</span></a></li>
+<li><a class="reference internal" href="../features/building_blocks/solvers/nonlinear/newton.html#nlnewton"><span class="std std-ref">NewtonSolver</span></a></li>
+</ol>
+</div></blockquote>
+<p>The <code class="code docutils literal notranslate"><span class="pre">NonlinearBlockGaussSeidel</span></code> solver, also sometimes called a “fixed-point iteration solver,” is a gradient-free method
+that works well in many situations.
+More tightly-coupled problems, or problems with instances of <a class="reference internal" href="../features/core_features/defining_components/implicitcomp.html#comp-type-3-implicitcomp"><span class="std std-ref">ImplicitComponent</span></a>
+that don’t implement their own <code class="code docutils literal notranslate"><span class="pre">solve_nonlinear</span></code> method, will require the <code class="code docutils literal notranslate"><span class="pre">Newton</span></code> solver.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">OpenMDAO comes with other nonlinear solvers you can use if they suit your problem.
+Here is the complete list of OpenMDAO’s <a class="reference internal" href="../features/building_blocks/solvers/nonlinear/index.html#feature-nonlinear-solvers"><span class="std std-ref">nonlinear solvers</span></a>.</p>
+</div>
+<p>The subgroup, named <code class="code docutils literal notranslate"><span class="pre">cycle</span></code>, is useful here, because it contains the multidisciplinary coupling of the Sellar problem.
+This allows us to assign the nonlinear solver to <code class="code docutils literal notranslate"><span class="pre">cycle</span></code> to just converge those two components, before moving on to the final
+calculations for the <code class="code docutils literal notranslate"><span class="pre">obj_cmp</span></code>, <code class="code docutils literal notranslate"><span class="pre">con_cmp1</span></code>, and <code class="code docutils literal notranslate"><span class="pre">con_cmp2</span></code> to compute the actual outputs of the problem.</p>
+</div>
+<div class="section" id="promoting-variables-with-the-same-name-connects-them">
+<h3>Promoting variables with the same name connects them<a class="headerlink" href="#promoting-variables-with-the-same-name-connects-them" title="Permalink to this headline">¶</a></h3>
+<p>The data connections in this model are made via promotion.
+OpenMDAO will look at each level of the hierarchy and connect all output-input pairs that have the same names.</p>
+</div>
+<div class="section" id="execcomp-is-a-helper-component-for-quickly-defining-components-for-simple-equations">
+<h3>ExecComp is a helper component for quickly defining components for simple equations<a class="headerlink" href="#execcomp-is-a-helper-component-for-quickly-defining-components-for-simple-equations" title="Permalink to this headline">¶</a></h3>
+<p>A lot of times in your models, you need to define a new variable as a simple function of other variables.
+OpenMDAO provides a helper component to make this easier, called <a class="reference internal" href="../features/building_blocks/components/exec_comp.html#feature-exec-comp"><span class="std std-ref">ExecComp</span></a>.
+It’s fairly flexible, allowing you to work with scalars or arrays, to work with units, and to call basic math
+functions (e.g. <em>sin</em> or <em>exp</em>).  We have used <code class="code docutils literal notranslate"><span class="pre">ExecComp</span></code> in this model to calculate our
+objectives and constraints.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="promote_vs_connect.html" title="Linking Variables with Promotion vs. Connection"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="first_optimization.html" title="Optimization of Paraboloid"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,218 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OpenMDAO Solvers &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Scaling Variables in OpenMDAO" href="scaling.html" />
+    <link rel="prev" title="The System Setup Stack: Understanding When to Use setup and configure" href="setup_stack.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scaling.html" title="Scaling Variables in OpenMDAO"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="setup_stack.html" title="The System Setup Stack: Understanding When to Use setup and configure"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="openmdao-solvers">
+<span id="theory-solver-api"></span><h1>OpenMDAO Solvers<a class="headerlink" href="#openmdao-solvers" title="Permalink to this headline">¶</a></h1>
+<p>Every OpenMDAO solver is either a linear solver, inheriting from the <code class="code docutils literal notranslate"><span class="pre">LinearSolver</span></code> class, or
+a nonlinear solver, inheriting from the <code class="code docutils literal notranslate"><span class="pre">NonlinearSolver</span></code> class. A solver can be either monolithic
+or recursive in behavior.  Monolithic solvers treat the associated system as a single block. Recursive
+solvers, as the name suggests, recurse down through their system hierarchy asking each sub-system to
+operate on itself.</p>
+<p>The following is a list of available OpenMDAO solvers separated by type:</p>
+<p><strong>Linear</strong></p>
+<ul>
+<li><p class="first"><strong>Monolithic</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>DirectSolver</li>
+<li>PETScKrylov</li>
+<li>ScipyKrylov</li>
+<li>LinearUserDefined</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Recursive</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>LinearBlockGS</li>
+<li>LinearBlockJac</li>
+<li>LinearRunOnce</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p><strong>Nonlinear</strong></p>
+<ul>
+<li><p class="first"><strong>Monolithic</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Newton  (options[‘solve_subsystems’] = False)</li>
+<li>Broyden  (options[‘solve_subsystems’] = False)</li>
+<li>BoundsEnforceLS  (options[‘solve_subsystems’] = False)</li>
+<li>ArmijoGoldsteinLS  (options[‘solve_subsystems’] = False)</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Recursive</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>NonlinearBlockGS</li>
+<li>NonlinearBlockJac</li>
+<li>NonlinearRunOnce</li>
+<li>Newton  (options[‘solve_subsystems’] = True)</li>
+<li>BoundsEnforceLS  (options[‘solve_subsystems’] = True)</li>
+<li>ArmijoGoldsteinLS  (options[‘solve_subsystems’] = True)</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>Below is a figure depicting how a model containing both recursive and monolithic solvers
+would function.  The numbered circles represent the order of calls to subsystems in the model.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/solver_call_diag.svg"><img alt="Solver execution example" src="../_images/solver_call_diag.svg" width="70%" /></a>
+</div>
+</div>
+<div class="section" id="writing-custom-solvers">
+<h1>Writing Custom Solvers<a class="headerlink" href="#writing-custom-solvers" title="Permalink to this headline">¶</a></h1>
+<p>If your solver will be linear, you’ll need to inherit from <code class="code docutils literal notranslate"><span class="pre">LinearSolver</span></code>, or perhaps from
+<code class="code docutils literal notranslate"><span class="pre">BlockLinearSolver</span></code>.  If your solver will be nonlinear, inherit from <code class="code docutils literal notranslate"><span class="pre">NonlinearSolver</span></code>.
+If your solver will be monolithic, you’ll most likely override the entire <code class="code docutils literal notranslate"><span class="pre">solve</span></code> function,
+and if your solver will be recursive, you may be able to get away with only overriding a couple of
+lower level functions like <code class="code docutils literal notranslate"><span class="pre">_iter_initialize</span></code> and <code class="code docutils literal notranslate"><span class="pre">_single_iteration</span></code>.  The best thing
+to do is to start with the OpenMDAO solver that is most similar to what you want to do and go from
+there.</p>
+<p>Some solvers, especially recursive ones, can have confusing calling structures, because it’s
+not always obvious which class is the owner of a given method.  A command line tool,
+<cite>openmdao call_tree</cite> was developed to help clarify what the actual call structure is. So, for
+example, if we wanted to see the call structure of <code class="code docutils literal notranslate"><span class="pre">NonlinearBlockGS.solve</span></code>, we could do the
+following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>openmdao call_tree openmdao.api.NonlinearBlockGS.solve
+</pre></div>
+</div>
+
+    <div class="cell border-box-sizing code_cell rendered">
+       <div class="output_area"><pre>NonlinearSolver.solve
+  Solver._solve
+    NonlinearBlockGS._mpi_print_header
+    NonlinearBlockGS._iter_initialize
+      NonlinearSolver._iter_initialize
+        NonlinearBlockGS._run_apply
+        NonlinearSolver._iter_get_norm
+    Solver._mpi_print
+    NonlinearBlockGS._single_iteration
+      NonlinearSolver._gs_iter
+    NonlinearBlockGS._run_apply
+    NonlinearSolver._iter_get_norm
+  NonlinearSolver._print_exc_debug_info
+</pre></div>
+    </div><p>The output above shows that <code class="code docutils literal notranslate"><span class="pre">NonlinearBlockGS</span></code> does not override the <code class="code docutils literal notranslate"><span class="pre">solve</span></code> method,
+but instead overrides some lower level methods like <code class="code docutils literal notranslate"><span class="pre">_iter_initialize</span></code>, <code class="code docutils literal notranslate"><span class="pre">_run_apply</span></code>,
+and <code class="code docutils literal notranslate"><span class="pre">_single_iteration</span></code> and relies on the <code class="code docutils literal notranslate"><span class="pre">Solver._solve</span></code> method to provide the main
+skeleton for the entire solve including the iteration loop.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scaling.html" title="Scaling Variables in OpenMDAO"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="setup_stack.html" title="The System Setup Stack: Understanding When to Use setup and configure"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,703 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>units.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="variable_table.py" href="variable_table.html" />
+    <link rel="prev" title="testing_utils.py" href="testing_utils.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="variable_table.html" title="variable_table.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="testing_utils.html" title="testing_utils.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.units">
+<span id="units-py"></span><span id="openmdao-utils-units-py"></span><span id="index-0"></span><h1>units.py<a class="headerlink" href="#module-openmdao.utils.units" title="Permalink to this headline">¶</a></h1>
+<p>Classes and functions to support unit conversion.</p>
+<p>The module provides a basic set of predefined physical quantities
+in its built-in library; however, it also supports generation of
+personal libararies which can be saved and reused.
+This module is based on the PhysicalQuantities module
+in Scientific Python, by Konrad Hinsen. Modifications by
+Justin Gray.</p>
+<dl class="class">
+<dt id="openmdao.utils.units.NumberDict">
+<em class="property">class </em><code class="descclassname">openmdao.utils.units.</code><code class="descname">NumberDict</code><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#NumberDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.NumberDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.OrderedDict</span></code></p>
+<p>Dictionary storing numerical values.</p>
+<p>An instance of this class acts like an array of numbers with
+generalized (non-integer) indices. A value of zero is assumed
+for undefined entries. NumberDict instances support addition
+and subtraction with other NumberDict instances, and multiplication
+and division by scalars.</p>
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.__contains__">
+<code class="descname">__contains__</code><span class="sig-paren">(</span><em>$self</em>, <em>key</em>, <em>/</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.__contains__" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if the dictionary has the specified key, else False.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#NumberDict.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.NumberDict.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the item, or 0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>item</strong> <span class="classifier-delimiter">:</span> <span class="classifier">key</span></dt>
+<dd><p class="first last">key to get the item</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">value of the given key</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.utils.units.NumberDict.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.utils.units.NumberDict.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement iter(self).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.utils.units.NumberDict.__setitem__">
+<code class="descname">__setitem__</code><span class="sig-paren">(</span><em>$self</em>, <em>key</em>, <em>value</em>, <em>/</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.__setitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set self[key] to value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None.  Remove all items from od.<a class="headerlink" href="#openmdao.utils.units.NumberDict.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.copy">
+<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a shallow copy of od<a class="headerlink" href="#openmdao.utils.units.NumberDict.copy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.fromkeys">
+<code class="descname">fromkeys</code><span class="sig-paren">(</span><em>$type</em>, <em>/</em>, <em>iterable</em>, <em>value=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.fromkeys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new ordered dictionary with keys from iterable and values set to value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>$self</em>, <em>key</em>, <em>default=None</em>, <em>/</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a set-like object providing a view on D's items<a class="headerlink" href="#openmdao.utils.units.NumberDict.items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a set-like object providing a view on D's keys<a class="headerlink" href="#openmdao.utils.units.NumberDict.keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.move_to_end">
+<code class="descname">move_to_end</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em>, <em>key</em>, <em>last=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.move_to_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move an existing element to the end (or beginning if last is false).</p>
+<p>Raise KeyError if the element does not exist.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.pop">
+<code class="descname">pop</code><span class="sig-paren">(</span><em>k</em><span class="optional">[</span>, <em>d</em><span class="optional">]</span><span class="sig-paren">)</span> &#x2192; v, remove specified key and return the corresponding<a class="headerlink" href="#openmdao.utils.units.NumberDict.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>value.  If key is not found, d is returned if given, otherwise KeyError
+is raised.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.popitem">
+<code class="descname">popitem</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em>, <em>last=True</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.popitem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove and return a (key, value) pair from the dictionary.</p>
+<p>Pairs are returned in LIFO order if last is true or FIFO order if false.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.setdefault">
+<code class="descname">setdefault</code><span class="sig-paren">(</span><em>$self</em>, <em>/</em>, <em>key</em>, <em>default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.utils.units.NumberDict.setdefault" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert key with a value of default if key is not in the dictionary.</p>
+<p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="optional">[</span><em>E</em>, <span class="optional">]</span><em>**F</em><span class="sig-paren">)</span> &#x2192; None.  Update D from dict/iterable E and F.<a class="headerlink" href="#openmdao.utils.units.NumberDict.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>If E is present and has a .keys() method, then does:  for k in E: D[k] = E[k]
+If E is present and lacks a .keys() method, then does:  for k, v in E: D[k] = v
+In either case, this is followed by: for k in F:  D[k] = F[k]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.NumberDict.values">
+<code class="descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; an object providing a view on D's values<a class="headerlink" href="#openmdao.utils.units.NumberDict.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.utils.units.PhysicalUnit">
+<em class="property">class </em><code class="descclassname">openmdao.utils.units.</code><code class="descname">PhysicalUnit</code><span class="sig-paren">(</span><em>names</em>, <em>factor</em>, <em>powers</em>, <em>offset=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Physical unit.</p>
+<p>A physical unit is defined by a name (possibly composite), a scaling
+factor, and the exponentials of each of the SI base units that enter into
+it. Units can be multiplied, divided, and raised to integer powers.</p>
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>names</em>, <em>factor</em>, <em>powers</em>, <em>offset=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict or str</span></dt>
+<dd><p class="first last">A dictionary mapping each name component to its
+associated integer power (e.g., C{{‘m’: 1, ‘s’: -1}})
+for M{m/s}). As a shorthand, a string may be passed
+which is assigned an implicit power 1.</p>
+</dd>
+<dt><strong>factor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">A scaling factor.</p>
+</dd>
+<dt><strong>powers</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of int</span></dt>
+<dd><p class="first last">The integer powers for each of the nine base units.</p>
+</dd>
+<dt><strong>offset</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">An additive offset to the base unit (used only for temperatures).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.conversion_tuple_to">
+<code class="descname">conversion_tuple_to</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.conversion_tuple_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.conversion_tuple_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the tuple of (factor, offset) for conversion.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>other</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PhysicalUnit</span></dt>
+<dd><p class="first last">Another unit.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Tuple with two floats</strong></dt>
+<dd><p class="first last">The conversion factor and offset from this unit to another unit.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.in_base_units">
+<code class="descname">in_base_units</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.in_base_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.in_base_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the base unit equivalent of this unit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>PhysicalUnit</strong></dt>
+<dd><p class="first last">the equivalent base unit</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.is_angle">
+<code class="descname">is_angle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.is_angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.is_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this PQ is an Angle.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">indicates if this an angle type</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.is_compatible">
+<code class="descname">is_compatible</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.is_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.is_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for compatibility with another unit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>other</strong> <span class="classifier-delimiter">:</span> <span class="classifier">PhysicalUnit</span></dt>
+<dd><p class="first last">Another unit.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">indicates if two units are compatible</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.is_dimensionless">
+<code class="descname">is_dimensionless</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.is_dimensionless"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.is_dimensionless" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dimensionless PQ.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">indicates if this is dimensionless</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.name">
+<code class="descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the name of this unit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">str representation of the unit</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.units.PhysicalUnit.set_name">
+<code class="descname">set_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#PhysicalUnit.set_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.PhysicalUnit.set_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">the name</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.add_offset_unit">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">add_offset_unit</code><span class="sig-paren">(</span><em>name</em>, <em>baseunit</em>, <em>factor</em>, <em>offset</em>, <em>comment=''</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#add_offset_unit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.add_offset_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adding Offset Unit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the unit</p>
+</dd>
+<dt><strong>baseunit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or instance of PhysicalUnit</span></dt>
+<dd><p class="first last">The unit upon which this offset unit is based.</p>
+</dd>
+<dt><strong>factor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The scaling factor used to define the new unit w.r.t. baseunit</p>
+</dd>
+<dt><strong>offset</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">zero offset for new unit</p>
+</dd>
+<dt><strong>comment</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">optional comment to describe unit</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.add_unit">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">add_unit</code><span class="sig-paren">(</span><em>name</em>, <em>unit</em>, <em>comment=''</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#add_unit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.add_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adding Unit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the unit being added. For example: ‘Hz’</p>
+</dd>
+<dt><strong>unit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">definition of the unit w.r.t. some other unit.  For example: ‘1/s’</p>
+</dd>
+<dt><strong>comment</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">optional comment to describe unit</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.conversion_to_base_units">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">conversion_to_base_units</code><span class="sig-paren">(</span><em>units</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#conversion_to_base_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.conversion_to_base_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the offset and scaler to convert from given units to base units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">String representation of the units.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">Offset to get to default unit: m (length), s(time), etc.</p>
+</dd>
+<dt><strong>float</strong></dt>
+<dd><p class="first last">Mult. factor to get to default unit: m (length), s(time), etc.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.convert_units">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">convert_units</code><span class="sig-paren">(</span><em>val</em>, <em>old_units</em>, <em>new_units=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#convert_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.convert_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a given quantity and return in different units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>val</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">value in original units.</p>
+</dd>
+<dt><strong>old_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">original units as a string or None.</p>
+</dd>
+<dt><strong>new_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">new units to return the value in or None.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>float</strong></dt>
+<dd><p class="first last">value in new units.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.get_conversion">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">get_conversion</code><span class="sig-paren">(</span><em>old_units</em>, <em>new_units</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#get_conversion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.get_conversion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return conversion factor and offset between old and new units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>old_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">original units as a string.</p>
+</dd>
+<dt><strong>new_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">new units to return the value in.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>(float, float)</strong></dt>
+<dd><p class="first last">Conversion factor and offset</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.import_library">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">import_library</code><span class="sig-paren">(</span><em>libfilepointer</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#import_library"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.import_library" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import a units library, replacing any existing definitions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>libfilepointer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file</span></dt>
+<dd><p class="first last">new library file to work with</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ConfigParser</strong></dt>
+<dd><p class="first last">newly updated units library for the module</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.is_compatible">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">is_compatible</code><span class="sig-paren">(</span><em>old_units</em>, <em>new_units</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#is_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.is_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether units are compatible in terms of base units.</p>
+<p>e.g., m/s is compatible with ft/hr</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>old_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">original units as a string.</p>
+</dd>
+<dt><strong>new_units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">new units to return the value in; if None, return in standard units.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">whether the units are compatible.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.update_library">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">update_library</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#update_library"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.update_library" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update units in current library from <cite>filename</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or file</span></dt>
+<dd><p class="first last">Source of units configuration data.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.units.valid_units">
+<code class="descclassname">openmdao.utils.units.</code><code class="descname">valid_units</code><span class="sig-paren">(</span><em>unit</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/units.html#valid_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.units.valid_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether the given units are vaild.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>unit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">String representation of the units.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">True for valid, False for invalid.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="variable_table.html" title="variable_table.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="testing_utils.html" title="testing_utils.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

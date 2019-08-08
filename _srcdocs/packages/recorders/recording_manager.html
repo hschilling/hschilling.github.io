@@ -1,0 +1,351 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>recording_manager.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="sqlite_reader.py" href="sqlite_reader.html" />
+    <link rel="prev" title="recording_iteration_stack.py" href="recording_iteration_stack.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sqlite_reader.html" title="sqlite_reader.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="recording_iteration_stack.html" title="recording_iteration_stack.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" accesskey="U">openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.recorders.recording_manager">
+<span id="recording-manager-py"></span><span id="openmdao-recorders-recording-manager-py"></span><span id="index-0"></span><h1>recording_manager.py<a class="headerlink" href="#module-openmdao.recorders.recording_manager" title="Permalink to this headline">¶</a></h1>
+<p>RecordingManager class definition.</p>
+<dl class="class">
+<dt id="openmdao.recorders.recording_manager.RecordingManager">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.recording_manager.</code><code class="descname">RecordingManager</code><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Object that routes function calls to all attached recorders.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>rank</strong></td>
+<td>(int) Rank of the iteration coordinate.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a particular recorder in the manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">an index into _recorders.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">CaseRecorder</span></dt>
+<dd><p class="first last">a recorder from _recorders</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>init.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">CaseRecorder</span></dt>
+<dd><p class="first last">a recorder from _recorders.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.append">
+<code class="descname">append</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder for recording.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">CaseRecorder</span></dt>
+<dd><p class="first last">Recorder instance to be added to the manager.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.has_recorders">
+<code class="descname">has_recorders</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.has_recorders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.has_recorders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Are there any recorders managed by this RecordingManager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>True/False</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">True if RecordingManager is managing at least one recorder</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.record_derivatives">
+<code class="descname">record_derivatives</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.record_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.record_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call record_derivatives on all recorders.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that needs an iteration of itself recorded.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing derivatives keyed by ‘of,wrt’ to be recorded.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Metadata for iteration coordinate.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><em>recording_requester</em>, <em>data</em>, <em>metadata</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.record_iteration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call record_iteration on all recorders.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that needs an iteration of itself recorded.</p>
+</dd>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary containing desvars, objectives, constraints, responses, and System vars.</p>
+</dd>
+<dt><strong>metadata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Metadata for iteration coordinate.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.record_metadata">
+<code class="descname">record_metadata</code><span class="sig-paren">(</span><em>recording_requester</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.record_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.record_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call record_metadata for all recorders.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that needs its metadata recorded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.shutdown">
+<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down and remove all recorders.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.recording_manager.RecordingManager.startup">
+<code class="descname">startup</code><span class="sig-paren">(</span><em>recording_requester</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#RecordingManager.startup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.RecordingManager.startup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run startup on each recorder in the manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recording_requester</strong> <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd><p class="first last">The object that needs an iteration of itself recorded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.recorders.recording_manager.record_viewer_data">
+<code class="descclassname">openmdao.recorders.recording_manager.</code><code class="descname">record_viewer_data</code><span class="sig-paren">(</span><em>problem</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/recording_manager.html#record_viewer_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.recording_manager.record_viewer_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record model viewer data for all recorders that have that option enabled.</p>
+<p>We don’t want to collect the viewer data if it’s not needed though,
+so first we’ll find all recorders that need the data (if any) and
+then record it for those recorders.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>problem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Problem</span></dt>
+<dd><p class="first last">The problem for which model viewer data is to be recorded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sqlite_reader.html" title="sqlite_reader.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="recording_iteration_stack.html" title="recording_iteration_stack.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" >openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

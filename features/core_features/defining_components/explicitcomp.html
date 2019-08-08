@@ -1,0 +1,214 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ExplicitComponent &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="ImplicitComponent" href="implicitcomp.html" />
+    <link rel="prev" title="IndepVarComp" href="indepvarcomp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="implicitcomp.html" title="ImplicitComponent"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="indepvarcomp.html" title="IndepVarComp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="explicitcomponent">
+<span id="comp-type-2-explicitcomp"></span><h1>ExplicitComponent<a class="headerlink" href="#explicitcomponent" title="Permalink to this headline">¶</a></h1>
+<p>Explicit variables are those that are computed as an explicit function of other variables.
+For instance, <span class="math notranslate nohighlight">\(z\)</span> would be an explicit variable, given <span class="math notranslate nohighlight">\(z = \sin(y)\)</span>, while <span class="math notranslate nohighlight">\(y\)</span> would not be, given that it is defined implicitly by the nonlinear equation, <span class="math notranslate nohighlight">\(\cos(x \cdot y) - z \cdot y = 0\)</span>.</p>
+<p>In OpenMDAO, explicit variables are defined by writing a class that inherits from the  <a class="reference internal" href="../../../_srcdocs/packages/core/explicitcomponent.html#openmdao-core-explicitcomponent-py"><span class="std std-ref">ExplicitComponent</span></a> class.
+The explicit variables would be considered <em>outputs</em> while the variables on which they depend would be considered <em>inputs</em> (e.g., <span class="math notranslate nohighlight">\(y\)</span> in <span class="math notranslate nohighlight">\(z = \sin(y)\)</span>).</p>
+<div class="section" id="explicitcomponent-methods">
+<h2>ExplicitComponent Methods<a class="headerlink" href="#explicitcomponent-methods" title="Permalink to this headline">¶</a></h2>
+<p>The implementation of each method will be illustrated using a simple explicit component that computes the output <em>area</em> as a function of inputs <em>length</em> and <em>width</em>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">RectangleComp</span><span class="p">(</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple Explicit Component that computes the area of a rectangle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<ul>
+<li><p class="first"><code class="code docutils literal notranslate"><span class="pre">setup()</span></code> :</p>
+<p>Declare input and output variables via <code class="code docutils literal notranslate"><span class="pre">add_input</span></code> and <code class="code docutils literal notranslate"><span class="pre">add_output</span></code>.
+Information such as variable names, sizes, units, and bounds are declared here. Also in <code class="code docutils literal notranslate"><span class="pre">setup</span></code>, we declare partial derivatives that this component provides,
+using wild cards to say that this component provides derivatives of all outputs with respect to all inputs.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;width&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;area&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="code docutils literal notranslate"><span class="pre">compute(inputs,</span> <span class="pre">outputs)</span></code> :</p>
+<p>Compute the <code class="code docutils literal notranslate"><span class="pre">outputs</span></code> given the <code class="code docutils literal notranslate"><span class="pre">inputs</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+    <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="code docutils literal notranslate"><span class="pre">compute_partials(inputs,</span> <span class="pre">partials)</span></code> :</p>
+<p>[Optional] Compute the <code class="code docutils literal notranslate"><span class="pre">partials</span></code> (partial derivatives) given the <code class="code docutils literal notranslate"><span class="pre">inputs</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+    <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">,</span> <span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+    <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">,</span> <span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="code docutils literal notranslate"><span class="pre">compute_jacvec_product(inputs,</span> <span class="pre">d_inputs,</span> <span class="pre">d_outputs,</span> <span class="pre">mode)</span></code> :</p>
+<p>[Optional] Provide the partial derivatives as a matrix-vector product. If <code class="code docutils literal notranslate"><span class="pre">mode</span></code> is <code class="code docutils literal notranslate"><span class="pre">'fwd'</span></code>, this method must compute <span class="math notranslate nohighlight">\(d\_{outputs} = J \cdot d\_{inputs}\)</span>, where <span class="math notranslate nohighlight">\(J\)</span> is the partial derivative Jacobian. If <code class="code docutils literal notranslate"><span class="pre">mode</span></code> is <code class="code docutils literal notranslate"><span class="pre">'rev'</span></code>, this method must compute <span class="math notranslate nohighlight">\(d\_{inputs} = J^T \cdot d\_{outputs}\)</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">compute_jacvec_product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">d_inputs</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="n">d_outputs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;width&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;rev&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="n">d_outputs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;width&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="code docutils literal notranslate"><span class="pre">compute_multi_jacvec_product(self,</span> <span class="pre">inputs,</span> <span class="pre">d_inputs,</span> <span class="pre">d_outputs,</span> <span class="pre">mode):</span></code> :</p>
+<p>[Optional] Provide the partial derivatives as a matrix-matrix product. If <code class="code docutils literal notranslate"><span class="pre">mode</span></code> is <code class="code docutils literal notranslate"><span class="pre">'fwd'</span></code>, this method must
+compute <span class="math notranslate nohighlight">\(d\_{outputs} = J \cdot d\_{inputs}\)</span>, where <span class="math notranslate nohighlight">\(J\)</span> is the partial derivative Jacobian, and where both
+d_outputs and d_inputs are matrices instead of vectors. If <code class="code docutils literal notranslate"><span class="pre">mode</span></code> is <code class="code docutils literal notranslate"><span class="pre">'rev'</span></code>, this method must similarly
+compute <span class="math notranslate nohighlight">\(d\_{inputs} = J^T \cdot d\_{outputs}\)</span>. Note that in this case, the code in compute_multi_jacvec_product is
+the same as the code in compute_jacvec_product. This won’t always be the case, depending on the math operations that
+are required for multiplying by a matrix versus multiplying by a vector.</p>
+<p>This method is only used when “vectorize_derivs” is set to True on a design variable or response.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">compute_multi_jacvec_product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">d_inputs</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="n">d_outputs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;width&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;rev&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="n">d_outputs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;width&#39;</span> <span class="ow">in</span> <span class="n">d_inputs</span><span class="p">:</span>
+                <span class="n">d_inputs</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">d_outputs</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Note that the last three are optional, because the class can implement compute_partials, one or both of compute_jacvec_product and
+compute_multi_jacvec_product, or neither if the user wants to use the finite-difference or complex-step method.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="implicitcomp.html" title="ImplicitComponent"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="indepvarcomp.html" title="IndepVarComp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

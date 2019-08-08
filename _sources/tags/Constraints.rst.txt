@@ -1,0 +1,7 @@
+.. _Constraints: 
+
+=========================
+Constraints
+=========================
+  .. toctree::
+     ../features/building_blocks/components/ks_comp.rst

@@ -1,0 +1,408 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.solvers.nonlinear.newton &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.solvers.nonlinear.newton</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the NewtonSolver class.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.solvers.solver</span> <span class="k">import</span> <span class="n">NonlinearSolver</span>
+<span class="kn">from</span> <span class="nn">openmdao.recorders.recording_iteration_stack</span> <span class="k">import</span> <span class="n">Recording</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+
+
+<div class="viewcode-block" id="NewtonSolver"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.nonlinear/newton.html#openmdao.solvers.nonlinear.newton.NewtonSolver">[docs]</a><span class="k">class</span> <span class="nc">NewtonSolver</span><span class="p">(</span><span class="n">NonlinearSolver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Newton solver.</span>
+
+<span class="sd">    The default linear solver is the linear_solver in the containing system.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    linear_solver : LinearSolver</span>
+<span class="sd">        Linear solver to use to find the Newton search direction. The default</span>
+<span class="sd">        is the parent system&#39;s linear solver.</span>
+<span class="sd">    linesearch : NonlinearSolver</span>
+<span class="sd">        Line search algorithm. Default is None for no line search.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SOLVER</span> <span class="o">=</span> <span class="s1">&#39;NL: Newton&#39;</span>
+
+<div class="viewcode-block" id="NewtonSolver.__init__"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.nonlinear/newton.html#openmdao.solvers.nonlinear.newton.NewtonSolver.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            options dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NewtonSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Slot for linear solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Slot for linesearch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">line_search</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the current linesearch object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;line_search&#39; attribute provides backwards compatibility &quot;</span>
+                         <span class="s2">&quot;with OpenMDAO 1.x ; use &#39;linesearch&#39; instead.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span>
+
+    <span class="nd">@line_search</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">line_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solver</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the linesearch solver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;line_search&#39; attribute provides backwards compatibility &quot;</span>
+                         <span class="s2">&quot;with OpenMDAO 1.x ; use &#39;linesearch&#39; instead.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">solver</span>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NewtonSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_declare_options</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to turn on sub-solvers (Hybrid Newton).&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;max_sub_solves&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Maximum number of subsystem solves.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;cs_reconverge&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;When True, when this driver solves under a complex step, nudge &#39;</span>
+                             <span class="s1">&#39;the Solution vector by a small amount so that it reconverges.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;gradients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;implicit_components&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_setup_solvers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign system instance, set depth, and optionally perform setup.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            pointer to the owning system.</span>
+<span class="sd">        depth : int</span>
+<span class="sd">            depth of the current system (already incremented).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NewtonSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup_solvers</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disallow_discrete_outputs</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_setup_solvers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">linear_solver</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">_setup_solvers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_assembled_jac_solver_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a generator of linear solvers using assembled jacs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_assembled_jac_solver_iter</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">_set_solver_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Control printing for solvers and subsolvers in the model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        level : int</span>
+<span class="sd">            iprint level. Set to 2 to print residuals each iteration; set to 1</span>
+<span class="sd">            to print just the iteration totals; set to 0 to disable all printing</span>
+<span class="sd">            except for failures, and set to -1 to disable all printing including failures.</span>
+<span class="sd">        type_ : str</span>
+<span class="sd">            Type of solver to set: &#39;LN&#39; for linear, &#39;NL&#39; for nonlinear, or &#39;all&#39; for all.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NewtonSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">!=</span> <span class="s1">&#39;NL&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">_set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the apply_nonlinear method on the system.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;_run_apply&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+
+        <span class="c1"># Disable local fd</span>
+        <span class="n">approx_status</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_jac</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_jac</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">_apply_nonlinear</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># Enable local fd</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_jac</span> <span class="o">=</span> <span class="n">approx_status</span>
+
+    <span class="k">def</span> <span class="nf">_linearize_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a flag that is True when we need to call linearize on our subsystems&#39; solvers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            Flag for indicating child linerization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_sub_solves&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_linearize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any required linearization operations such as matrix factorization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_linearize</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">_linearize</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_iter_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any necessary pre-processing operations.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            initial error.</span>
+<span class="sd">        float</span>
+<span class="sd">            error at the first iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_err_cache</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_inputs</span><span class="o">.</span><span class="n">_copy_views</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_err_cache</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_copy_views</span><span class="p">()</span>
+
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+
+        <span class="c1"># When under a complex step from higher in the hierarchy, sometimes the step is too small</span>
+        <span class="c1"># to trigger reconvergence, so nudge the outputs slightly so that we always get at least</span>
+        <span class="c1"># one iteration of Newton.</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">under_complex_step</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;cs_reconverge&#39;</span><span class="p">]:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-10</span>
+
+        <span class="c1"># Execute guess_nonlinear if specified.</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_guess_nonlinear</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="n">Recording</span><span class="p">(</span><span class="s1">&#39;Newton_subsolve&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="ow">and</span> \
+               <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_sub_solves&#39;</span><span class="p">]):</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">append_solver</span><span class="p">()</span>
+
+                <span class="c1"># should call the subsystems solve before computing the first residual</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gs_iter</span><span class="p">()</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_apply</span><span class="p">()</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_get_norm</span><span class="p">()</span>
+
+        <span class="n">norm0</span> <span class="o">=</span> <span class="n">norm</span> <span class="k">if</span> <span class="n">norm</span> <span class="o">!=</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">norm0</span><span class="p">,</span> <span class="n">norm</span>
+
+    <span class="k">def</span> <span class="nf">_single_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the operations in the iteration loop.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">append_subsolver</span><span class="p">()</span>
+        <span class="n">do_subsolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;solve_subsystems&#39;</span><span class="p">]</span> <span class="ow">and</span> \
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_sub_solves&#39;</span><span class="p">])</span>
+        <span class="n">do_sub_ln</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_linearize_children</span><span class="p">()</span>
+
+        <span class="c1"># Disable local fd</span>
+        <span class="n">approx_status</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_jac</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_jac</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_vec</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_residuals</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="n">my_asm_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_assembled_jac</span>
+
+        <span class="n">system</span><span class="o">.</span><span class="n">_linearize</span><span class="p">(</span><span class="n">my_asm_jac</span><span class="p">,</span> <span class="n">sub_do_ln</span><span class="o">=</span><span class="n">do_sub_ln</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">my_asm_jac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">system</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_assembled_jac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">my_asm_jac</span><span class="p">):</span>
+            <span class="n">my_asm_jac</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_linearize</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">([</span><span class="s1">&#39;linear&#39;</span><span class="p">],</span> <span class="s1">&#39;fwd&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">_do_subsolve</span> <span class="o">=</span> <span class="n">do_subsolve</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">+=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># Hybrid newton support.</span>
+        <span class="k">if</span> <span class="n">do_subsolve</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Recording</span><span class="p">(</span><span class="s1">&#39;Newton_subsolve&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">append_solver</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gs_iter</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># Enable local fd</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_owns_approx_jac</span> <span class="o">=</span> <span class="n">approx_status</span>
+
+    <span class="k">def</span> <span class="nf">_set_complex_step_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turn on or off complex stepping mode.</span>
+
+<span class="sd">        Recurses to turn on or off complex stepping mode in all subsystems and their vectors.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        active : bool</span>
+<span class="sd">            Complex mode flag; set to True prior to commencing complex step.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_set_complex_step_mode</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_assembled_jac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">_assembled_jac</span><span class="o">.</span><span class="n">set_complex_step_mode</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_mpi_print_header</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print header text before solving.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;iprint&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+
+            <span class="n">pathname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">pathname</span>
+            <span class="k">if</span> <span class="n">pathname</span><span class="p">:</span>
+                <span class="n">nchar</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+                <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">header</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="n">header</span> <span class="o">+=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">nchar</span> <span class="o">*</span> <span class="s2">&quot;=&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="n">header</span> <span class="o">+=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">pathname</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="n">header</span> <span class="o">+=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">nchar</span> <span class="o">*</span> <span class="s2">&quot;=&quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NewtonSolver.cleanup"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.nonlinear/newton.html#openmdao.solvers.nonlinear.newton.NewtonSolver.cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clean up resources prior to exit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NewtonSolver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear_solver</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linesearch</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+.. index:: find_cite.py
+
+.. _openmdao.utils.find_cite.py:
+
+find_cite.py
+------------
+
+.. automodule:: openmdao.utils.find_cite
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

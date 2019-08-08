@@ -1,0 +1,244 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.proc_allocators.default_allocator &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.proc_allocators.default_allocator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the DefaultAllocator class.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.proc_allocators.proc_allocator</span> <span class="k">import</span> <span class="n">ProcAllocator</span><span class="p">,</span> <span class="n">ProcAllocationError</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+
+
+<div class="viewcode-block" id="DefaultAllocator"><a class="viewcode-back" href="../../../_srcdocs/packages/proc_allocators/default_allocator.html#openmdao.proc_allocators.default_allocator.DefaultAllocator">[docs]</a><span class="k">class</span> <span class="nc">DefaultAllocator</span><span class="p">(</span><span class="n">ProcAllocator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Default processor allocator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_divide_procs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proc_info</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the parallel processor allocation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        proc_info : list of (min_procs, max_procs, weight)</span>
+<span class="sd">            Information used to determine MPI process allocation to subsystems.</span>
+<span class="sd">        comm : MPI.Comm or &lt;FakeComm&gt;</span>
+<span class="sd">            communicator of the owning System.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        isubs : [int, ...]</span>
+<span class="sd">            indices of the owned local subsystems.</span>
+<span class="sd">        sub_comm : MPI.Comm or &lt;FakeComm&gt;</span>
+<span class="sd">            communicator to pass to the subsystems.</span>
+<span class="sd">        sub_proc_range : (int, int)</span>
+<span class="sd">            The range of processors that the subcomm owns, among those of comm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">nproc</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="n">nsubs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">proc_info</span><span class="p">)</span>
+        <span class="n">min_procs</span><span class="p">,</span> <span class="n">max_procs</span><span class="p">,</span> <span class="n">proc_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_proc_info</span><span class="p">(</span><span class="n">proc_info</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+        <span class="n">min_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">min_procs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">max_procs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">nproc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProcAllocationError</span><span class="p">(</span><span class="s2">&quot;too many MPI procs allocated. Comm is size </span><span class="si">%d</span><span class="s2"> but &quot;</span>
+                                      <span class="s2">&quot;can only use </span><span class="si">%d</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nproc</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">max_procs</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">min_sum</span> <span class="o">&gt;</span> <span class="n">nproc</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">min_procs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ProcAllocationError</span><span class="p">(</span><span class="s2">&quot;can&#39;t meet min_procs required because the sum of the &quot;</span>
+                                      <span class="s2">&quot;min procs required exceeds the procs allocated and the &quot;</span>
+                                      <span class="s2">&quot;min procs required is &gt; 1&quot;</span><span class="p">,</span>
+                                      <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nsubs</span><span class="p">)))[</span><span class="n">min_procs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Define the normalized weights for all subsystems</span>
+        <span class="n">proc_weights</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">proc_weights</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">min_sum</span> <span class="o">&gt;</span> <span class="n">nproc</span><span class="p">:</span>
+            <span class="n">isubs_list</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nproc</span><span class="p">)]</span>
+            <span class="n">proc_load</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nproc</span><span class="p">)</span>
+
+            <span class="n">sub_sort_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">proc_weights</span><span class="p">))</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">proc_weights</span>
+
+            <span class="c1"># Assign the slowest subsystem to the most free processor</span>
+            <span class="k">for</span> <span class="n">isub</span> <span class="ow">in</span> <span class="n">sub_sort_idxs</span><span class="p">:</span>
+                <span class="n">min_loads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">proc_load</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_procs</span><span class="p">[</span><span class="n">isub</span><span class="p">]):</span>
+                    <span class="n">iproc1</span> <span class="o">=</span> <span class="n">min_loads</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">isubs_list</span><span class="p">[</span><span class="n">iproc1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">isub</span><span class="p">)</span>
+                    <span class="n">proc_load</span><span class="p">[</span><span class="n">iproc1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">vals</span><span class="p">[</span><span class="n">isub</span><span class="p">]</span>
+
+            <span class="c1"># Result</span>
+            <span class="n">sub_comm</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Split</span><span class="p">(</span><span class="n">iproc</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">isubs_list</span><span class="p">[</span><span class="n">iproc</span><span class="p">],</span> <span class="n">sub_comm</span><span class="p">,</span> <span class="p">[</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span><span class="p">,</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">+</span> <span class="n">sub_comm</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+
+        <span class="n">num_procs</span> <span class="o">=</span> <span class="n">min_procs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">min_sum</span> <span class="o">&lt;</span> <span class="n">nproc</span><span class="p">:</span>
+            <span class="c1"># weighted sums to nproc</span>
+            <span class="n">weighted</span> <span class="o">=</span> <span class="n">proc_weights</span> <span class="o">*</span> <span class="n">nproc</span>
+
+            <span class="c1"># the number of procs expected beyond the min requested</span>
+            <span class="n">weighted_less_min</span> <span class="o">=</span> <span class="n">weighted</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span> <span class="n">min_procs</span>
+            <span class="n">weighted_less_min</span><span class="p">[</span><span class="n">weighted_less_min</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weighted_less_min</span><span class="p">)</span> <span class="o">+</span> <span class="n">min_sum</span> <span class="o">&lt;=</span> <span class="n">nproc</span><span class="p">:</span>
+                <span class="c1"># start with min procs then add what&#39;s left over using weights</span>
+                <span class="n">num_procs</span> <span class="o">+=</span> <span class="n">weighted_less_min</span>
+
+        <span class="n">excess_idxs</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_procs</span> <span class="o">-</span> <span class="n">num_procs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+
+        <span class="c1"># limit all procs to their stated max</span>
+        <span class="n">num_procs</span><span class="p">[</span><span class="n">excess_idxs</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_procs</span><span class="p">[</span><span class="n">excess_idxs</span><span class="p">]</span>
+
+        <span class="n">expected_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">num_procs</span><span class="p">)</span>
+        <span class="n">extras</span> <span class="o">=</span> <span class="n">nproc</span> <span class="o">-</span> <span class="n">expected_total</span>
+
+        <span class="k">if</span> <span class="n">extras</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># we have some extra procs lying around.</span>
+            <span class="c1"># give remaining procs such that after each addition we are closest to</span>
+            <span class="c1"># desired weights</span>
+            <span class="n">newsum</span> <span class="o">=</span> <span class="n">expected_total</span>
+            <span class="n">eye</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">weighted</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">weighted</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">proc_weights</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">extras</span><span class="p">):</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">max_procs</span> <span class="o">&lt;=</span> <span class="n">num_procs</span>
+                <span class="n">weighted</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">weighted</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weighted</span><span class="p">))</span>
+                <span class="n">newsum</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">mat</span> <span class="o">=</span> <span class="n">eye</span> <span class="o">+</span> <span class="n">num_procs</span>
+                <span class="n">mat</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">newsum</span><span class="p">)</span>
+                <span class="n">mat</span> <span class="o">-=</span> <span class="n">weighted</span>
+                <span class="c1"># prevent rows associated with the maxed out subsystems from having the</span>
+                <span class="c1"># smallest norm.</span>
+                <span class="n">mat</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e99</span>
+                <span class="c1"># zero out columns for maxed out subsystems</span>
+                <span class="n">mat</span><span class="p">[:,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="c1"># add a proc to a subsystem based on matching closest to desired weights for</span>
+                <span class="c1"># the remaining &#39;active&#39; subsystems.</span>
+                <span class="n">num_procs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">norm</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Compute the coloring</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nproc</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">isub</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsubs</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">+=</span> <span class="n">num_procs</span><span class="p">[</span><span class="n">isub</span><span class="p">]</span>
+            <span class="n">color</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="n">isub</span>
+            <span class="n">start</span> <span class="o">+=</span> <span class="n">num_procs</span><span class="p">[</span><span class="n">isub</span><span class="p">]</span>
+
+        <span class="n">isub</span> <span class="o">=</span> <span class="n">color</span><span class="p">[</span><span class="n">iproc</span><span class="p">]</span>
+
+        <span class="c1"># Result</span>
+        <span class="n">isubs</span> <span class="o">=</span> <span class="p">[</span><span class="n">isub</span><span class="p">]</span>
+        <span class="n">sub_comm</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Split</span><span class="p">(</span><span class="n">isub</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">color</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">isub</span><span class="p">)</span>  <span class="c1"># find lowest matching color</span>
+        <span class="n">sub_proc_range</span> <span class="o">=</span> <span class="p">[</span><span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">sub_comm</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">isubs</span><span class="p">,</span> <span class="n">sub_comm</span><span class="p">,</span> <span class="n">sub_proc_range</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

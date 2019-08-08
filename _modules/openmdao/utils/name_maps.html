@@ -1,0 +1,327 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.utils.name_maps &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.utils.name_maps</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Maps between promoted/relative/absolute names and name pairs.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="rel_name2abs_name"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.rel_name2abs_name">[docs]</a><span class="k">def</span> <span class="nf">rel_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">rel_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map relative variable name to absolute variable name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which the given name is relative.</span>
+<span class="sd">    rel_name : str</span>
+<span class="sd">        Given relative variable name.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        Absolute variable name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">rel_name</span> <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span> <span class="ow">is</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">rel_name</span></div>
+
+
+<div class="viewcode-block" id="abs_name2rel_name"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.abs_name2rel_name">[docs]</a><span class="k">def</span> <span class="nf">abs_name2rel_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">abs_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map relative variable name to absolute variable name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which the given name is relative.</span>
+<span class="sd">    abs_name : str</span>
+<span class="sd">        Given absolute variable name.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        Relative variable name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">abs_name</span> <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span> <span class="ow">is</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="n">abs_name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="rel_key2abs_key"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.rel_key2abs_key">[docs]</a><span class="k">def</span> <span class="nf">rel_key2abs_key</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">rel_key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map relative variable name pair to absolute variable name pair.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which the given key is relative.</span>
+<span class="sd">    rel_key : (str, str)</span>
+<span class="sd">        Given relative variable name pair.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, str)</span>
+<span class="sd">        Absolute variable name pair.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">rel_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">rel_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">rel_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">rel_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="abs_key2rel_key"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.abs_key2rel_key">[docs]</a><span class="k">def</span> <span class="nf">abs_key2rel_key</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map relative variable name pair to absolute variable name pair.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which the given key is relative.</span>
+<span class="sd">    abs_key : (str, str)</span>
+<span class="sd">        Given absolute variable name pair.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, str)</span>
+<span class="sd">        Relative variable name pair.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">abs_name2rel_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">abs_name2rel_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="prom_name2abs_name"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.prom_name2abs_name">[docs]</a><span class="k">def</span> <span class="nf">prom_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">prom_name</span><span class="p">,</span> <span class="n">type_</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map the given promoted name to the absolute name.</span>
+
+<span class="sd">    This is only valid when the name is unique; otherwise, a KeyError is thrown.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which prom_name is relative.</span>
+<span class="sd">    prom_name : str</span>
+<span class="sd">        Promoted variable name in the owning system&#39;s namespace.</span>
+<span class="sd">    type_ : str</span>
+<span class="sd">        Either &#39;input&#39; or &#39;output&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        Absolute variable name or None if prom_name is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prom2abs_lists</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_prom2abs_list</span><span class="p">[</span><span class="n">type_</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">prom_name</span> <span class="ow">in</span> <span class="n">prom2abs_lists</span><span class="p">:</span>
+        <span class="n">abs_list</span> <span class="o">=</span> <span class="n">prom2abs_lists</span><span class="p">[</span><span class="n">prom_name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">abs_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">abs_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># looks like an aliased input, which must be set via the connected output</span>
+            <span class="n">src_name</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_conn_global_abs_in2out</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">abs_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">src_name</span> <span class="ow">and</span> <span class="n">src_name</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]:</span>
+                <span class="n">src_name</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">src_name</span><span class="p">]</span>  <span class="c1"># use promoted name</span>
+            <span class="k">if</span> <span class="n">src_name</span><span class="p">:</span>  <span class="c1"># input is connected</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The promoted name </span><span class="si">{}</span><span class="s2"> is invalid because it refers to &quot;</span>
+                                   <span class="s2">&quot;multiple inputs: [</span><span class="si">{}</span><span class="s2">]. &quot;</span>
+                                   <span class="s2">&quot;Access the value from the connected output variable </span><span class="si">{}</span><span class="s2"> instead.&quot;</span>
+                                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prom_name</span><span class="p">,</span> <span class="s1">&#39; ,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">abs_list</span><span class="p">),</span> <span class="n">src_name</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The promoted name </span><span class="si">{}</span><span class="s2"> is invalid because it refers to &quot;</span>
+                                   <span class="s2">&quot;multiple inputs: [</span><span class="si">{}</span><span class="s2">] that are not connected to an output &quot;</span>
+                                   <span class="s2">&quot;variable.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prom_name</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">abs_list</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="name2abs_name"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.name2abs_name">[docs]</a><span class="k">def</span> <span class="nf">name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">type_</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map the given promoted or relative name to the absolute name.</span>
+
+<span class="sd">    This is only valid when the name is unique; otherwise, a KeyError is thrown.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which name is relative.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Promoted or relative variable name in the owning system&#39;s namespace.</span>
+<span class="sd">    names : dict or list of str</span>
+<span class="sd">        List of valid names.</span>
+<span class="sd">    type_ : str</span>
+<span class="sd">        Either &#39;input&#39; or &#39;output&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        Absolute variable name if unique abs_name found or None otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">abs_name1</span> <span class="o">=</span> <span class="n">prom_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abs_name1</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">abs_name1</span>
+
+    <span class="n">abs_name2</span> <span class="o">=</span> <span class="n">rel_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abs_name2</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">abs_name2</span></div>
+
+
+<div class="viewcode-block" id="prom_key2abs_key"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.prom_key2abs_key">[docs]</a><span class="k">def</span> <span class="nf">prom_key2abs_key</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">prom_key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map the given promoted name pair to the absolute name pair.</span>
+
+<span class="sd">    The first name is an output, and the second name can be an output or an input.</span>
+<span class="sd">    If the second name is non-unique, a KeyError is thrown.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which prom_key is relative.</span>
+<span class="sd">    prom_key : (str, str)</span>
+<span class="sd">        Promoted name pair of sub-Jacobian.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, str) or None</span>
+<span class="sd">        Absolute name pair of sub-Jacobian or None is prom_key is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">abs_name1in</span> <span class="o">=</span> <span class="n">prom_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">prom_key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span>
+    <span class="n">abs_name1out</span> <span class="o">=</span> <span class="n">prom_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">prom_key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;output&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abs_name1in</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">abs_name1out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="n">abs_name1in</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">abs_name1</span> <span class="o">=</span> <span class="n">abs_name1out</span>
+    <span class="k">elif</span> <span class="n">abs_name1out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">abs_name1</span> <span class="o">=</span> <span class="n">abs_name1in</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;The promoted name &quot;</span><span class="si">{}</span><span class="s1">&quot; is invalid because it is non-unique.&#39;</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prom_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="n">abs_name0</span> <span class="o">=</span> <span class="n">prom_name2abs_name</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">prom_key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;output&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abs_name0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">abs_name0</span><span class="p">,</span> <span class="n">abs_name1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="key2abs_key"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/name_maps.html#openmdao.utils.name_maps.key2abs_key">[docs]</a><span class="k">def</span> <span class="nf">key2abs_key</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map the given absolute, promoted or relative name pair to the absolute name pair.</span>
+
+<span class="sd">    The first name is an output, and the second name can be an output or an input.</span>
+<span class="sd">    If the second name is non-unique, a KeyError is thrown.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : &lt;System&gt;</span>
+<span class="sd">        System to which prom_key is relative.</span>
+<span class="sd">    key : (str, str)</span>
+<span class="sd">        Promoted or relative name pair of sub-Jacobian.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, str) or None</span>
+<span class="sd">        Absolute name pair of sub-Jacobian if unique abs_key found or None otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">key</span>
+
+    <span class="n">abs_key</span> <span class="o">=</span> <span class="n">prom_key2abs_key</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">abs_key</span>
+
+    <span class="n">abs_key</span> <span class="o">=</span> <span class="n">rel_key2abs_key</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abs_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2meta</span> <span class="ow">and</span> <span class="n">abs_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2meta</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">abs_key</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

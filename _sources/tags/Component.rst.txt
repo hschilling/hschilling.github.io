@@ -1,0 +1,24 @@
+.. _Component: 
+
+=========================
+Component
+=========================
+  .. toctree::
+     ../features/building_blocks/components/dot_product_comp.rst
+     ../features/building_blocks/components/metamodelstructured_comp.rst
+     ../features/building_blocks/components/exec_comp.rst
+     ../features/building_blocks/components/bsplines_comp.rst
+     ../features/building_blocks/components/add_subtract_comp.rst
+     ../features/building_blocks/components/linearsystem_comp.rst
+     ../features/building_blocks/components/balance_comp.rst
+     ../features/building_blocks/components/external_code_comp.rst
+     ../features/building_blocks/components/matrix_vector_product_comp.rst
+     ../features/building_blocks/components/cross_product_comp.rst
+     ../features/building_blocks/components/ks_comp.rst
+     ../features/building_blocks/components/mux_demux_comps.rst
+     ../features/building_blocks/components/vector_magnitude_comp.rst
+     ../features/building_blocks/components/metamodelunstructured_comp.rst
+     ../features/building_blocks/components/external_code_implicit_comp.rst
+     ../features/building_blocks/components/eq_constraint_comp.rst
+     ../features/core_features/defining_components/implicitcomp.rst
+     ../basic_guide/component_types.rst

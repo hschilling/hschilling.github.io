@@ -1,0 +1,500 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.jacobians.jacobian &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.jacobians.jacobian</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the base Jacobian class.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="k">import</span> <span class="n">rand</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">issparse</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">itervalues</span><span class="p">,</span> <span class="n">iteritems</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.utils.name_maps</span> <span class="k">import</span> <span class="n">key2abs_key</span><span class="p">,</span> <span class="n">rel_name2abs_name</span>
+<span class="kn">from</span> <span class="nn">openmdao.matrices.matrix</span> <span class="k">import</span> <span class="n">sparse_types</span>
+
+<span class="n">SUBJAC_META_DEFAULTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;rows&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;cols&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;dependent&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">_full_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Jacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/jacobian.html#openmdao.jacobians.assembled_jacobian.Jacobian">[docs]</a><span class="k">class</span> <span class="nc">Jacobian</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base Jacobian class.</span>
+
+<span class="sd">    This class provides a dictionary interface for sub-Jacobians and</span>
+<span class="sd">    performs matrix-vector products when apply_linear is called.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _system : &lt;System&gt;</span>
+<span class="sd">        Pointer to the system that is currently operating on this Jacobian.</span>
+<span class="sd">    _subjacs_info : dict</span>
+<span class="sd">        Dictionary of the sub-Jacobian metadata keyed by absolute names.</span>
+<span class="sd">    _override_checks : bool</span>
+<span class="sd">        If we are approximating a jacobian at the top level and we have specified indices on the</span>
+<span class="sd">        functions or designvars, then we need to disable the size checking temporarily so that we</span>
+<span class="sd">        can assign a jacobian with less rows or columns than the variable sizes.</span>
+<span class="sd">    _under_complex_step : bool</span>
+<span class="sd">        When True, this Jacobian is under complex step, using a complex jacobian.</span>
+<span class="sd">    _abs_keys : defaultdict</span>
+<span class="sd">        A cache dict for key to absolute key.</span>
+<span class="sd">    _randomize : bool</span>
+<span class="sd">        If True, sparsity is being computed for simultaneous derivative coloring.</span>
+<span class="sd">    _jac_summ : dict or None</span>
+<span class="sd">        A dict containing a summation of some number of instantaneous absolute values of this</span>
+<span class="sd">        jacobian, for use later to determine jacobian sparsity and simultaneous coloring.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Jacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/jacobian.html#openmdao.jacobians.assembled_jacobian.Jacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_subjacs_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_override_checks</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_under_complex_step</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_abs_keys</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_randomize</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jac_summ</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_abs_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">abskey</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs_keys</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">abskey</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_abs_keys</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">abskey</span> <span class="o">=</span> <span class="n">key2abs_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">abskey</span>
+
+    <span class="k">def</span> <span class="nf">_abs_key2shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return shape of sub-jacobian for variables making up the key tuple.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        abs_key : (str, str)</span>
+<span class="sd">            Absolute name pair of sub-Jacobian.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out_size : int</span>
+<span class="sd">            local size of the output variable.</span>
+<span class="sd">        in_size : int</span>
+<span class="sd">            local size of the input variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abs2meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">abs2meta</span><span class="p">[</span><span class="n">abs_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;size&#39;</span><span class="p">],</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">abs_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;size&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Jacobian.__contains__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/jacobian.html#openmdao.jacobians.assembled_jacobian.Jacobian.__contains__">[docs]</a>    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return whether there is a subjac for the given promoted or relative name pair.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : (str, str)</span>
+<span class="sd">            Promoted or relative name pair of sub-Jacobian.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            return whether sub-Jacobian has been defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_abs_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span></div>
+
+<div class="viewcode-block" id="Jacobian.__getitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/jacobian.html#openmdao.jacobians.assembled_jacobian.Jacobian.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get sub-Jacobian.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : (str, str)</span>
+<span class="sd">            Promoted or relative name pair of sub-Jacobian.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray or spmatrix or list[3]</span>
+<span class="sd">            sub-Jacobian as an array, sparse mtx, or AIJ/IJ list or tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abs_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_abs_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">[</span><span class="n">abs_key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: Variable name pair (&quot;</span><span class="si">{}</span><span class="s1">&quot;, &quot;</span><span class="si">{}</span><span class="s1">&quot;) not found.&#39;</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="Jacobian.__setitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/jacobian.html#openmdao.jacobians.assembled_jacobian.Jacobian.__setitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">subjac</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set sub-Jacobian.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : (str, str)</span>
+<span class="sd">            Promoted or relative name pair of sub-Jacobian.</span>
+<span class="sd">        subjac : int or float or ndarray or sparse matrix</span>
+<span class="sd">            sub-Jacobian as a scalar, vector, array, or AIJ list or tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abs_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_abs_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="c1"># You can only set declared subjacobians.</span>
+            <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: Variable name pair (&quot;</span><span class="si">{}</span><span class="s1">&quot;, &quot;</span><span class="si">{}</span><span class="s1">&quot;) must first be declared.&#39;</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+            <span class="n">subjacs_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">issparse</span><span class="p">(</span><span class="n">subjac</span><span class="p">):</span>
+                <span class="n">subjacs_info</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subjac</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># np.promote_types will choose the smallest dtype that can contain both arguments</span>
+                <span class="n">subjac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">subjac</span><span class="p">)</span>
+                <span class="n">safe_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">promote_types</span><span class="p">(</span><span class="n">subjac</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+                <span class="n">subjac</span> <span class="o">=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">safe_dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="c1"># Bail here so that we allow top level jacobians to be of reduced size when indices</span>
+                <span class="c1"># are specified on driver vars.</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_override_checks</span><span class="p">:</span>
+                    <span class="n">subjacs_info</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subjac</span>
+                    <span class="k">return</span>
+
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">subjacs_info</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># Dense subjac</span>
+                    <span class="n">subjac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">subjac</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">subjac</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs_key2shape</span><span class="p">(</span><span class="n">abs_key</span><span class="p">)</span>
+                        <span class="n">subjac</span> <span class="o">=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Sparse subjac</span>
+                    <span class="k">if</span> <span class="n">subjac</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="ow">and</span> <span class="n">subjac</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">rows</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: Sub-jacobian for key </span><span class="si">%s</span><span class="s2"> has &quot;</span>
+                                         <span class="s2">&quot;the wrong shape (</span><span class="si">%s</span><span class="s2">), expected (</span><span class="si">%s</span><span class="s2">).&quot;</span> <span class="o">%</span>
+                                         <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">,</span> <span class="n">subjac</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">rows</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+                <span class="n">subjacs_info</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">][:]</span> <span class="o">=</span> <span class="n">subjac</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: Variable name pair (&quot;</span><span class="si">{}</span><span class="s1">&quot;, &quot;</span><span class="si">{}</span><span class="s1">&quot;) not found.&#39;</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">msginfo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return info to prepend to messages.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Info to prepend to messages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">msginfo</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the user&#39;s sub-Jacobians and set into the global matrix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System that is updating this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">d_inputs</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">,</span> <span class="n">d_residuals</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute matrix-vector product.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System that is updating this jacobian.</span>
+<span class="sd">        d_inputs : Vector</span>
+<span class="sd">            inputs linear vector.</span>
+<span class="sd">        d_outputs : Vector</span>
+<span class="sd">            outputs linear vector.</span>
+<span class="sd">        d_residuals : Vector</span>
+<span class="sd">            residuals linear vector.</span>
+<span class="sd">        mode : str</span>
+<span class="sd">            &#39;fwd&#39; or &#39;rev&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_randomize_subjac</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subjac</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a subjac that is the given subjac filled with random values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        subjac : ndarray or csc_matrix</span>
+<span class="sd">            Sub-jacobian to be randomized.</span>
+<span class="sd">        key : tuple (of, wrt)</span>
+<span class="sd">            Key for subjac within the jacobian.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray or csc_matrix</span>
+<span class="sd">            Randomized version of the subjac.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subjac</span><span class="p">,</span> <span class="n">sparse_types</span><span class="p">):</span>  <span class="c1"># sparse</span>
+            <span class="n">sparse</span> <span class="o">=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">sparse</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">rand</span><span class="p">(</span><span class="n">sparse</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">sparse</span><span class="o">.</span><span class="n">data</span> <span class="o">+=</span> <span class="mf">1.0</span>
+            <span class="k">return</span> <span class="n">sparse</span>
+
+        <span class="c1"># if a subsystem has computed a dynamic partial or semi-total coloring,</span>
+        <span class="c1"># we use that sparsity information to set the sparsity of the randomized</span>
+        <span class="c1"># subjac.  Otherwise all subjacs that didn&#39;t have sparsity declared by the</span>
+        <span class="c1"># user will appear completely dense, which will lead to a total jacobian that</span>
+        <span class="c1"># is more dense than it should be, causing any total coloring that we compute</span>
+        <span class="c1"># to be overly conservative.</span>
+        <span class="n">subjac_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;sparsity&#39;</span> <span class="ow">in</span> <span class="n">subjac_info</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">subjac_info</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="n">subjac_info</span><span class="p">[</span><span class="s1">&#39;sparsity&#39;</span><span class="p">]</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">rand</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">))</span>
+            <span class="n">val</span> <span class="o">+=</span> <span class="mf">1.0</span>
+            <span class="n">r</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">subjac</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">+=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="k">def</span> <span class="nf">_get_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">vtype</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an ordered dict of ranges for each var of a particular type (input or output).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System owning this jacobian.</span>
+<span class="sd">        vtype : str</span>
+<span class="sd">            Type of variable, must be one of (&#39;input&#39;, &#39;output&#39;).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        OrderedDict</span>
+<span class="sd">            Tuples of the form (start, end) keyed on variable name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">abs2idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2idx</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]</span>
+        <span class="n">sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">][</span><span class="n">vtype</span><span class="p">]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ranges</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="n">vtype</span><span class="p">]:</span>
+            <span class="n">end</span> <span class="o">+=</span> <span class="n">sizes</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="n">abs2idx</span><span class="p">[</span><span class="n">name</span><span class="p">]]</span>
+            <span class="n">ranges</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="k">return</span> <span class="n">ranges</span>
+
+    <span class="k">def</span> <span class="nf">_save_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add the current jacobian to a running absolute summation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System owning this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">subjacs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jac_summ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># create _jac_summ structure</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jac_summ</span> <span class="o">=</span> <span class="n">summ</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subjacs</span><span class="p">:</span>
+                <span class="n">summ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">summ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jac_summ</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subjacs</span><span class="p">:</span>
+                <span class="n">summ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_compute_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ordered_of_info</span><span class="p">,</span> <span class="n">ordered_wrt_info</span><span class="p">,</span> <span class="n">num_full_jacs</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">orders</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute a dense sparsity matrix for this jacobian using saved absolute summations.</span>
+
+<span class="sd">        The sparsity matrix will contain only those columns that match the wrt variables in</span>
+<span class="sd">        wrt_matches, but will contain rows for all outputs in the given system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ordered_of_info : list of (name, offset, end, idxs)</span>
+<span class="sd">            Name, offset, etc. of row variables in the order that they appear in the jacobian.</span>
+<span class="sd">        ordered_wrt_info : list of (name, offset, end, idxs)</span>
+<span class="sd">            Name, offset, etc. of column variables in the order that they appear in the jacobian.</span>
+<span class="sd">        num_full_jacs : int</span>
+<span class="sd">            Number of times to compute partial jacobian when computing sparsity.</span>
+<span class="sd">        tol : float</span>
+<span class="sd">            Tolerance used to determine if an array entry is zero or nonzero.</span>
+<span class="sd">        orders : int</span>
+<span class="sd">            Number of orders +/- for the tolerance sweep.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Boolean sparsity matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">openmdao.utils.coloring</span> <span class="k">import</span> <span class="n">_tol_sweep</span>
+
+        <span class="n">subjacs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span>
+        <span class="n">summ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jac_summ</span>
+
+        <span class="n">rend</span> <span class="o">=</span> <span class="n">ordered_of_info</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">cend</span> <span class="o">=</span> <span class="n">ordered_wrt_info</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rend</span><span class="p">,</span> <span class="n">cend</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">of</span><span class="p">,</span> <span class="n">roffset</span><span class="p">,</span> <span class="n">rend</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ordered_of_info</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">wrt</span><span class="p">,</span> <span class="n">coffset</span><span class="p">,</span> <span class="n">cend</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ordered_wrt_info</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subjacs</span><span class="p">:</span>
+                    <span class="n">meta</span> <span class="o">=</span> <span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">rows</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">roffset</span>
+                        <span class="n">cols</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;cols&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">coffset</span>
+                        <span class="n">J</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">summ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">elif</span> <span class="n">issparse</span><span class="p">(</span><span class="n">summ</span><span class="p">[</span><span class="n">key</span><span class="p">]):</span>
+                        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: scipy sparse arrays are not &quot;</span>
+                                                  <span class="s2">&quot;supported yet.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">J</span><span class="p">[</span><span class="n">roffset</span><span class="p">:</span><span class="n">rend</span><span class="p">,</span> <span class="n">coffset</span><span class="p">:</span><span class="n">cend</span><span class="p">]</span> <span class="o">=</span> <span class="n">summ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="n">J</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_full_jacs</span><span class="p">)</span>
+
+        <span class="n">tol_info</span> <span class="o">=</span> <span class="n">_tol_sweep</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">orders</span><span class="p">)</span>
+
+        <span class="n">boolJ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">J</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">boolJ</span><span class="p">[</span><span class="n">J</span> <span class="o">&gt;</span> <span class="n">tol_info</span><span class="p">[</span><span class="s1">&#39;good_tol&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="n">boolJ</span><span class="p">,</span> <span class="n">tol_info</span>
+
+<div class="viewcode-block" id="Jacobian.set_complex_step_mode"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/jacobian.html#openmdao.jacobians.assembled_jacobian.Jacobian.set_complex_step_mode">[docs]</a>    <span class="k">def</span> <span class="nf">set_complex_step_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turn on or off complex stepping mode.</span>
+
+<span class="sd">        When turned on, the value in each subjac is cast as complex, and when turned</span>
+<span class="sd">        off, they are returned to real values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        active : bool</span>
+<span class="sd">            Complex mode flag; set to True prior to commencing complex step.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
+                <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">real</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_under_complex_step</span> <span class="o">=</span> <span class="n">active</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

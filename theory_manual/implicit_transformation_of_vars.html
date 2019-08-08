@@ -1,0 +1,171 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Understanding How Variables Work &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The System Setup Stack: Understanding When to Use setup and configure" href="setup_stack.html" />
+    <link rel="prev" title="OpenMDAO Class Structure" href="class_structure.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="setup_stack.html" title="The System Setup Stack: Understanding When to Use setup and configure"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="class_structure.html" title="OpenMDAO Class Structure"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="understanding-how-variables-work">
+<h1>Understanding How Variables Work<a class="headerlink" href="#understanding-how-variables-work" title="Permalink to this headline">¶</a></h1>
+<p>In general, a numerical model can be complex, multidisciplinary, and heterogeneous.
+It can be decomposed into a series of smaller computations that are chained together.</p>
+<div class="section" id="a-simple-numerical-model">
+<h2>A Simple Numerical Model<a class="headerlink" href="#a-simple-numerical-model" title="Permalink to this headline">¶</a></h2>
+<p>Let us consider the following numerical model that takes <span class="math notranslate nohighlight">\(x\)</span> as an input:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l l}
+  y \quad \text{is computed by solving:} &amp;
+  \cos(x \cdot y) - z \cdot y = 0  \\
+  z \quad \text{is computed by evaluating:} &amp;
+  z = \sin(y) .
+\end{array}\end{split}\]</div>
+<p>OpenMDAO reformulates all numerical models into the form of a nonlinear system which drives a set of residual equations to 0.
+This is done so that all models ‘look the same’ to the framework,
+which helps simplify methods for converging coupled numerical models and for computing their derivatives
+(i.e., <span class="math notranslate nohighlight">\(dz/dx\)</span> and <span class="math notranslate nohighlight">\(dy/dx\)</span> in this case).
+If we say we want to evaluate the numerical model at <span class="math notranslate nohighlight">\(x=\pi\)</span>, the reformulation would be:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{l}
+  R_x(x, y, z) = x - \pi \\
+  R_y(x, y, z) = \cos(x \cdot y) - z \cdot y \\
+  R_z(x, y, z) = z - \sin(y) .
+\end{array}\end{split}\]</div>
+<p>The variables in this model would be x, y, and z.</p>
+</div>
+<div class="section" id="the-relationship-between-variables-and-components">
+<h2>The Relationship Between Variables and Components<a class="headerlink" href="#the-relationship-between-variables-and-components" title="Permalink to this headline">¶</a></h2>
+<p>In OpenMDAO, all three of these variables would be defined as the output of one or more <cite>Component</cite> instances.
+There are two main component types:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="../_srcdocs/packages/core/explicitcomponent.html#openmdao-core-explicitcomponent-py"><span class="std std-ref">ExplicitComponent</span></a></li>
+<li><a class="reference internal" href="../_srcdocs/packages/core/implicitcomponent.html#openmdao-core-implicitcomponent-py"><span class="std std-ref">ImplicitComponent</span></a></li>
+</ul>
+</div></blockquote>
+<p>The <code class="code docutils literal notranslate"><span class="pre">ExplicitComponent</span></code> allows you to define your equations in the explicit form (e.g. <span class="math notranslate nohighlight">\(z = \sin(y)\)</span>) and it computes the implicit transformation for you in order to compute the residuals.
+The <code class="code docutils literal notranslate"><span class="pre">ImplicitComponent</span></code> expects you to compute all the residuals yourself in the <code class="code docutils literal notranslate"><span class="pre">apply_linear</span></code> method.
+Regardless of which type of component you chose, OpenMDAO sees everything in the implicit form, and treats your model as system of nonlinear equations.</p>
+<p>Multiple components can be aggregated into a hierarchy with the <code class="code docutils literal notranslate"><span class="pre">Group</span></code> class.
+A Group is seen by OpenMDAO as a collection of all the implicit equations from all of its children components.
+Since both <code class="code docutils literal notranslate"><span class="pre">Component</span></code> and <code class="code docutils literal notranslate"><span class="pre">Group</span></code> represent systems of nonlinear equations,
+you call the <a class="reference internal" href="../features/core_features/grouping_components/add_subsystem.html#feature-adding-subsystem-to-a-group"><span class="std std-ref">add_system</span></a> method to construct a model hierarchy.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The underlying mathematics that power OpenMDAO are based on the <a class="reference external" href="http://mdolab.engin.umich.edu/sites/default/files/Hwang_dissertation.pdf">MAUD</a> architecture, which established the foundation
+for treating a multidisciplinary model as a single system of nonlinear equations as a means to efficiently computing
+analytic derivatives across it.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="setup_stack.html" title="The System Setup Stack: Understanding When to Use setup and configure"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="class_structure.html" title="OpenMDAO Class Structure"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

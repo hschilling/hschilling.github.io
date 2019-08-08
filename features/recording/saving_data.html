@@ -1,0 +1,772 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Case Recording &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Case Reader Object" href="case_reader.html" />
+    <link rel="prev" title="Recording Data" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="case_reader.html" title="Case Reader Object"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Recording Data"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Recording Data</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="case-recording">
+<span id="saving-data"></span><h1>Case Recording<a class="headerlink" href="#case-recording" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="driver-recording">
+<h2>Driver Recording<a class="headerlink" href="#driver-recording" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="../../_srcdocs/packages/recorders/case_recorder.html#openmdao.recorders.case_recorder.CaseRecorder" title="openmdao.recorders.case_recorder.CaseRecorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">CaseRecorder</span></code></a> is commonly attached to
+the problem’s <code class="xref py py-class docutils literal notranslate"><span class="pre">Driver</span></code> in order to gain insight into the convergence of the model as the driver
+finds a solution.  By default, a recorder attached to a driver will record the design variables,
+constraints and objectives.</p>
+<div class="section" id="driver-recording-options">
+<h3>Driver Recording Options<a class="headerlink" href="#driver-recording-options" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="5%" />
+<col width="13%" />
+<col width="13%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>excludes</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for vars to exclude in recording (processed post-includes)</td>
+</tr>
+<tr class="row-odd"><td>includes</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for variables to include in recording</td>
+</tr>
+<tr class="row-even"><td>record_constraints</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record constraints at the driver level</td>
+</tr>
+<tr class="row-odd"><td>record_derivatives</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record derivatives at the driver level</td>
+</tr>
+<tr class="row-even"><td>record_desvars</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record design variables at the driver level</td>
+</tr>
+<tr class="row-odd"><td>record_inputs</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record inputs at the driver level</td>
+</tr>
+<tr class="row-even"><td>record_model_metadata</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Record metadata for all Systems in the model</td>
+</tr>
+<tr class="row-odd"><td>record_objectives</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record objectives at the driver level</td>
+</tr>
+<tr class="row-even"><td>record_responses</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record responses at the driver level</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that the <code class="code docutils literal notranslate"><span class="pre">excludes</span></code> option takes precedence over the <code class="code docutils literal notranslate"><span class="pre">includes</span></code> option.</p>
+</div>
+</div>
+<div class="section" id="driver-recording-example">
+<h3>Driver Recording Example<a class="headerlink" href="#driver-recording-example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarDerivatives</span><span class="p">())</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+                          <span class="n">upper</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">driver</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">)</span>
+<span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_objectives&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+<span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Optimization terminated successfully.    (Exit mode 0)
+            Current function value: 3.1833939517234966
+            Iterations: 6
+            Function evaluations: 6
+            Gradient evaluations: 6
+Optimization Complete
+-----------------------------------</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="n">driver_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">)</span>
+
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">driver_cases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">objectives</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_objectives</span><span class="p">()</span>
+<span class="n">design_vars</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()</span>
+<span class="n">constraints</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">objectives</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[28.58830817]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">design_vars</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;x&#x27;: array([1.]), &#x27;z&#x27;: array([5., 2.])}</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;con2&#x27;: array([-11.94151185]), &#x27;con1&#x27;: array([-22.42830237])}</pre></div></div></div>
+</div>
+<div class="section" id="problem-recording">
+<h2>Problem Recording<a class="headerlink" href="#problem-recording" title="Permalink to this headline">¶</a></h2>
+<p>You might also want to attach a recorder to the problem itself. This allows you to record an
+arbitrary case at a point of your choosing.  This feature can be useful if you only record a
+limited number of variables during the run but would like to see a more complete list of values
+after the run.</p>
+<p>The options are a subset of those for driver recording.</p>
+<div class="section" id="problem-recording-options">
+<h3>Problem Recording Options<a class="headerlink" href="#problem-recording-options" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="6%" />
+<col width="14%" />
+<col width="13%" />
+<col width="54%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>excludes</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for vars to exclude in recording (processed post-includes)</td>
+</tr>
+<tr class="row-odd"><td>includes</td>
+<td>[‘*’]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for variables to include in recording</td>
+</tr>
+<tr class="row-even"><td>record_constraints</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record constraints at the problem level</td>
+</tr>
+<tr class="row-odd"><td>record_desvars</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record design variables at the problem level</td>
+</tr>
+<tr class="row-even"><td>record_objectives</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record objectives at the problem level</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that the <code class="code docutils literal notranslate"><span class="pre">excludes</span></code> option takes precedence over the <code class="code docutils literal notranslate"><span class="pre">includes</span></code> option.</p>
+</div>
+</div>
+<div class="section" id="problem-recording-example">
+<h3>Problem Recording Example<a class="headerlink" href="#problem-recording-example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarDerivatives</span><span class="p">())</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+                          <span class="n">upper</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">))</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_objectives&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations
+NL: NLBGS Converged in 0 iterations
+NL: NLBGS Converged in 8 iterations
+NL: NLBGS Converged in 9 iterations
+NL: NLBGS Converged in 9 iterations
+NL: NLBGS Converged in 8 iterations
+NL: NLBGS Converged in 5 iterations
+Optimization terminated successfully.    (Exit mode 0)
+            Current function value: 3.1833939517234966
+            Iterations: 6
+            Function evaluations: 6
+            Gradient evaluations: 6
+Optimization Complete
+-----------------------------------</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">(</span><span class="s1">&#39;final&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="c1"># get list of cases recorded on problem</span>
+<span class="n">problem_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;problem&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">problem_cases</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;final&#x27;]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get list of output variables recorded on problem</span>
+<span class="n">problem_vars</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_source_vars</span><span class="p">(</span><span class="s1">&#39;problem&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">problem_vars</span><span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;con1&#x27;, &#x27;con2&#x27;, &#x27;obj&#x27;, &#x27;x&#x27;, &#x27;z&#x27;]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get the recorded case and check values</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="s1">&#39;final&#39;</span><span class="p">)</span>
+
+<span class="n">objectives</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_objectives</span><span class="p">()</span>
+<span class="n">design_vars</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()</span>
+<span class="n">constraints</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">objectives</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[3.18339395]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">design_vars</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;x&#x27;: array([0.]), &#x27;z&#x27;: array([1.97763888e+00, 3.82375769e-15])}</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{&#x27;con2&#x27;: array([-20.24472223]), &#x27;con1&#x27;: array([-8.39701642e-11])}</pre></div></div></div>
+</div>
+<div class="section" id="system-and-solver-recording">
+<h2>System and Solver Recording<a class="headerlink" href="#system-and-solver-recording" title="Permalink to this headline">¶</a></h2>
+<p>If you need to focus on a smaller part of your model, it may be useful to attach a case recorder to
+a particular <code class="code docutils literal notranslate"><span class="pre">System</span></code> or <code class="code docutils literal notranslate"><span class="pre">Solver</span></code>. There are slightly different options when recording from these objects.</p>
+<div class="section" id="system-recording-options">
+<h3>System Recording Options<a class="headerlink" href="#system-recording-options" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="5%" />
+<col width="13%" />
+<col width="13%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>excludes</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for vars to exclude in recording (processed post-includes)</td>
+</tr>
+<tr class="row-odd"><td>includes</td>
+<td>[‘*’]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for variables to include in recording</td>
+</tr>
+<tr class="row-even"><td>options_excludes</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>User-defined metadata to exclude in recording</td>
+</tr>
+<tr class="row-odd"><td>record_inputs</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record inputs at the system level</td>
+</tr>
+<tr class="row-even"><td>record_metadata</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Record metadata for this system</td>
+</tr>
+<tr class="row-odd"><td>record_model_metadata</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Record metadata for all sub systems in the model</td>
+</tr>
+<tr class="row-even"><td>record_outputs</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record outputs at the system level</td>
+</tr>
+<tr class="row-odd"><td>record_residuals</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record residuals at the system level</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that the <code class="code docutils literal notranslate"><span class="pre">excludes</span></code> option takes precedence over the <code class="code docutils literal notranslate"><span class="pre">includes</span></code> option.</p>
+</div>
+</div>
+<div class="section" id="system-recording-example">
+<h3>System Recording Example<a class="headerlink" href="#system-recording-example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarDerivatives</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="n">obj_cmp</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">obj_cmp</span>
+<span class="n">obj_cmp</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">obj_cmp</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">]</span>
+<span class="n">obj_cmp</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;excludes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;obj_cmp.x&#39;</span><span class="p">]</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;use_apply_nonlinear&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="n">system_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;root.obj_cmp&#39;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">system_cases</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>7</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">system_cases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;y1&#x27;, &#x27;y2&#x27;, &#x27;z&#x27;]</pre></div></div></div>
+<div class="section" id="solver-recording-options">
+<h3>Solver Recording Options<a class="headerlink" href="#solver-recording-options" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="4%" />
+<col width="11%" />
+<col width="10%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable Values</th>
+<th class="head">Acceptable Types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>excludes</td>
+<td>[]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for vars to exclude in recording (processed post-includes)</td>
+</tr>
+<tr class="row-odd"><td>includes</td>
+<td>[‘*’]</td>
+<td>N/A</td>
+<td>[‘list’]</td>
+<td>Patterns for variables to include in recording</td>
+</tr>
+<tr class="row-even"><td>record_abs_error</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record absolute error at the                                        solver level</td>
+</tr>
+<tr class="row-odd"><td>record_inputs</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record inputs at the solver level</td>
+</tr>
+<tr class="row-even"><td>record_metadata</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Record metadata</td>
+</tr>
+<tr class="row-odd"><td>record_outputs</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record outputs at the solver level</td>
+</tr>
+<tr class="row-even"><td>record_rel_error</td>
+<td>True</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record relative error at the                                        solver level</td>
+</tr>
+<tr class="row-odd"><td>record_solver_residuals</td>
+<td>False</td>
+<td>[True, False]</td>
+<td>[‘bool’]</td>
+<td>Set to True to record residuals at the solver level</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that the <code class="code docutils literal notranslate"><span class="pre">excludes</span></code> option takes precedence over the <code class="code docutils literal notranslate"><span class="pre">includes</span></code> option.</p>
+</div>
+</div>
+<div class="section" id="solver-recording-example">
+<h3>Solver Recording Example<a class="headerlink" href="#solver-recording-example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarDerivatives</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_abs_error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;use_apply_nonlinear&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="n">solver_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;root.nonlinear_solver&#39;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solver_cases</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>7</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="n">solver_cases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">abs_err</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>2.2545141061171243</pre></div></div></div>
+</div>
+<div class="section" id="specifying-a-case-prefix">
+<h2>Specifying a Case Prefix<a class="headerlink" href="#specifying-a-case-prefix" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to record data from multiple executions by specifying a prefix that will be used to
+differentiate the cases.  This prefix can be specified when calling <code class="code docutils literal notranslate"><span class="pre">run_model</span></code> or
+<code class="code docutils literal notranslate"><span class="pre">run_driver</span></code> and will be prepended to the case ID in the recorded case data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">SellarDerivatives</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">,</span> <span class="n">record_viewer_data</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="n">case_prefix</span><span class="o">=</span><span class="s1">&#39;Model_Run1&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">(</span><span class="n">case_prefix</span><span class="o">=</span><span class="s1">&#39;Driver_Run1&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s1">&#39;Model_Run2&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">(</span><span class="s1">&#39;Driver_Run2&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="s2">&quot;cases.sql&quot;</span><span class="p">)</span>
+
+<span class="c1"># all cases recorded by the root system</span>
+<span class="n">model_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_cases</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Model_Run1_rank0:root._solve_nonlinear|0
+Driver_Run1_rank0:Driver|0|root._solve_nonlinear|0
+Model_Run2_rank0:root._solve_nonlinear|0
+Driver_Run2_rank0:Driver|0|root._solve_nonlinear|0</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># all cases recorded by the driver</span>
+<span class="n">driver_cases</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">list_cases</span><span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">driver_cases</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Driver_Run1_rank0:Driver|0
+Driver_Run2_rank0:Driver|0</pre></div></div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A recorder can be attached to more than one object. Also, more than one recorder can be
+attached to an object.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this example, we have disabled the saving of data needed by the standalone <span class="math notranslate nohighlight">\(N^2\)</span>
+visualizer and debugging tool by setting <code class="code docutils literal notranslate"><span class="pre">record_viewer_data</span></code> to <code class="code docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</div>
+</div>
+<div class="section" id="recording-options-precedence">
+<h2>Recording Options Precedence<a class="headerlink" href="#recording-options-precedence" title="Permalink to this headline">¶</a></h2>
+<p>The recording options that determine what gets recorded can sometime be a little confusing. Here is
+an example that might help. The code shows how the <code class="code docutils literal notranslate"><span class="pre">record_desvars</span></code> and <code class="code docutils literal notranslate"><span class="pre">includes</span></code> options interact.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid</span> <span class="kn">import</span> <span class="n">Paraboloid</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">Paraboloid</span><span class="p">(),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;con&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;c = x - y&#39;</span><span class="p">),</span> <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;f_xy&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">15.0</span><span class="p">)</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;cases.sql&quot;</span>
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;excludes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">set_solver_print</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="c1"># First case with record_desvars = True and includes = []</span>
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;c&#x27;, &#x27;f_xy&#x27;, &#x27;x&#x27;]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Second case with record_desvars = False and includes = []</span>
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;c&#x27;, &#x27;f_xy&#x27;]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Third case with record_desvars = True and includes = [&#39;*&#39;]</span>
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">]</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;c&#x27;, &#x27;f_xy&#x27;, &#x27;x&#x27;]</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fourth case with record_desvars = False and includes = [&#39;*&#39;]</span>
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">SqliteRecorder</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">]</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+<span class="n">cr</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">CaseReader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">get_case</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>[&#x27;c&#x27;, &#x27;f_xy&#x27;]</pre></div></div></div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="case_reader.html" title="Case Reader Object"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Recording Data"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Recording Data</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

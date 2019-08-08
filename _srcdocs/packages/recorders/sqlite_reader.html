@@ -1,0 +1,1273 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>sqlite_reader.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="sqlite_recorder.py" href="sqlite_recorder.html" />
+    <link rel="prev" title="recording_manager.py" href="recording_manager.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sqlite_recorder.html" title="sqlite_recorder.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="recording_manager.html" title="recording_manager.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" accesskey="U">openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.recorders.sqlite_reader">
+<span id="sqlite-reader-py"></span><span id="openmdao-recorders-sqlite-reader-py"></span><span id="index-0"></span><h1>sqlite_reader.py<a class="headerlink" href="#module-openmdao.recorders.sqlite_reader" title="Permalink to this headline">¶</a></h1>
+<p>Definition of the SqliteCaseReader.</p>
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_reader.</code><code class="descname">CaseTable</code><span class="sig-paren">(</span><em>fname</em>, <em>ver</em>, <em>table</em>, <em>index</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for wrapping case tables in a recording database.</p>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>fname</em>, <em>ver</em>, <em>table</em>, <em>index</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>fname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the recording file from which to instantiate the case reader.</p>
+</dd>
+<dt><strong>ver</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The version of the format assumed when loading the file.</p>
+</dd>
+<dt><strong>table</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the table in the database.</p>
+</dd>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the case index column in the table.</p>
+</dd>
+<dt><strong>giter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuple</span></dt>
+<dd><p class="first last">The global iterations table.</p>
+</dd>
+<dt><strong>abs2prom</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping absolute names to promoted names.</p>
+</dd>
+<dt><strong>abs2meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable metadata.</p>
+</dd>
+<dt><strong>prom2abs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping promoted names to absolute names.</p>
+</dd>
+<dt><strong>voi_meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable settings.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.cases">
+<code class="descname">cases</code><span class="sig-paren">(</span><em>cache=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all cases, optionally caching them into memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, cases will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.count">
+<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of cases recorded in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">The number of cases recorded in the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>cache=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.get_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a case from the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
+<dd><p class="first last">The string-identifier of the case to be retrieved or the index of the case.</p>
+</dd>
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, case will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Case</strong></dt>
+<dd><p class="first last">The specified case from the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=False</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.get_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case names for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">If not None, only cases that have the specified source will be returned</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases from the table that have the specified source.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.list_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case IDs for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">A source of cases or the iteration coordinate of a case.
+If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">The cases from the table from the specified source or parent case.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.CaseTable.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#CaseTable.list_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.CaseTable.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of sources that recorded data in this table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">List of sources.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_reader.</code><code class="descname">DriverCases</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#DriverCases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.recorders.sqlite_reader.CaseTable" title="openmdao.recorders.sqlite_reader.CaseTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.recorders.sqlite_reader.CaseTable</span></code></a></p>
+<p>Cases specific to the entries that might be recorded in a Driver iteration.</p>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#DriverCases.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the recording file from which to instantiate the case reader.</p>
+</dd>
+<dt><strong>format_version</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The version of the format assumed when loading the file.</p>
+</dd>
+<dt><strong>giter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuple</span></dt>
+<dd><p class="first last">The global iterations table.</p>
+</dd>
+<dt><strong>abs2prom</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping absolute names to promoted names.</p>
+</dd>
+<dt><strong>abs2meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable metadata.</p>
+</dd>
+<dt><strong>prom2abs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping promoted names to absolute names.</p>
+</dd>
+<dt><strong>voi_meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable settings.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.cases">
+<code class="descname">cases</code><span class="sig-paren">(</span><em>cache=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#DriverCases.cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all cases, optionally caching them into memory.</p>
+<p>Override base class to add derivatives from the derivatives table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, cases will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.count">
+<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of cases recorded in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">The number of cases recorded in the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>cache=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#DriverCases.get_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a case from the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or str</span></dt>
+<dd><p class="first last">The integer index or string-identifier of the case to be retrieved.</p>
+</dd>
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, cache the case so it does not have to be fetched on next access.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Case</strong></dt>
+<dd><p class="first last">The specified case from the driver_iterations and driver_derivatives tables.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=False</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case names for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">If not None, only cases that have the specified source will be returned</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases from the table that have the specified source.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case IDs for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">A source of cases or the iteration coordinate of a case.
+If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">The cases from the table from the specified source or parent case.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.DriverCases.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#DriverCases.list_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.DriverCases.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of sources that recorded data in this table (just the driver).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">List of sources.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_reader.</code><code class="descname">ProblemCases</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#ProblemCases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.recorders.sqlite_reader.CaseTable" title="openmdao.recorders.sqlite_reader.CaseTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.recorders.sqlite_reader.CaseTable</span></code></a></p>
+<p>Cases specific to the entries that might be recorded in a Driver iteration.</p>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#ProblemCases.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the recording file from which to instantiate the case reader.</p>
+</dd>
+<dt><strong>format_version</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The version of the format assumed when loading the file.</p>
+</dd>
+<dt><strong>giter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuple</span></dt>
+<dd><p class="first last">The global iterations table.</p>
+</dd>
+<dt><strong>abs2prom</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping absolute names to promoted names.</p>
+</dd>
+<dt><strong>abs2meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable metadata.</p>
+</dd>
+<dt><strong>prom2abs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping promoted names to absolute names.</p>
+</dd>
+<dt><strong>voi_meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable settings.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.cases">
+<code class="descname">cases</code><span class="sig-paren">(</span><em>cache=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all cases, optionally caching them into memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, cases will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.count">
+<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of cases recorded in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">The number of cases recorded in the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>cache=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a case from the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
+<dd><p class="first last">The string-identifier of the case to be retrieved or the index of the case.</p>
+</dd>
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, case will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Case</strong></dt>
+<dd><p class="first last">The specified case from the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=False</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case names for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">If not None, only cases that have the specified source will be returned</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases from the table that have the specified source.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case IDs for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">A source of cases or the iteration coordinate of a case.
+If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">The cases from the table from the specified source or parent case.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.ProblemCases.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#ProblemCases.list_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.ProblemCases.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of sources that recorded data in this table (just the problem).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">List of sources.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_reader.</code><code class="descname">SolverCases</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SolverCases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.recorders.sqlite_reader.CaseTable" title="openmdao.recorders.sqlite_reader.CaseTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.recorders.sqlite_reader.CaseTable</span></code></a></p>
+<p>Cases specific to the entries that might be recorded in a Solver iteration.</p>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SolverCases.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the recording file from which to instantiate the case reader.</p>
+</dd>
+<dt><strong>format_version</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The version of the format assumed when loading the file.</p>
+</dd>
+<dt><strong>giter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuple</span></dt>
+<dd><p class="first last">The global iterations table.</p>
+</dd>
+<dt><strong>abs2prom</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping absolute names to promoted names.</p>
+</dd>
+<dt><strong>abs2meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable metadata.</p>
+</dd>
+<dt><strong>prom2abs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping promoted names to absolute names.</p>
+</dd>
+<dt><strong>voi_meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable settings.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.cases">
+<code class="descname">cases</code><span class="sig-paren">(</span><em>cache=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all cases, optionally caching them into memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, cases will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.count">
+<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of cases recorded in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">The number of cases recorded in the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>cache=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a case from the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
+<dd><p class="first last">The string-identifier of the case to be retrieved or the index of the case.</p>
+</dd>
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, case will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Case</strong></dt>
+<dd><p class="first last">The specified case from the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=False</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case names for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">If not None, only cases that have the specified source will be returned</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases from the table that have the specified source.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case IDs for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">A source of cases or the iteration coordinate of a case.
+If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">The cases from the table from the specified source or parent case.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SolverCases.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SolverCases.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of sources that recorded data in this table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">List of sources.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_reader.</code><code class="descname">SqliteCaseReader</code><span class="sig-paren">(</span><em>filename</em>, <em>pre_load=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="base_case_reader.html#openmdao.recorders.base_case_reader.BaseCaseReader" title="openmdao.recorders.base_case_reader.BaseCaseReader"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.recorders.base_case_reader.BaseCaseReader</span></code></a></p>
+<p>A CaseReader specific to files created with SqliteRecorder.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>problem_metadata</strong></td>
+<td>(dict) Metadata about the problem, including the system hierachy and connections.</td>
+</tr>
+<tr class="row-even"><td><strong>solver_metadata</strong></td>
+<td>(dict) The solver options for each solver in the recorded model.</td>
+</tr>
+<tr class="row-odd"><td><strong>system_metadata</strong></td>
+<td>(dict) Metadata about each system in the recorded model, including options and scaling factors.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>pre_load=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The path to the filename containing the recorded data.</p>
+</dd>
+<dt><strong>pre_load</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, load all the data into memory during initialization.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>recurse=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader.get_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get case identified by case_id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
+<dd><p class="first last">The unique identifier of the case to return or an index into all cases.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will return all successors to the case as well.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">The case identified by case_id</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=True</em>, <em>flat=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader.get_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over the cases.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘problem’, ‘driver’, component pathname, solver pathname, case_name}</span></dt>
+<dd><p class="first last">Identifies which cases to return.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases identified by source</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=True</em>, <em>flat=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader.list_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over Driver, Solver and System cases in order.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘problem’, ‘driver’, component pathname, solver pathname, case_name}</span></dt>
+<dd><p class="first last">If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy.</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iterator or dict</strong></dt>
+<dd><p class="first last">An iterator or a nested dictionary of identified cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader.list_source_vars">
+<code class="descname">list_source_vars</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader.list_source_vars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader.list_source_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all inputs and outputs recorded by the specified source.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘problem’, ‘driver’, <cite>&lt;component hierarchy location&gt;</cite>,</span></dt>
+<dd><p class="first last"><cite>&lt;solver hierarchy location&gt;</cite>}
+Identifies the source for which to return information.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">{‘inputs’:[list of keys], ‘outputs’:[list of keys]}. Does not recurse.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SqliteCaseReader.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SqliteCaseReader.list_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SqliteCaseReader.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all the different recording sources for which there is recorded data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">One or more of: <cite>problem</cite>, <cite>driver</cite>, <cite>&lt;component hierarchy location&gt;</cite>,
+<cite>&lt;solver hierarchy location&gt;</cite></p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases">
+<em class="property">class </em><code class="descclassname">openmdao.recorders.sqlite_reader.</code><code class="descname">SystemCases</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SystemCases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openmdao.recorders.sqlite_reader.CaseTable" title="openmdao.recorders.sqlite_reader.CaseTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.recorders.sqlite_reader.CaseTable</span></code></a></p>
+<p>Cases specific to the entries that might be recorded in a System iteration.</p>
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>format_version</em>, <em>giter</em>, <em>prom2abs</em>, <em>abs2prom</em>, <em>abs2meta</em>, <em>voi_meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/recorders/sqlite_reader.html#SystemCases.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The name of the recording file from which to instantiate the case reader.</p>
+</dd>
+<dt><strong>format_version</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The version of the format assumed when loading the file.</p>
+</dd>
+<dt><strong>giter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuple</span></dt>
+<dd><p class="first last">The global iterations table.</p>
+</dd>
+<dt><strong>abs2prom</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping absolute names to promoted names.</p>
+</dd>
+<dt><strong>abs2meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable metadata.</p>
+</dd>
+<dt><strong>prom2abs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘input’: dict, ‘output’: dict}</span></dt>
+<dd><p class="first last">Dictionary mapping promoted names to absolute names.</p>
+</dd>
+<dt><strong>voi_meta</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Dictionary mapping absolute variable names to variable settings.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.cases">
+<code class="descname">cases</code><span class="sig-paren">(</span><em>cache=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all cases, optionally caching them into memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, cases will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.count">
+<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of cases recorded in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">The number of cases recorded in the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.get_case">
+<code class="descname">get_case</code><span class="sig-paren">(</span><em>case_id</em>, <em>cache=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.get_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a case from the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>case_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
+<dd><p class="first last">The string-identifier of the case to be retrieved or the index of the case.</p>
+</dd>
+<dt><strong>cache</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, case will be cached for faster access by key.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Case</strong></dt>
+<dd><p class="first last">The specified case from the table.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.get_cases">
+<code class="descname">get_cases</code><span class="sig-paren">(</span><em>source=None</em>, <em>recurse=False</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.get_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case names for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">If not None, only cases that have the specified source will be returned</p>
+</dd>
+<dt><strong>recurse</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If True, will enable iterating over all successors in case hierarchy</p>
+</dd>
+<dt><strong>flat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If False and there are child cases, then a nested ordered dictionary
+is returned rather than an iterator.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list or dict</strong></dt>
+<dd><p class="first last">The cases from the table that have the specified source.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.list_cases">
+<code class="descname">list_cases</code><span class="sig-paren">(</span><em>source=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.list_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of case IDs for cases in the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">A source of cases or the iteration coordinate of a case.
+If not None, only cases originating from the specified source or case are returned.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">The cases from the table from the specified source or parent case.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.recorders.sqlite_reader.SystemCases.list_sources">
+<code class="descname">list_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.recorders.sqlite_reader.SystemCases.list_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of sources that recorded data in this table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first last">List of sources.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sqlite_recorder.html" title="sqlite_recorder.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="recording_manager.html" title="recording_manager.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.recorders.html" >openmdao.recorders</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+.. _BalanceComp: 
+
+=========================
+BalanceComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/balance_comp.rst

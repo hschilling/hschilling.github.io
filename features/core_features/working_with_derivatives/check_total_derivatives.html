@@ -1,0 +1,773 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Checking Total Derivatives &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="In-Memory Assembly of Jacobians" href="assembled_jacobian.html" />
+    <link rel="prev" title="Computing Total Derivatives" href="compute_totals.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="assembled_jacobian.html" title="In-Memory Assembly of Jacobians"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="compute_totals.html" title="Computing Total Derivatives"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="checking-total-derivatives">
+<span id="check-total-derivatives"></span><h1>Checking Total Derivatives<a class="headerlink" href="#checking-total-derivatives" title="Permalink to this headline">¶</a></h1>
+<p>If you want to check the analytic derivatives of your model (or just part of it) against finite difference or complex-step approximations, you can use <code class="code docutils literal notranslate"><span class="pre">check_totals()</span></code>. You should always converge your model
+before calling this method. By default, this method checks the derivatives of all of the driver responses (objectives, constraints) with respect to the des_vars, though you can also specify the
+variables you want to check. Derivatives are computed
+and compared in an unscaled form by default, but you can optionally request for them to be computed in scaled form using the <cite>ref</cite> and <cite>ref0</cite> that were declared when adding the
+constraints, objectives, and des_vars.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You should probably <strong>not</strong> use this method until you’ve used <code class="code docutils literal notranslate"><span class="pre">check_partials()</span></code> to verify the
+partials for each component in your model. <code class="code docutils literal notranslate"><span class="pre">check_totals()</span></code> is a blunt instrument, since it can only tell you that there is a problem, but will not give you much insight into which component or group is causing the problem.</p>
+</div>
+<dl class="method">
+<dt>
+<code class="descclassname">Problem.</code><code class="descname">check_totals</code><span class="sig-paren">(</span><em>of=None</em>, <em>wrt=None</em>, <em>out_stream=&lt;object object&gt;</em>, <em>compact_print=False</em>, <em>driver_scaling=False</em>, <em>abs_err_tol=1e-06</em>, <em>rel_err_tol=1e-06</em>, <em>method='fd'</em>, <em>step=None</em>, <em>form=None</em>, <em>step_calc='abs'</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/core/problem.html#Problem.check_totals"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Check total derivatives for the model vs. finite difference.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>of</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of variable name strings or None</span></dt>
+<dd><p class="first last">Variables whose derivatives will be computed. Default is None, which
+uses the driver’s objectives and constraints.</p>
+</dd>
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of variable name strings or None</span></dt>
+<dd><p class="first last">Variables with respect to which the derivatives will be computed.
+Default is None, which uses the driver’s desvars.</p>
+</dd>
+<dt><strong>out_stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like object</span></dt>
+<dd><p class="first last">Where to send human readable output. By default it goes to stdout.
+Set to None to suppress.</p>
+</dd>
+<dt><strong>compact_print</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True to just print the essentials, one line per unknown-param pair.</p>
+</dd>
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return derivatives that are scaled according to either the adder and scaler
+or the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is False, which is unscaled.</p>
+</dd>
+<dt><strong>abs_err_tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Threshold value for absolute error.  Errors about this value will have a ‘*’ displayed
+next to them in output, making them easy to search for. Default is 1.0E-6.</p>
+</dd>
+<dt><strong>rel_err_tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Threshold value for relative error.  Errors about this value will have a ‘*’ displayed
+next to them in output, making them easy to search for. Note at times there may be a
+significant relative error due to a minor absolute error.  Default is 1.0E-6.</p>
+</dd>
+<dt><strong>method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Method, ‘fd’ for finite difference or ‘cs’ for complex step. Default is ‘fd’</p>
+</dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Step size for approximation. Default is None, which means 1e-6 for ‘fd’ and 1e-40 for
+‘cs’.</p>
+</dd>
+<dt><strong>form</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Form for finite difference, can be ‘forward’, ‘backward’, or ‘central’. Default
+None, which defaults to ‘forward’ for FD.</p>
+</dd>
+<dt><strong>step_calc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Step type for finite difference, can be ‘abs’ for absolute’, or ‘rel’ for relative.
+Default is ‘abs’.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Dict of Dicts of Tuples of Floats</strong></dt>
+<dd><dl class="first last docutils">
+<dt>First key:</dt>
+<dd><p class="first last">is the (output, input) tuple of strings;</p>
+</dd>
+<dt>Second key:</dt>
+<dd><p class="first last">is one of [‘rel error’, ‘abs error’, ‘magnitude’, ‘fdstep’];</p>
+</dd>
+<dt>For ‘rel error’, ‘abs error’, ‘magnitude’ the value is: A tuple containing norms for</dt>
+<dd><p class="first last">forward - fd, adjoint - fd, forward - adjoint.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>Please check out the <a class="reference internal" href="approximating_totals.html#cs-guidelines"><span class="std std-ref">Complex Step Guidelines</span></a> for more information on how to use it on a model.</p>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>You can check specific combinations of variables by specifying them manually:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarDerivatives</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># manually specify which derivatives to check</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">,</span> <span class="s1">&#39;con1&#39;</span><span class="p">],</span> <span class="n">wrt</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 3 iterations
+NL: NLBGS Converged in 4 iterations
+NL: NLBGS Converged in 4 iterations
+-------------------------------------
+Group: SellarDerivatives &#x27;Full Model&#x27;
+-------------------------------------
+  Full Model: &#x27;con1&#x27; wrt &#x27;x&#x27;
+    Forward Magnitude : 9.806145e-01
+         Fd Magnitude : 9.806169e-01 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 2.407248e-06 *
+
+    Relative Error (Jfor  - Jfd) : 2.454831e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[-0.98061448]]
+
+    Raw FD Derivative (Jfd)
+[[-0.98061688]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con1&#x27; wrt &#x27;z&#x27;
+    Forward Magnitude : 9.641989e+00
+         Fd Magnitude : 9.641993e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 4.447254e-06 *
+
+    Relative Error (Jfor  - Jfd) : 4.612380e-07
+
+    Raw Forward Derivative (Jfor)
+[[-9.61002186 -0.78449158]]
+
+    Raw FD Derivative (Jfd)
+[[-9.61002547 -0.78449417]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj&#x27; wrt &#x27;x&#x27;
+    Forward Magnitude : 2.980614e+00
+         Fd Magnitude : 2.980617e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 3.404818e-06 *
+
+    Relative Error (Jfor  - Jfd) : 1.142320e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[2.98061391]]
+
+    Raw FD Derivative (Jfd)
+[[2.98061732]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj&#x27; wrt &#x27;z&#x27;
+    Forward Magnitude : 9.774287e+00
+         Fd Magnitude : 9.774291e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 4.448707e-06 *
+
+    Relative Error (Jfor  - Jfd) : 4.551437e-07
+
+    Raw Forward Derivative (Jfor)
+[[9.61001056 1.78448534]]
+
+    Raw FD Derivative (Jfd)
+[[9.61001417 1.78448793]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</pre></div></div><hr class="docutils" />
+<p>Check all the derivatives that the driver will need:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarDerivatives</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># We don&#39;t call run_driver() here because we don&#39;t</span>
+<span class="c1"># actually want the optimizer to run</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># check derivatives of all obj+constraints w.r.t all design variables</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 3 iterations
+NL: NLBGS Converged in 4 iterations
+NL: NLBGS Converged in 4 iterations
+-------------------------------------
+Group: SellarDerivatives &#x27;Full Model&#x27;
+-------------------------------------
+  Full Model: &#x27;con_cmp1.con1&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 9.806145e-01
+         Fd Magnitude : 9.806169e-01 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 2.407248e-06 *
+
+    Relative Error (Jfor  - Jfd) : 2.454831e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[-0.98061448]]
+
+    Raw FD Derivative (Jfd)
+[[-0.98061688]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp1.con1&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 9.641989e+00
+         Fd Magnitude : 9.641993e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 4.447254e-06 *
+
+    Relative Error (Jfor  - Jfd) : 4.612380e-07
+
+    Raw Forward Derivative (Jfor)
+[[-9.61002186 -0.78449158]]
+
+    Raw FD Derivative (Jfd)
+[[-9.61002547 -0.78449417]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp2.con2&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 9.692762e-02
+         Fd Magnitude : 9.692786e-02 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 2.385894e-07
+
+    Relative Error (Jfor  - Jfd) : 2.461515e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[0.09692762]]
+
+    Raw FD Derivative (Jfd)
+[[0.09692786]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp2.con2&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 2.227817e+00
+         Fd Magnitude : 2.227818e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 3.738610e-07
+
+    Relative Error (Jfor  - Jfd) : 1.678149e-07
+
+    Raw Forward Derivative (Jfor)
+[[1.94989072 1.0775421 ]]
+
+    Raw FD Derivative (Jfd)
+[[1.94989099 1.07754236]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj_cmp.obj&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 2.980614e+00
+         Fd Magnitude : 2.980617e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 3.404818e-06 *
+
+    Relative Error (Jfor  - Jfd) : 1.142320e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[2.98061391]]
+
+    Raw FD Derivative (Jfd)
+[[2.98061732]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj_cmp.obj&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 9.774287e+00
+         Fd Magnitude : 9.774291e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 4.448707e-06 *
+
+    Relative Error (Jfor  - Jfd) : 4.551437e-07
+
+    Raw Forward Derivative (Jfor)
+[[9.61001056 1.78448534]]
+
+    Raw FD Derivative (Jfd)
+[[9.61001417 1.78448793]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</pre></div></div><hr class="docutils" />
+<p>Use the driver scaled values during the check:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarDerivatives</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">ref0</span><span class="o">=-</span><span class="mf">100.0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">20.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># We don&#39;t call run_driver() here because we don&#39;t</span>
+<span class="c1"># actually want the optimizer to run</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># check derivatives of all driver vars using the declared scaling</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 3 iterations
+NL: NLBGS Converged in 4 iterations
+NL: NLBGS Converged in 4 iterations
+-------------------------------------
+Group: SellarDerivatives &#x27;Full Model&#x27;
+-------------------------------------
+  Full Model: &#x27;con_cmp1.con1&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 6.537430e+01
+         Fd Magnitude : 6.537446e+01 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 1.604832e-04 *
+
+    Relative Error (Jfor  - Jfd) : 2.454831e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[-65.37429835]]
+
+    Raw FD Derivative (Jfd)
+[[-65.37445883]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp1.con1&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 3.213996e+00
+         Fd Magnitude : 3.213998e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 1.482418e-06 *
+
+    Relative Error (Jfor  - Jfd) : 4.612380e-07
+
+    Raw Forward Derivative (Jfor)
+[[-3.20334062 -0.26149719]]
+
+    Raw FD Derivative (Jfd)
+[[-3.20334182 -0.26149806]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp2.con2&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 9.692762e-01
+         Fd Magnitude : 9.692786e-01 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 2.385894e-06 *
+
+    Relative Error (Jfor  - Jfd) : 2.461515e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[0.96927624]]
+
+    Raw FD Derivative (Jfd)
+[[0.96927863]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp2.con2&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 1.113909e-01
+         Fd Magnitude : 1.113909e-01 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 1.869305e-08
+
+    Relative Error (Jfor  - Jfd) : 1.678149e-07
+
+    Raw Forward Derivative (Jfor)
+[[0.09749454 0.0538771 ]]
+
+    Raw FD Derivative (Jfd)
+[[0.09749455 0.05387712]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj_cmp.obj&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 5.961228e+02
+         Fd Magnitude : 5.961235e+02 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 6.809636e-04 *
+
+    Relative Error (Jfor  - Jfd) : 1.142320e-06 *
+
+    Raw Forward Derivative (Jfor)
+[[596.1227827]]
+
+    Raw FD Derivative (Jfd)
+[[596.12346366]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj_cmp.obj&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 9.774287e+00
+         Fd Magnitude : 9.774291e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 4.448707e-06 *
+
+    Relative Error (Jfor  - Jfd) : 4.551437e-07
+
+    Raw Forward Derivative (Jfor)
+[[9.61001056 1.78448534]]
+
+    Raw FD Derivative (Jfd)
+[[9.61001417 1.78448793]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</pre></div></div><hr class="docutils" />
+<p>Display the results in a compact format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarDerivatives</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># We don&#39;t call run_driver() here because we don&#39;t</span>
+<span class="c1"># actually want the optimizer to run</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># check derivatives of all obj+constraints w.r.t all design variables</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">(</span><span class="n">compact_print</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 3 iterations
+NL: NLBGS Converged in 4 iterations
+NL: NLBGS Converged in 4 iterations
+&#x27;con_cmp1.con1&#x27;                wrt &#x27;px.x&#x27;                         | 9.8061e-01 | 9.8062e-01 | 2.4072e-06 | 2.4548e-06
+&#x27;con_cmp1.con1&#x27;                wrt &#x27;pz.z&#x27;                         | 9.6420e+00 | 9.6420e+00 | 4.4473e-06 | 4.6124e-07
+&#x27;con_cmp2.con2&#x27;                wrt &#x27;px.x&#x27;                         | 9.6928e-02 | 9.6928e-02 | 2.3859e-07 | 2.4615e-06
+&#x27;con_cmp2.con2&#x27;                wrt &#x27;pz.z&#x27;                         | 2.2278e+00 | 2.2278e+00 | 3.7386e-07 | 1.6781e-07
+&#x27;obj_cmp.obj&#x27;                  wrt &#x27;px.x&#x27;                         | 2.9806e+00 | 2.9806e+00 | 3.4048e-06 | 1.1423e-06
+&#x27;obj_cmp.obj&#x27;                  wrt &#x27;pz.z&#x27;                         | 9.7743e+00 | 9.7743e+00 | 4.4487e-06 | 4.5514e-07
+-------------------------------------
+Group: SellarDerivatives &#x27;Full Model&#x27;
+-------------------------------------
+&#x27;&lt;output&gt;&#x27;                     wrt &#x27;&lt;variable&gt;&#x27;                   | calc mag.  | check mag. | a(cal-chk) | r(cal-chk)
+---------------------------------------------------------------------------------------------------------------------</pre></div></div><hr class="docutils" />
+<p>Use complex step instead of finite difference for a more accurate check. We also tighten the tolerance
+on the nonlinear Gauss-Seidel solver so that we get more accuracate converged values.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarDerivatives</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">force_alloc_complex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># We don&#39;t call run_driver() here because we don&#39;t</span>
+<span class="c1"># actually want the optimizer to run</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;atol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-15</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-15</span>
+
+<span class="c1"># check derivatives with complex step</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;cs&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 6 iterations
+NL: NLBGS Converged in 5 iterations
+NL: NLBGS Converged in 6 iterations
+-------------------------------------
+Group: SellarDerivatives &#x27;Full Model&#x27;
+-------------------------------------
+  Full Model: &#x27;con_cmp1.con1&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 9.806145e-01
+         Fd Magnitude : 9.806145e-01 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 2.139144e-11
+
+    Relative Error (Jfor  - Jfd) : 2.181433e-11
+
+    Raw Forward Derivative (Jfor)
+[[-0.98061448]]
+
+    Raw FD Derivative (Jfd)
+[[-0.98061448]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp1.con1&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 9.641989e+00
+         Fd Magnitude : 9.641989e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 1.806088e-08
+
+    Relative Error (Jfor  - Jfd) : 1.873149e-09
+
+    Raw Forward Derivative (Jfor)
+[[-9.61002186 -0.78449158]]
+
+    Raw FD Derivative (Jfd)
+[[-9.61002187 -0.78449158]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp2.con2&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 9.692762e-02
+         Fd Magnitude : 9.692762e-02 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 1.010578e-10
+
+    Relative Error (Jfor  - Jfd) : 1.042611e-09
+
+    Raw Forward Derivative (Jfor)
+[[0.09692762]]
+
+    Raw FD Derivative (Jfd)
+[[0.09692762]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;con_cmp2.con2&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 2.227817e+00
+         Fd Magnitude : 2.227817e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 3.399854e-10
+
+    Relative Error (Jfor  - Jfd) : 1.526092e-10
+
+    Raw Forward Derivative (Jfor)
+[[1.94989072 1.0775421 ]]
+
+    Raw FD Derivative (Jfd)
+[[1.94989072 1.0775421 ]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj_cmp.obj&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 2.980614e+00
+         Fd Magnitude : 2.980614e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 9.598640e-09
+
+    Relative Error (Jfor  - Jfd) : 3.220357e-09
+
+    Raw Forward Derivative (Jfor)
+[[2.98061391]]
+
+    Raw FD Derivative (Jfd)
+[[2.98061392]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Full Model: &#x27;obj_cmp.obj&#x27; wrt &#x27;pz.z&#x27;
+    Forward Magnitude : 9.774287e+00
+         Fd Magnitude : 9.774287e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 1.806122e-08
+
+    Relative Error (Jfor  - Jfd) : 1.847830e-09
+
+    Raw Forward Derivative (Jfor)
+[[9.61001056 1.78448534]]
+
+    Raw FD Derivative (Jfd)
+[[9.61001058 1.78448534]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</pre></div></div><p>Note that you need to set the argument “force_alloc_complex” to True when you call setup. This
+makes sure that the vectors allocate space to pass complex numbers. All systems also have an
+attribute “force_alloc_complex” that can be queried during <cite>setup</cite> in case you need to set up your
+<cite>Component</cite> or <cite>Group</cite> differently to accomodate complex step.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="k">class</span> <span class="nc">SimpleComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_alloc_complex</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Vectors allocated for complex step.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;px&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="n">SimpleComp</span><span class="p">())</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="s1">&#39;comp.x&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;px.x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;comp.y&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">force_alloc_complex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;cs&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Vectors allocated for complex step.
+-------------------------
+Group: Group &#x27;Full Model&#x27;
+-------------------------
+  Full Model: &#x27;comp.y&#x27; wrt &#x27;px.x&#x27;
+    Forward Magnitude : 3.000000e+00
+         Fd Magnitude : 3.000000e+00 (fd:None)
+    Absolute Error (Jfor  - Jfd) : 0.000000e+00
+
+    Relative Error (Jfor  - Jfd) : 0.000000e+00
+
+    Raw Forward Derivative (Jfor)
+[[3.]]
+
+    Raw FD Derivative (Jfd)
+[[3.]]
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+</pre></div></div><hr class="docutils" />
+<p>Turn off standard output and just view the derivatives in the return:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.sellar</span> <span class="kn">import</span> <span class="n">SellarDerivatives</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">SellarDerivatives</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">nonlinear_solver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">NonlinearBlockGS</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con1&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;con2&#39;</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="c1"># We don&#39;t call run_driver() here because we don&#39;t</span>
+<span class="c1"># actually want the optimizer to run</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 7 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># check derivatives of all obj+constraints w.r.t all design variables</span>
+<span class="n">totals</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">check_totals</span><span class="p">(</span><span class="n">out_stream</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>NL: NLBGS Converged in 3 iterations
+NL: NLBGS Converged in 4 iterations
+NL: NLBGS Converged in 4 iterations</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">totals</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>{(&#x27;obj_cmp.obj&#x27;, &#x27;px.x&#x27;): {&#x27;J_fwd&#x27;: array([[2.98061391]]), &#x27;J_fd&#x27;: array([[2.98061732]]), &#x27;abs error&#x27;: ErrorTuple(forward=3.4048181056789417e-06, reverse=None, forward_reverse=None), &#x27;magnitude&#x27;: MagnitudeTuple(forward=2.9806139134842873, reverse=None, fd=2.980617318302393), &#x27;rel error&#x27;: ErrorTuple(forward=1.1423197754276459e-06, reverse=nan, forward_reverse=nan)}, (&#x27;obj_cmp.obj&#x27;, &#x27;pz.z&#x27;): {&#x27;J_fwd&#x27;: array([[9.61001056, 1.78448534]]), &#x27;J_fd&#x27;: array([[9.61001417, 1.78448793]]), &#x27;abs error&#x27;: ErrorTuple(forward=4.448706700918802e-06, reverse=None, forward_reverse=None), &#x27;magnitude&#x27;: MagnitudeTuple(forward=9.774287228158457, reverse=None, fd=9.77429125733397), &#x27;rel error&#x27;: ErrorTuple(forward=4.5514366042456444e-07, reverse=nan, forward_reverse=nan)}, (&#x27;con_cmp1.con1&#x27;, &#x27;px.x&#x27;): {&#x27;J_fwd&#x27;: array([[-0.98061448]]), &#x27;J_fd&#x27;: array([[-0.98061688]]), &#x27;abs error&#x27;: ErrorTuple(forward=2.4072484330339705e-06, reverse=None, forward_reverse=None), &#x27;magnitude&#x27;: MagnitudeTuple(forward=0.980614475194995, reverse=None, fd=0.980616882443428), &#x27;rel error&#x27;: ErrorTuple(forward=2.4548307051738375e-06, reverse=nan, forward_reverse=nan)}, (&#x27;con_cmp1.con1&#x27;, &#x27;pz.z&#x27;): {&#x27;J_fwd&#x27;: array([[-9.61002186, -0.78449158]]), &#x27;J_fd&#x27;: array([[-9.61002547, -0.78449417]]), &#x27;abs error&#x27;: ErrorTuple(forward=4.4472535743135455e-06, reverse=None, forward_reverse=None), &#x27;magnitude&#x27;: MagnitudeTuple(forward=9.641988753864103, reverse=None, fd=9.641992568542056), &#x27;rel error&#x27;: ErrorTuple(forward=4.6123802136325483e-07, reverse=nan, forward_reverse=nan)}, (&#x27;con_cmp2.con2&#x27;, &#x27;px.x&#x27;): {&#x27;J_fwd&#x27;: array([[0.09692762]]), &#x27;J_fd&#x27;: array([[0.09692786]]), &#x27;abs error&#x27;: ErrorTuple(forward=2.3858936838705436e-07, reverse=None, forward_reverse=None), &#x27;magnitude&#x27;: MagnitudeTuple(forward=0.09692762402502485, reverse=None, fd=0.09692786261439323), &#x27;rel error&#x27;: ErrorTuple(forward=2.4615148003028926e-06, reverse=nan, forward_reverse=nan)}, (&#x27;con_cmp2.con2&#x27;, &#x27;pz.z&#x27;): {&#x27;J_fwd&#x27;: array([[1.94989072, 1.0775421 ]]), &#x27;J_fd&#x27;: array([[1.94989099, 1.07754236]]), &#x27;abs error&#x27;: ErrorTuple(forward=3.7386098692867233e-07, reverse=None, forward_reverse=None), &#x27;magnitude&#x27;: MagnitudeTuple(forward=2.2278174920246605, reverse=None, fd=2.2278178536542534), &#x27;rel error&#x27;: ErrorTuple(forward=1.678148805188154e-07, reverse=nan, forward_reverse=nan)}}</pre></div></div><div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/Derivatives.html#derivatives"><span class="std std-ref">Derivatives</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="assembled_jacobian.html" title="In-Memory Assembly of Jacobians"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="compute_totals.html" title="Computing Total Derivatives"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Derivatives</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

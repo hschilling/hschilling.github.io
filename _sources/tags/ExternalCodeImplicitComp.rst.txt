@@ -1,0 +1,7 @@
+.. _ExternalCodeImplicitComp: 
+
+=========================
+ExternalCodeImplicitComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/external_code_implicit_comp.rst

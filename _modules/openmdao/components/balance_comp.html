@@ -1,0 +1,454 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.components.balance_comp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.components.balance_comp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the BalanceComp class.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">FunctionType</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.implicitcomponent</span> <span class="k">import</span> <span class="n">ImplicitComponent</span>
+
+
+<div class="viewcode-block" id="BalanceComp"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp">[docs]</a><span class="k">class</span> <span class="nc">BalanceComp</span><span class="p">(</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple equation balance for solving implicit equations.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _state_vars : dict</span>
+<span class="sd">        Cache the data provided during `add_balance`</span>
+<span class="sd">        so everything can be saved until setup is called.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BalanceComp.initialize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;guess_func&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="n">FunctionType</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;A callable function in the form f(inputs, outputs, residuals) &#39;</span>
+                                  <span class="s1">&#39;that can provide an initial &quot;guess&quot; value of the state &#39;</span>
+                                  <span class="s1">&#39;variable(s) based on the inputs, outputs and residuals.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BalanceComp.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eq_units</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lhs_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rhs_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rhs_val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">use_mult</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mult_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mult_val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a BalanceComp, optionally creating a new implicit state variable.</span>
+
+<span class="sd">        The BalanceComp allows for the creation of one or more implicit state variables,</span>
+<span class="sd">        and computes the residuals for those variables based on the following equation.</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \mathcal{R}_{name} =</span>
+<span class="sd">            \frac{f_{mult}(x,...) \times f_{lhs}(x,...) - f_{rhs}(x,...)}{f_{norm}(f_{rhs}(x,...))}</span>
+
+
+<span class="sd">        Where :math:`f_{lhs}` represents the left-hand-side of the equation,</span>
+<span class="sd">        :math:`f_{rhs}` represents the right-hand-side, and :math:`f_{mult}`</span>
+<span class="sd">        is an optional multiplier on the left hand side.  At least one of these</span>
+<span class="sd">        quantities should be a function of the associated state variable.  If</span>
+<span class="sd">        use_mult is True the default value of the multiplier is 1. The optional normalization</span>
+<span class="sd">        function :math:`f_{norm}(f_{rhs}(x,...))` is computed as:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">          f_{norm}(f_{rhs}(x,...)) =</span>
+<span class="sd">          \begin{cases}</span>
+<span class="sd">           \left| f_{rhs} \right|, &amp; \text{if normalize and } \left| f_{rhs} \right| \geq 2 \\</span>
+<span class="sd">           0.25 f_{rhs}^2 + 1,     &amp; \text{if normalize and } \left| f_{rhs} \right| &lt; 2 \\</span>
+<span class="sd">           1,                      &amp; \text{if not normalize}</span>
+<span class="sd">          \end{cases}</span>
+
+<span class="sd">        New state variables, and their associated residuals are created by</span>
+<span class="sd">        calling `add_balance`.  As an example, solving the equation</span>
+<span class="sd">        :math:`x**2 = 2` implicitly can be be accomplished as follows:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            prob = Problem()</span>
+<span class="sd">            bal = BalanceComp()</span>
+<span class="sd">            bal.add_balance(&#39;x&#39;, val=1.0)</span>
+<span class="sd">            tgt = IndepVarComp(name=&#39;y_tgt&#39;, val=2)</span>
+<span class="sd">            exec_comp = ExecComp(&#39;y=x**2&#39;)</span>
+<span class="sd">            prob.model.add_subsystem(name=&#39;target&#39;, subsys=tgt, promotes_outputs=[&#39;y_tgt&#39;])</span>
+<span class="sd">            prob.model.add_subsystem(name=&#39;exec&#39;, subsys=exec_comp)</span>
+<span class="sd">            prob.model.add_subsystem(name=&#39;balance&#39;, subsys=bal)</span>
+<span class="sd">            prob.model.connect(&#39;y_tgt&#39;, &#39;balance.rhs:x&#39;)</span>
+<span class="sd">            prob.model.connect(&#39;balance.x&#39;, &#39;exec.x&#39;)</span>
+<span class="sd">            prob.model.connect(&#39;exec.y&#39;, &#39;balance.lhs:x&#39;)</span>
+<span class="sd">            prob.model.linear_solver = DirectSolver()</span>
+<span class="sd">            prob.model.nonlinear_solver = NewtonSolver()</span>
+<span class="sd">            prob.setup()</span>
+<span class="sd">            prob.run_model()</span>
+
+<span class="sd">        The arguments to add_balance can be provided on initialization to provide a balance</span>
+<span class="sd">        with a one state/residual without the need to call `add_balance`:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            prob = Problem()</span>
+<span class="sd">            bal = BalanceComp(&#39;x&#39;, val=1.0)</span>
+<span class="sd">            tgt = IndepVarComp(name=&#39;y_tgt&#39;, val=2)</span>
+<span class="sd">            exec_comp = ExecComp(&#39;y=x**2&#39;)</span>
+<span class="sd">            prob.model.add_subsystem(name=&#39;target&#39;, subsys=tgt, promotes_outputs=[&#39;y_tgt&#39;])</span>
+<span class="sd">            prob.model.add_subsystem(name=&#39;exec&#39;, subsys=exec_comp)</span>
+<span class="sd">            prob.model.add_subsystem(name=&#39;balance&#39;, subsys=bal)</span>
+<span class="sd">            prob.model.connect(&#39;y_tgt&#39;, &#39;balance.rhs:x&#39;)</span>
+<span class="sd">            prob.model.connect(&#39;balance.x&#39;, &#39;exec.x&#39;)</span>
+<span class="sd">            prob.model.connect(&#39;exec.y&#39;, &#39;balance.lhs:x&#39;)</span>
+<span class="sd">            prob.model.linear_solver = DirectSolver()</span>
+<span class="sd">            prob.model.nonlinear_solver = NewtonSolver()</span>
+<span class="sd">            prob.setup()</span>
+<span class="sd">            prob.run_model()</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            The name of the state variable to be created.</span>
+<span class="sd">        eq_units : str or None</span>
+<span class="sd">            Units for the left-hand-side and right-hand-side of the equation to be balanced.</span>
+<span class="sd">        lhs_name : str or None</span>
+<span class="sd">            Optional name for the LHS variable associated with the implicit state variable.  If</span>
+<span class="sd">            None, the default will be used:  &#39;lhs:{name}&#39;.</span>
+<span class="sd">        rhs_name : str or None</span>
+<span class="sd">            Optional name for the RHS variable associated with the implicit state variable.  If</span>
+<span class="sd">            None, the default will be used:  &#39;rhs:{name}&#39;.</span>
+<span class="sd">        rhs_val : int, float, or np.array</span>
+<span class="sd">            Default value for the RHS of the given state.  Must be compatible</span>
+<span class="sd">            with the shape (optionally) given by the val or shape option in kwargs.</span>
+<span class="sd">        use_mult : bool</span>
+<span class="sd">            Specifies whether the LHS multiplier is to be used.  If True, then an additional</span>
+<span class="sd">            input `mult_name` is created, with the default value given by `mult_val`, that</span>
+<span class="sd">            multiplies lhs.  Default is False.</span>
+<span class="sd">        mult_name : str or None</span>
+<span class="sd">            Optional name for the LHS multiplier variable associated with the implicit state</span>
+<span class="sd">            variable. If None, the default will be used: &#39;mult:{name}&#39;.</span>
+<span class="sd">        mult_val : int, float, or np.array</span>
+<span class="sd">            Default value for the LHS multiplier of the given state.  Must be compatible</span>
+<span class="sd">            with the shape (optionally) given by the val or shape option in kwargs.</span>
+<span class="sd">        normalize : bool</span>
+<span class="sd">            Specifies whether or not the resulting residual should be normalized by a quadratic</span>
+<span class="sd">            function of the RHS.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional arguments to be passed for the creation of the implicit state variable.</span>
+<span class="sd">            (see `add_output` method).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;guess_func&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">BalanceComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">guess_func</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;guess_func&#39;</span><span class="p">])</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;guess_func&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">BalanceComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_balance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">eq_units</span><span class="p">,</span> <span class="n">lhs_name</span><span class="p">,</span> <span class="n">rhs_name</span><span class="p">,</span> <span class="n">rhs_val</span><span class="p">,</span>
+                             <span class="n">use_mult</span><span class="p">,</span> <span class="n">mult_name</span><span class="p">,</span> <span class="n">mult_val</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BalanceComp.setup"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define the independent variables, output variables, and partials.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state_vars</span><span class="p">):</span>
+
+            <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">])</span>
+
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_vars</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;lhs&#39;</span><span class="p">,</span> <span class="s1">&#39;rhs&#39;</span><span class="p">,</span> <span class="s1">&#39;mult&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_name&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">options</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_name&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">:</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;lhs_name&#39;</span><span class="p">],</span>
+                           <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+                           <span class="n">units</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;eq_units&#39;</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rhs_name&#39;</span><span class="p">],</span>
+                           <span class="n">val</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rhs_val&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+                           <span class="n">units</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;eq_units&#39;</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;use_mult&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;mult_name&#39;</span><span class="p">],</span>
+                               <span class="n">val</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;mult_val&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+                               <span class="n">units</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+            <span class="n">ar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;lhs_name&#39;</span><span class="p">],</span> <span class="n">rows</span><span class="o">=</span><span class="n">ar</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">ar</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rhs_name&#39;</span><span class="p">],</span> <span class="n">rows</span><span class="o">=</span><span class="n">ar</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">ar</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;use_mult&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;mult_name&#39;</span><span class="p">],</span> <span class="n">rows</span><span class="o">=</span><span class="n">ar</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">ar</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BalanceComp.apply_nonlinear"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.apply_nonlinear">[docs]</a>    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the residual for each balance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        outputs : Vector</span>
+<span class="sd">            unscaled, dimensional output variables read via outputs[key]</span>
+<span class="sd">        residuals : Vector</span>
+<span class="sd">            unscaled, dimensional residuals written to via residuals[key]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">_under_complex_step</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="o">.</span><span class="n">real</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state_vars</span><span class="p">):</span>
+            <span class="n">lhs</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;lhs_name&#39;</span><span class="p">]]</span>
+            <span class="n">rhs</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;rhs_name&#39;</span><span class="p">]]</span>
+
+            <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;normalize&#39;</span><span class="p">]:</span>
+                <span class="c1"># Indices where the rhs is near zero or not near zero</span>
+                <span class="n">idxs_nz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">idxs_nnz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="c1"># Compute scaling factors</span>
+                <span class="c1"># scale factor that normalizes by the rhs, except near 0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="o">.</span><span class="mi">25</span> <span class="o">*</span> <span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+            <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;use_mult&#39;</span><span class="p">]:</span>
+                <span class="n">residuals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;mult_name&#39;</span><span class="p">]]</span> <span class="o">*</span> <span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">residuals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span></div>
+
+<div class="viewcode-block" id="BalanceComp.linearize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.linearize">[docs]</a>    <span class="k">def</span> <span class="nf">linearize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">jacobian</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the partials of the residual for each balance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        outputs : Vector</span>
+<span class="sd">            unscaled, dimensional output variables read via outputs[key]</span>
+<span class="sd">        jacobian : Jacobian</span>
+<span class="sd">            sub-jac components written to jacobian[output_name, input_name]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">_under_complex_step</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span><span class="o">.</span><span class="n">real</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state_vars</span><span class="p">):</span>
+            <span class="n">lhs_name</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;lhs_name&#39;</span><span class="p">]</span>
+            <span class="n">rhs_name</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;rhs_name&#39;</span><span class="p">]</span>
+
+            <span class="n">lhs</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">lhs_name</span><span class="p">]</span>
+            <span class="n">rhs</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">rhs_name</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;normalize&#39;</span><span class="p">]:</span>
+                <span class="c1"># Indices where the rhs is near zero or not near zero</span>
+                <span class="n">idxs_nz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">idxs_nnz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="c1"># scale factor that normalizes by the rhs, except near 0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="o">.</span><span class="mi">25</span> <span class="o">*</span> <span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">])</span> <span class="o">/</span> <span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nnz</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">=</span> <span class="o">-.</span><span class="mi">5</span> <span class="o">*</span> <span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="o">.</span><span class="mi">25</span> <span class="o">*</span> <span class="n">rhs</span><span class="p">[</span><span class="n">idxs_nz</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+            <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;use_mult&#39;</span><span class="p">]:</span>
+                <span class="n">mult_name</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;mult_name&#39;</span><span class="p">]</span>
+                <span class="n">mult</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">mult_name</span><span class="p">]</span>
+
+                <span class="c1"># Partials of residual wrt mult</span>
+                <span class="n">jacobian</span><span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">mult_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">lhs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mult</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+            <span class="c1"># Partials of residual wrt rhs</span>
+            <span class="n">jacobian</span><span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">rhs_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">mult</span> <span class="o">*</span> <span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dscale_drhs</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span>
+
+            <span class="c1"># Partials of residual wrt lhs</span>
+            <span class="n">jacobian</span><span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">lhs_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mult</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span></div>
+
+<div class="viewcode-block" id="BalanceComp.guess_nonlinear"><a class="viewcode-back" href="../../../_srcdocs/packages/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.guess_nonlinear">[docs]</a>    <span class="k">def</span> <span class="nf">guess_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provide initial guess for states.</span>
+
+<span class="sd">        Override this method to set the initial guess for states.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : Vector</span>
+<span class="sd">            unscaled, dimensional input variables read via inputs[key]</span>
+<span class="sd">        outputs : Vector</span>
+<span class="sd">            unscaled, dimensional output variables read via outputs[key]</span>
+<span class="sd">        residuals : Vector</span>
+<span class="sd">            unscaled, dimensional residuals written to via residuals[key]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;guess_func&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;guess_func&#39;</span><span class="p">](</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BalanceComp.add_balance"><a class="viewcode-back" href="../../../features/building_blocks/components/balance_comp.html#openmdao.components.balance_comp.BalanceComp.add_balance">[docs]</a>    <span class="k">def</span> <span class="nf">add_balance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">eq_units</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lhs_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rhs_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rhs_val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                    <span class="n">use_mult</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mult_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mult_val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a new state variable and associated equation to be balanced.</span>
+
+<span class="sd">        This will create new inputs `lhs:name`, `rhs:name`, and `mult:name` that will</span>
+<span class="sd">        define the left and right sides of the equation to be balanced, and a</span>
+<span class="sd">        multiplier for the left-hand-side.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            The name of the state variable to be created.</span>
+<span class="sd">        eq_units : str or None</span>
+<span class="sd">            Units for the left-hand-side and right-hand-side of the equation to be balanced.</span>
+<span class="sd">        lhs_name : str or None</span>
+<span class="sd">            Optional name for the LHS variable associated with the implicit state variable.  If</span>
+<span class="sd">            None, the default will be used:  &#39;lhs:{name}&#39;.</span>
+<span class="sd">        rhs_name : str or None</span>
+<span class="sd">            Optional name for the RHS variable associated with the implicit state variable.  If</span>
+<span class="sd">            None, the default will be used:  &#39;rhs:{name}&#39;.</span>
+<span class="sd">        rhs_val : int, float, or np.array</span>
+<span class="sd">            Default value for the RHS.  Must be compatible with the shape (optionally)</span>
+<span class="sd">            given by the val or shape option in kwargs.</span>
+<span class="sd">        use_mult : bool</span>
+<span class="sd">            Specifies whether the LHS multiplier is to be used.  If True, then an additional</span>
+<span class="sd">            input `mult_name` is created, with the default value given by `mult_val`, that</span>
+<span class="sd">            multiplies lhs.  Default is False.</span>
+<span class="sd">        mult_name : str or None</span>
+<span class="sd">            Optional name for the LHS multiplier variable associated with the implicit state</span>
+<span class="sd">            variable. If None, the default will be used: &#39;mult:{name}&#39;.</span>
+<span class="sd">        mult_val : int, float, or np.array</span>
+<span class="sd">            Default value for the LHS multiplier.  Must be compatible with the shape (optionally)</span>
+<span class="sd">            given by the val or shape option in kwargs.</span>
+<span class="sd">        normalize : bool</span>
+<span class="sd">            Specifies whether or not the resulting residual should be normalized by a quadratic</span>
+<span class="sd">            function of the RHS.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional arguments to be passed for the creation of the implicit state variable.</span>
+<span class="sd">            (see `add_output` method).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;kwargs&#39;</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">,</span>
+                                  <span class="s1">&#39;eq_units&#39;</span><span class="p">:</span> <span class="n">eq_units</span><span class="p">,</span>
+                                  <span class="s1">&#39;lhs_name&#39;</span><span class="p">:</span> <span class="n">lhs_name</span><span class="p">,</span>
+                                  <span class="s1">&#39;rhs_name&#39;</span><span class="p">:</span> <span class="n">rhs_name</span><span class="p">,</span>
+                                  <span class="s1">&#39;rhs_val&#39;</span><span class="p">:</span> <span class="n">rhs_val</span><span class="p">,</span>
+                                  <span class="s1">&#39;use_mult&#39;</span><span class="p">:</span> <span class="n">use_mult</span><span class="p">,</span>
+                                  <span class="s1">&#39;mult_name&#39;</span><span class="p">:</span> <span class="n">mult_name</span><span class="p">,</span>
+                                  <span class="s1">&#39;mult_val&#39;</span><span class="p">:</span> <span class="n">mult_val</span><span class="p">,</span>
+                                  <span class="s1">&#39;normalize&#39;</span><span class="p">:</span> <span class="n">normalize</span><span class="p">}</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

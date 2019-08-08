@@ -1,0 +1,16 @@
+.. index:: case_recorder.py
+
+.. _openmdao.recorders.case_recorder.py:
+
+case_recorder.py
+----------------
+
+.. automodule:: openmdao.recorders.case_recorder
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

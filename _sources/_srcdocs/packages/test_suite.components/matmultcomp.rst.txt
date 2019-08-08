@@ -1,0 +1,16 @@
+.. index:: matmultcomp.py
+
+.. _openmdao.test_suite.components.matmultcomp.py:
+
+matmultcomp.py
+--------------
+
+.. automodule:: openmdao.test_suite.components.matmultcomp
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

@@ -1,0 +1,7 @@
+.. _LinearSystemComp: 
+
+=========================
+LinearSystemComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/linearsystem_comp.rst

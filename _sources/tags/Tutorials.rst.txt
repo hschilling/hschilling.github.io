@@ -1,0 +1,7 @@
+.. _Tutorials: 
+
+=========================
+Tutorials
+=========================
+  .. toctree::
+     ../features/debugging/profiling/inst_profile.rst

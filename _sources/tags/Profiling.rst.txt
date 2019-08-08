@@ -1,0 +1,7 @@
+.. _Profiling: 
+
+=========================
+Profiling
+=========================
+  .. toctree::
+     ../features/debugging/profiling/inst_profile.rst

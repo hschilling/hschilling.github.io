@@ -1,0 +1,239 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Setting Up Travis CI for Your Project &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Release Your Project on pypi" href="release_process.html" />
+    <link rel="prev" title="Hosting Documentation on github-pages" href="github-pages.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="release_process.html" title="Release Your Project on pypi"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="github-pages.html" title="Hosting Documentation on github-pages"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Building a Tool on Top of OpenMDAO</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setting-up-travis-ci-for-your-project">
+<span id="travis-ci-setup"></span><h1>Setting Up Travis CI for Your Project<a class="headerlink" href="#setting-up-travis-ci-for-your-project" title="Permalink to this headline">¶</a></h1>
+<p>Continuous integration using Travis CI is a way to make sure all your building and testing protocols remain
+functioning over time. For general assistance on how to get your initial Travis account set up, and how to make a .travis.yml
+file, see <a class="reference external" href="https://docs.travis-ci.com/user/getting-started/">this guide</a>.</p>
+<p>When working with an OpenMDAO-dependent project, there are several specific settings one must be mindful of,
+as well as technical nuances that must be included in the .travis.yml file</p>
+<div class="section" id="travis-yml">
+<h2>.travis.yml<a class="headerlink" href="#travis-yml" title="Permalink to this headline">¶</a></h2>
+<p>When you run your doc-build on CI, and you happen to be embedding any code from the openmdao project, that code will be
+executed to generate output for the documentation. That code will not execute up on the CI platform unless you have first installed
+everything that OpenMDAO needs to run. So installing just what your project needs will not be enough.</p>
+<p>You can use the .travis.yml file in our template repository to get you started for your project.
+That file looks something like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sudo: false
+
+os:
+  - linux
+
+env:
+  - PY=2.7
+  - PY=3.6 UPLOAD_DOCS=1
+
+language: generic
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gfortran
+    - libblas-dev
+    - liblapack-dev
+    - libopenmpi-dev
+    - openmpi-bin
+
+before_install:
+- if [ &quot;$PY&quot; = &quot;2.7&quot; ];  then wget &quot;https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh&quot; -O miniconda.sh; fi
+- if [ &quot;$PY&quot; = &quot;3.6&quot; ];  then wget &quot;https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh&quot; -O miniconda.sh; fi
+- chmod +x miniconda.sh;
+- ./miniconda.sh -b  -p /home/travis/miniconda;
+- export PATH=/home/travis/miniconda/bin:$PATH;
+- if  [ &quot;$TRAVIS_REPO_SLUG&quot; = &quot;OpenMDAO/dymos&quot; ] &amp;&amp; [ &quot;$TRAVIS_PULL_REQUEST&quot; = &quot;false&quot; ]; then
+    MASTER_BUILD=1;
+  fi
+
+install:
+- conda install --yes python=$PY numpy scipy nose sphinx mock swig pip;
+- pip install --upgrade pip
+- sudo apt-get install gfortran
+- pip install numpy==1.14.1
+- pip install scipy==1.0.0
+- pip install mpi4py
+- pip install matplotlib
+- pip install nose
+- pip install networkx
+- pip install testflo
+- pip install pyyaml
+- pip install coveralls
+- pip install --user travis-sphinx;
+
+# install pyoptsparse
+- git clone https://github.com/OpenMDAO/pyoptsparse.git;
+- cd pyoptsparse;
+- python setup.py install;
+- cd ..;
+
+# install MBI
+- git clone https://github.com/OpenMDAO/MBI.git;
+- cd MBI;
+- python setup.py build install;
+- cd ..;
+
+# install OpenMDAO in developer mode so we have access to its sphinx extensions
+- git clone https://github.com/OpenMDAO/OpenMDAO.git;
+- cd OpenMDAO;
+- pip install -e .;
+- cd ..;
+
+# install your project itself in developer mode.
+- pip install -e .;
+
+script:
+- testflo -n 1 your_project --pre_announce --coverage --coverpkg dymos;
+- travis-sphinx build --source=your_project/docs;
+
+after_success:
+- if [ &quot;$MASTER_BUILD&quot; ] &amp;&amp; [ &quot;$UPLOAD_DOCS&quot; ]; then
+    travis-sphinx deploy;
+  fi
+- coveralls;
+</pre></div>
+</div>
+</div>
+<div class="section" id="coverage">
+<h2>Coverage<a class="headerlink" href="#coverage" title="Permalink to this headline">¶</a></h2>
+<p>Coverage is a tool that shows developers how many lines of their code that are being executed by your current test suite.</p>
+<p>To use this tool, set up an account at the website <a class="reference external" href="https://coveralls.io">coveralls.io</a>, login using your Github credentials,
+and then activate the appropriate github repo for coverage results. This sets up the site to receive results. The other side
+of the equation is taken care of in your .travis.yml file, as I will show here using OpenMDAO’s example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">script</span><span class="p">:</span>
+    <span class="n">testflo</span> <span class="o">-</span><span class="n">n</span> <span class="mi">1</span> <span class="n">openmdao</span> <span class="o">--</span><span class="n">coverage</span>  <span class="o">--</span><span class="n">coverpkg</span> <span class="n">openmdao</span> <span class="o">--</span><span class="n">cover</span><span class="o">-</span><span class="n">omit</span> \<span class="o">*</span><span class="n">tests</span><span class="o">/</span>\<span class="o">*</span>  <span class="o">--</span><span class="n">cover</span><span class="o">-</span><span class="n">omit</span> \<span class="o">*</span><span class="n">devtools</span><span class="o">/</span>\<span class="o">*</span> <span class="o">--</span><span class="n">cover</span><span class="o">-</span><span class="n">omit</span> \<span class="o">*</span><span class="n">test_suite</span><span class="o">/</span>\<span class="o">*</span> <span class="o">--</span><span class="n">cover</span><span class="o">-</span><span class="n">omit</span> \<span class="o">*</span><span class="n">docs</span><span class="o">/</span>\<span class="o">*</span><span class="p">;</span>
+
+<span class="n">after_success</span><span class="p">:</span>
+    <span class="n">coveralls</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>The point of the above example is to:</dt>
+<dd><ol class="first last arabic simple">
+<li>Use testflo to run the test suite,</li>
+<li>Use testflo to set the <cite>coverpkg</cite> to your project, (collect coverage data on that package)</li>
+<li>Use tesflo to <cite>cover-omit</cite> directories you’d like to exclude from coverage, and</li>
+<li>Use coveralls to send coverage data to coveralls.io</li>
+</ol>
+</dd>
+</dl>
+<p>For more information on testflo, please see <a class="reference external" href="https://pypi.org/project/testflo">testflo on pypi</a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="release_process.html" title="Release Your Project on pypi"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="github-pages.html" title="Hosting Documentation on github-pages"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Building a Tool on Top of OpenMDAO</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

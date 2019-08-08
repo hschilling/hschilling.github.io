@@ -1,0 +1,16 @@
+.. index:: recording_iteration_stack.py
+
+.. _openmdao.recorders.recording_iteration_stack.py:
+
+recording_iteration_stack.py
+----------------------------
+
+.. automodule:: openmdao.recorders.recording_iteration_stack
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

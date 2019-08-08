@@ -1,0 +1,230 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Optimization of Paraboloid &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sellar - A Two-Discipline Problem with a Nonlinear Solver" href="sellar.html" />
+    <link rel="prev" title="Paraboloid - A Single-Discipline Model" href="first_analysis.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sellar.html" title="Sellar - A Two-Discipline Problem with a Nonlinear Solver"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="first_analysis.html" title="Paraboloid - A Single-Discipline Model"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p id="tutorial-paraboloid-optimization">This tutorial will show you how to setup and run an optimization using a component you’ve already defined.
+The organization of this run script and its use of the <code class="code docutils literal notranslate"><span class="pre">Problem</span></code> class is the basis for executing all models in OpenMDAO.</p>
+<div class="section" id="optimization-of-paraboloid">
+<h1>Optimization of Paraboloid<a class="headerlink" href="#optimization-of-paraboloid" title="Permalink to this headline">¶</a></h1>
+<p>To start out, we’ll reuse the <code class="code docutils literal notranslate"><span class="pre">Paraboloid</span></code> component that we defined in the <a class="reference internal" href="first_analysis.html#tutorial-paraboloid-analysis"><span class="std std-ref">previous tutorial</span></a>.
+We’ll add that component, along with an <a class="reference internal" href="../features/core_features/defining_components/indepvarcomp.html#comp-type-1-indepvarcomp"><span class="std std-ref">IndepVarComp</span></a>, to construct our model
+inside a <a class="reference internal" href="../features/core_features/running/index.html#feature-run-your-model"><span class="std std-ref">Problem</span></a>.
+You’ve already used <code class="code docutils literal notranslate"><span class="pre">Problem</span></code> in the run script from the previous tutorial on the paraboloid analysis,
+but we’ll take a closer look now.</p>
+<p>All analyses and optimizations in OpenMDAO are executed with an instance of the <code class="code docutils literal notranslate"><span class="pre">Problem</span></code> class.
+This class serves as a container for your model and the driver you’ve chosen,
+and provides methods for you to <a class="reference internal" href="../features/core_features/running/run_model.html#run-model"><span class="std std-ref">run the model</span></a> and <a class="reference internal" href="../features/core_features/running/run_driver.html#setup-and-run"><span class="std std-ref">run the driver</span></a>.
+It also provides a <a class="reference internal" href="../features/core_features/running/set_get.html#set-and-get-variables"><span class="std std-ref">interface for setting and getting variable values</span></a>.
+Every problem has a single driver associated with it; similarly, every problem has a single model in it.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/problem_diagram.png"><img alt="diagram of the problem structure" src="../_images/problem_diagram.png" style="width: 50%;" /></a>
+</div>
+<div class="section" id="the-run-script">
+<h2>The Run Script<a class="headerlink" href="#the-run-script" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+
+<span class="c1"># We&#39;ll use the component that was defined in the last tutorial</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.components.paraboloid</span> <span class="kn">import</span> <span class="n">Paraboloid</span>
+
+<span class="c1"># build the model</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+<span class="n">indeps</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;indeps&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">())</span>
+<span class="n">indeps</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+<span class="n">indeps</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;parab&#39;</span><span class="p">,</span> <span class="n">Paraboloid</span><span class="p">())</span>
+
+<span class="c1"># define the component whose output will be constrained</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;const&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;g = x + y&#39;</span><span class="p">))</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;indeps.x&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;parab.x&#39;</span><span class="p">,</span> <span class="s1">&#39;const.x&#39;</span><span class="p">])</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;indeps.y&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;parab.y&#39;</span><span class="p">,</span> <span class="s1">&#39;const.y&#39;</span><span class="p">])</span>
+
+<span class="c1"># setup the optimization</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;COBYLA&#39;</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;indeps.x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">50</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;indeps.y&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">50</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;parab.f_xy&#39;</span><span class="p">)</span>
+
+<span class="c1"># to add the constraint to the model</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;const.g&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">10.</span><span class="p">)</span>
+<span class="c1"># prob.model.add_constraint(&#39;const.g&#39;, equals=0.)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+
+<span class="c1"># minimum value</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;parab.f_xy&#39;</span><span class="p">])</span>
+
+<span class="c1"># location of the minimum</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;indeps.x&#39;</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="s1">&#39;indeps.y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Optimization Complete
+-----------------------------------
+[-27.]
+[6.99999912]
+[-6.99999912]
+</pre></div></div><p>Although we defined the <code class="code docutils literal notranslate"><span class="pre">Paraboloid</span></code> component in a <a class="reference internal" href="first_analysis.html#tutorial-paraboloid-analysis"><span class="std std-ref">previous tutorial</span></a>, we wanted to add an additional equation to our model.
+Since it was a very simple equation, we used the <a class="reference internal" href="../features/building_blocks/components/exec_comp.html#feature-exec-comp"><span class="std std-ref">ExecComp</span></a> to quickly add the new output to our model, so that we can constrain it.
+Once you have defined the necessary output variable, you just have to add it to the problem formulation so the driver
+knows to actually respect it. For this toy problem it turns out that the constrained optimum occurs when <span class="math notranslate nohighlight">\(x = -y = 7.0\)</span>,
+so it’s actually possible to get the same answer using an equality constraint set to 0.
+We included both options in the tutorial for your reference.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference internal" href="../features/building_blocks/components/exec_comp.html#feature-exec-comp"><span class="std std-ref">ExecComp</span></a> is a useful utility component provided in OpenMDAO’s <a class="reference internal" href="../features/building_blocks/index.html#feature-building-blocks"><span class="std std-ref">standard library</span></a>
+that lets you define new calculations just by typing in the expression. It supports basic math operations, and even some of numpy’s more
+advanced methods. It also supports both scalar and array data as well.</p>
+</div>
+<div class="section" id="setting-a-driver">
+<h3>Setting a Driver<a class="headerlink" href="#setting-a-driver" title="Permalink to this headline">¶</a></h3>
+<p>Telling OpenMDAO to use a specific optimizer is done by setting the <code class="code docutils literal notranslate"><span class="pre">driver</span></code> attribute of the problem.
+Here we’ll use the <a class="reference internal" href="../features/building_blocks/drivers/scipy_optimize_driver.html#scipy-optimize-driver"><span class="std std-ref">ScipyOptimizeDriver</span></a>, and tell it to use the <em>COBYLA</em> algorithm.</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;optimizer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;COBYLA&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="defining-the-design-variables-and-objective">
+<h3>Defining the Design Variables and Objective<a class="headerlink" href="#defining-the-design-variables-and-objective" title="Permalink to this headline">¶</a></h3>
+<p>Next, we set up the problem formulation so that the optimizer knows what to vary and which objective to optimize.
+In these calls, we are always going to be specifying a single variable. For <a class="reference internal" href="../features/core_features/adding_desvars_objs_consts/adding_desvars.html#feature-add-design-var"><span class="std std-ref">add_design_var</span></a>,
+the variable will always be the output of an <a class="reference internal" href="../features/core_features/defining_components/indepvarcomp.html#comp-type-1-indepvarcomp"><span class="std std-ref">IndepVarComp</span></a>.
+For <a class="reference internal" href="../features/core_features/adding_desvars_objs_consts/adding_objectives.html#feature-add-objective"><span class="std std-ref">add_objective</span></a> and <a class="reference internal" href="../features/core_features/adding_desvars_objs_consts/adding_constraints.html#feature-add-constraint"><span class="std std-ref">add_constraint</span></a>
+the variable can be the output of any component (including an <code class="code docutils literal notranslate"><span class="pre">IndepVarComp</span></code>).</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;indeps.x&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">50</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;indeps.y&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=-</span><span class="mi">50</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;paraboloid.f_xy&#39;</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;const.g&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span> <span class="mf">10.</span><span class="p">)</span>
+<span class="c1">#prob.model.add_constraint(&#39;const.g&#39;, equals=0.)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although these calls always point to a specific variable, that variable doesn’t have to be a scalar value.
+See the feature docs for <a class="reference internal" href="../features/core_features/adding_desvars_objs_consts/index.html#feature-adding-des-vars-obj-con"><span class="std std-ref">adding design variables, objectives, and constraints</span></a> for more details.</p>
+</div>
+<p>Finally, we call <a class="reference internal" href="../features/core_features/running/setup.html#setup"><span class="std std-ref">setup</span></a>, and then <a class="reference internal" href="../features/core_features/running/run_driver.html#setup-and-run"><span class="std std-ref">run_driver()</span></a> to actually execute the model, then we use some print statements
+to interrogate the final values.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sellar.html" title="Sellar - A Two-Discipline Problem with a Nonlinear Solver"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="first_analysis.html" title="Paraboloid - A Single-Discipline Model"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Basic User Guide</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

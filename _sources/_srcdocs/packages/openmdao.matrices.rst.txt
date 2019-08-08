@@ -1,0 +1,11 @@
+openmdao.matrices
+-----------------
+
+.. toctree::
+    :maxdepth: 1
+
+    matrices/coo_matrix
+    matrices/csc_matrix
+    matrices/csr_matrix
+    matrices/dense_matrix
+    matrices/matrix

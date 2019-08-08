@@ -1,0 +1,536 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyoptsparse_driver.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="scipy_optimizer.py" href="scipy_optimizer.html" />
+    <link rel="prev" title="genetic_algorithm_driver.py" href="genetic_algorithm_driver.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scipy_optimizer.html" title="scipy_optimizer.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="genetic_algorithm_driver.html" title="genetic_algorithm_driver.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.drivers.html" accesskey="U">openmdao.drivers</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.drivers.pyoptsparse_driver">
+<span id="pyoptsparse-driver-py"></span><span id="openmdao-drivers-pyoptsparse-driver-py"></span><span id="index-0"></span><h1>pyoptsparse_driver.py<a class="headerlink" href="#module-openmdao.drivers.pyoptsparse_driver" title="Permalink to this headline">¶</a></h1>
+<p>OpenMDAO Wrapper for pyoptsparse.</p>
+<p>pyoptsparse is based on pyOpt, which is an object-oriented framework for
+formulating and solving nonlinear constrained optimization problems, with
+additional MPI capability.</p>
+<dl class="class">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver">
+<em class="property">class </em><code class="descclassname">openmdao.drivers.pyoptsparse_driver.</code><code class="descname">pyOptSparseDriver</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/pyoptsparse_driver.html#pyOptSparseDriver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../core/driver.html#openmdao.core.driver.Driver" title="openmdao.core.driver.Driver"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmdao.core.driver.Driver</span></code></a></p>
+<p>Driver wrapper for pyoptsparse.</p>
+<p>Pyoptsparse is based on pyOpt, which
+is an object-oriented framework for formulating and solving nonlinear
+constrained optimization problems, with additional MPI capability.
+pypptsparse has interfaces to the following optimizers:
+ALPSO, CONMIN, FSQP, IPOPT, NLPQLP, NSGA2, PSQP, SLSQP,
+SNOPT, NLPY_AUGLAG, NOMAD.
+Note that some of these are not open source and therefore not included
+in the pyoptsparse source code.</p>
+<dl class="docutils">
+<dt>pyOptSparseDriver supports the following:</dt>
+<dd><p class="first">equality_constraints</p>
+<p>inequality_constraints</p>
+<p class="last">two_sided_constraints</p>
+</dd>
+</dl>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>fail</strong></td>
+<td>(bool) Flag that indicates failure of most recent optimization.</td>
+</tr>
+<tr class="row-even"><td><strong>hist_file</strong></td>
+<td>(str or None) File location for saving pyopt_sparse optimization history. Default is None for no output.</td>
+</tr>
+<tr class="row-odd"><td><strong>hotstart_file</strong></td>
+<td>(str) Optional file to hot start the optimization.</td>
+</tr>
+<tr class="row-even"><td><strong>opt_settings</strong></td>
+<td>(dict) Dictionary for setting optimizer-specific options.</td>
+</tr>
+<tr class="row-odd"><td><strong>pyopt_solution</strong></td>
+<td>(Solution) Pyopt_sparse solution object.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/pyoptsparse_driver.html#pyOptSparseDriver.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize pyopt.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>**kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict of keyword arguments</span></dt>
+<dd><p class="first last">Keyword arguments that will be mapped into the Driver options.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.add_recorder">
+<code class="descname">add_recorder</code><span class="sig-paren">(</span><em>recorder</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.add_recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a recorder to the driver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>recorder</strong> <span class="classifier-delimiter">:</span> <span class="classifier">CaseRecorder</span></dt>
+<dd><p class="first last">A recorder instance.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up resources prior to exit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.declare_coloring">
+<code class="descname">declare_coloring</code><span class="sig-paren">(</span><em>num_full_jacs=3</em>, <em>tol=1e-25</em>, <em>orders=None</em>, <em>perturb_size=1e-09</em>, <em>show_summary=True</em>, <em>show_sparsity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.declare_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set options for total deriv coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>num_full_jacs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of times to repeat partial jacobian computation when computing sparsity.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Tolerance used to determine if an array entry is nonzero during sparsity determination.</p>
+</dd>
+<dt><strong>orders</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of orders above and below the tolerance to check during the tolerance sweep.</p>
+</dd>
+<dt><strong>perturb_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Size of input/output perturbation during generation of sparsity.</p>
+</dd>
+<dt><strong>show_summary</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display summary information after generating coloring.</p>
+</dd>
+<dt><strong>show_sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, display sparsity with coloring info after generating coloring.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_constraint_values">
+<code class="descname">get_constraint_values</code><span class="sig-paren">(</span><em>ctype='all'</em>, <em>lintype='all'</em>, <em>driver_scaling=True</em>, <em>filter=None</em>, <em>ignore_indices=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_constraint_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return constraint values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>ctype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Default is ‘all’. Optionally return just the inequality constraints
+with ‘ineq’ or the equality constraints with ‘eq’.</p>
+</dd>
+<dt><strong>lintype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">Default is ‘all’. Optionally return just the linear constraints
+with ‘linear’ or the nonlinear constraints with ‘nonlinear’.</p>
+</dd>
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return values that are scaled according to either the adder and scaler or
+the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is True.</p>
+</dd>
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of constraint names used by recorders.</p>
+</dd>
+<dt><strong>ignore_indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if the full array is desired, not just those indicated by indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each constraint.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_design_var_values">
+<code class="descname">get_design_var_values</code><span class="sig-paren">(</span><em>filter=None</em>, <em>driver_scaling=True</em>, <em>ignore_indices=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_design_var_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the design variable values.</p>
+<p>This is called to gather the initial design variable state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of desvar names used by recorders.</p>
+</dd>
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return values that are scaled according to either the adder and scaler or
+the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is True.</p>
+</dd>
+<dt><strong>ignore_indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if the full array is desired, not just those indicated by indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each design variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_objective_values">
+<code class="descname">get_objective_values</code><span class="sig-paren">(</span><em>driver_scaling=True</em>, <em>filter=None</em>, <em>ignore_indices=False</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_objective_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return objective values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>driver_scaling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">When True, return values that are scaled according to either the adder and scaler or
+the ref and ref0 values that were specified when add_design_var, add_objective, and
+add_constraint were called on the model. Default is True.</p>
+</dd>
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of objective names used by recorders.</p>
+</dd>
+<dt><strong>ignore_indices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Set to True if the full array is desired, not just those indicated by indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each objective.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_response_values">
+<code class="descname">get_response_values</code><span class="sig-paren">(</span><em>filter=None</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.get_response_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return response values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of response names used by recorders.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">Dictionary containing values of each response.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.msginfo">
+<code class="descname">msginfo</code><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.msginfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return info to prepend to messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Info to prepend to messages.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.record_iteration">
+<code class="descname">record_iteration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.record_iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an iteration of the current Driver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/drivers/pyoptsparse_driver.html#pyOptSparseDriver.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Excute pyOptsparse.</p>
+<p>Note that pyOpt controls the execution, and the individual optimizers
+(e.g., SNOPT) control the iteration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>boolean</strong></dt>
+<dd><p class="first last">Failure flag; True if failed to converge, False is successful.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.set_design_var">
+<code class="descname">set_design_var</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.set_design_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value of a design variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Global pathname of the design variable.</p>
+</dd>
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
+<dd><p class="first last">Value for the design variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.set_simul_deriv_color">
+<code class="descname">set_simul_deriv_color</code><span class="sig-paren">(</span><em>coloring</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.set_simul_deriv_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>See use_fixed_coloring. This method is deprecated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or Coloring</span></dt>
+<dd><p class="first last">Information about simultaneous coloring for design vars and responses.  If a
+string, then coloring is assumed to be the name of a file that contains the
+coloring information in pickle format. Otherwise it must be a Coloring object.
+See the docstring for Coloring for details.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.set_total_jac_sparsity">
+<code class="descname">set_total_jac_sparsity</code><span class="sig-paren">(</span><em>sparsity</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.set_total_jac_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the sparsity of sub-jacobians of the total jacobian.</p>
+<p>Note: This currently will have no effect if you are not using the pyOptSparseDriver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict</span></dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sparsity is a nested dictionary where the outer keys are response</span>
+<span class="c1"># names, the inner keys are design variable names, and the value is a tuple of</span>
+<span class="c1"># the form (row_list, col_list, shape).</span>
+<span class="p">{</span>
+    <span class="n">resp1</span><span class="p">:</span> <span class="p">{</span>
+        <span class="n">dv1</span><span class="p">:</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shape</span><span class="p">),</span>  <span class="c1"># for sub-jac d_resp1/d_dv1</span>
+        <span class="n">dv2</span><span class="p">:</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shape</span><span class="p">),</span>
+          <span class="o">...</span>
+    <span class="p">},</span>
+    <span class="n">resp2</span><span class="p">:</span> <span class="p">{</span>
+        <span class="o">...</span>
+    <span class="p">}</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.use_fixed_coloring">
+<code class="descname">use_fixed_coloring</code><span class="sig-paren">(</span><em>coloring=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#openmdao.drivers.pyoptsparse_driver.pyOptSparseDriver.use_fixed_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tell the driver to use a precomputed coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>coloring</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">A coloring filename.  If no arg is passed, filename will be determined
+automatically.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scipy_optimizer.html" title="scipy_optimizer.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="genetic_algorithm_driver.html" title="genetic_algorithm_driver.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.drivers.html" >openmdao.drivers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

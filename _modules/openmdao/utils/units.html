@@ -1,0 +1,1160 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.utils.units &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.utils.units</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Classes and functions to support unit conversion.</span>
+
+<span class="sd">The module provides a basic set of predefined physical quantities</span>
+<span class="sd">in its built-in library; however, it also supports generation of</span>
+<span class="sd">personal libararies which can be saved and reused.</span>
+<span class="sd">This module is based on the PhysicalQuantities module</span>
+<span class="sd">in Scientific Python, by Konrad Hinsen. Modifications by</span>
+<span class="sd">Justin Gray.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">six.moves.configparser</span> <span class="k">import</span> <span class="n">RawConfigParser</span> <span class="k">as</span> <span class="n">ConfigParser</span>
+
+<span class="c1"># pylint: disable=E0611, F0401</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">floor</span><span class="p">,</span> <span class="n">pi</span>
+
+
+<span class="c1">####################################</span>
+<span class="c1"># Class Definitions</span>
+<span class="c1">####################################</span>
+
+
+<div class="viewcode-block" id="NumberDict"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.NumberDict">[docs]</a><span class="k">class</span> <span class="nc">NumberDict</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dictionary storing numerical values.</span>
+
+<span class="sd">    An instance of this class acts like an array of numbers with</span>
+<span class="sd">    generalized (non-integer) indices. A value of zero is assumed</span>
+<span class="sd">    for undefined entries. NumberDict instances support addition</span>
+<span class="sd">    and subtraction with other NumberDict instances, and multiplication</span>
+<span class="sd">    and division by scalars.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NumberDict.__getitem__"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.NumberDict.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the item, or 0.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        item : key</span>
+<span class="sd">            key to get the item</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            value of the given key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="nf">__coerce__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change other dict to NumberDicts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : Dict</span>
+<span class="sd">            the dict instance to be coerced</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        NumberDict</span>
+<span class="sd">            new NumberDict with keys/values from original</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">,</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add another NumberDict to myself.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : NumberDict</span>
+<span class="sd">            the other NumberDict Instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        NumberDict</span>
+<span class="sd">            new NumberDict with self+other values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sum_dict</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">sum_dict</span>
+
+    <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add another NumberDict from myself.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : NumberDict</span>
+<span class="sd">            the other NumberDict Instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        NumberDict</span>
+<span class="sd">            new NumberDict instance, with self-other values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sum_dict</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">sum_dict</span>
+
+    <span class="k">def</span> <span class="nf">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add subtract myself from another NumberDict.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : NumberDict</span>
+<span class="sd">            the other NumberDict Instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        NumberDict</span>
+<span class="sd">            new NumberDict instance, with other-self values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sum_dict</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">sum_dict</span>
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Multiply myself by another NumberDict.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : NumberDict</span>
+<span class="sd">            the other NumberDict Instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        NumberDict</span>
+<span class="sd">            new NumberDict instance, with other*self values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">new</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">other</span> <span class="o">*</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">new</span>
+
+    <span class="fm">__rmul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+
+    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Divide myself by another NumberDict.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : int</span>
+<span class="sd">            value to divide by</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        NumberDict</span>
+<span class="sd">            new NumberDict instance, with self/other values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">new</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span> <span class="o">/</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">new</span>
+
+    <span class="fm">__truediv__</span> <span class="o">=</span> <span class="n">__div__</span>  <span class="c1"># for python 3</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a string deceleration of myself.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : NumberDict</span>
+<span class="sd">            the other NumberDict Instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            str representation for the creation of this NumberDict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="PhysicalUnit"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit">[docs]</a><span class="k">class</span> <span class="nc">PhysicalUnit</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Physical unit.</span>
+
+<span class="sd">    A physical unit is defined by a name (possibly composite), a scaling</span>
+<span class="sd">    factor, and the exponentials of each of the SI base units that enter into</span>
+<span class="sd">    it. Units can be multiplied, divided, and raised to integer powers.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _names : dict or str</span>
+<span class="sd">        A dictionary mapping each name component to its</span>
+<span class="sd">        associated integer power (e.g., C{{&#39;m&#39;: 1, &#39;s&#39;: -1}})</span>
+<span class="sd">        for M{m/s}). As a shorthand, a string may be passed</span>
+<span class="sd">        which is assigned an implicit power 1.</span>
+<span class="sd">    _factor : float</span>
+<span class="sd">        A scaling factor.</span>
+<span class="sd">    _powers : list of int</span>
+<span class="sd">        The integer powers for each of the nine base units.</span>
+<span class="sd">    _offset : float</span>
+<span class="sd">        An additive offset to the base unit (used only for temperatures)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PhysicalUnit.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">powers</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        names : dict or str</span>
+<span class="sd">            A dictionary mapping each name component to its</span>
+<span class="sd">            associated integer power (e.g., C{{&#39;m&#39;: 1, &#39;s&#39;: -1}})</span>
+<span class="sd">            for M{m/s}). As a shorthand, a string may be passed</span>
+<span class="sd">            which is assigned an implicit power 1.</span>
+<span class="sd">        factor : float</span>
+<span class="sd">            A scaling factor.</span>
+<span class="sd">        powers : list of int</span>
+<span class="sd">            The integer powers for each of the nine base units.</span>
+<span class="sd">        offset : float</span>
+<span class="sd">            An additive offset to the base unit (used only for temperatures).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">(((</span><span class="n">names</span><span class="p">,</span> <span class="mi">1</span><span class="p">),))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">=</span> <span class="n">names</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span> <span class="o">=</span> <span class="n">powers</span></div>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the string representation of this unit.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            str representation of how to instantiate this PhysicalUnit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;PhysicalUnit(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%s</span><span class="s1">,</span><span class="si">%s</span><span class="s1">,</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert myself to string.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            str representation of a PhysicalUnit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;PhysicalUnit &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;&gt;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compare myself to other.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            The other physical unit to be compared to</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            self._factor &lt; other._factor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">_powers</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">_offset</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Incompatible units&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span>
+
+    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compare myself to other.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            The other physical unit to be compared to</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            self._factor &gt; other._factor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">_powers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Incompatible units&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test for equality.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            The other physical unit to be compared to</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            true if _factor, _offset, and _powers all match</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_offset</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_powers</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Multiply myself by other.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            The other physical unit to be compared to</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PhysicalUnit</span>
+<span class="sd">            new PhysicalUnit instance representing the product of two units</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PhysicalUnit</span><span class="p">)</span> <span class="ow">and</span>
+                                 <span class="n">other</span><span class="o">.</span><span class="n">_offset</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot multiply units with non-zero offset&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PhysicalUnit</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">_names</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span><span class="p">,</span>
+                                <span class="p">[</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_powers</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">+</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">):</span> <span class="mi">1</span><span class="p">},</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">*</span> <span class="n">other</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">*</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="fm">__rmul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+
+    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Divide myself by other.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            The other physical unit to be operated on</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PhysicalUnit</span>
+<span class="sd">            new PhysicalUnit instance representing the self/other</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PhysicalUnit</span><span class="p">)</span> <span class="ow">and</span>
+                                 <span class="n">other</span><span class="o">.</span><span class="n">_offset</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot divide units with non-zero offset&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PhysicalUnit</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">_names</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">/</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span><span class="p">,</span>
+                                <span class="p">[</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">,</span>
+                                                         <span class="n">other</span><span class="o">.</span><span class="n">_powers</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">+</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">):</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">)</span>
+
+    <span class="fm">__truediv__</span> <span class="o">=</span> <span class="n">__div__</span>   <span class="c1"># for python 3</span>
+
+    <span class="k">def</span> <span class="nf">__rdiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Divide other by myself.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            The other physical unit to be operated on</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PhysicalUnit</span>
+<span class="sd">            new PhysicalUnit instance representing the other/self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">({</span><span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">):</span> <span class="mi">1</span><span class="p">}</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">,</span>
+                            <span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span><span class="p">,</span>
+                            <span class="p">[</span><span class="o">-</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">])</span>
+
+    <span class="fm">__rtruediv__</span> <span class="o">=</span> <span class="n">__rdiv__</span>
+
+    <span class="k">def</span> <span class="nf">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Raise myself to a power.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : float or int</span>
+<span class="sd">            power to raise self by</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PhysicalUnit</span>
+<span class="sd">            new PhysicalUnit of self^other</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot exponentiate units with non-zero offset&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="n">other</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">,</span> <span class="nb">pow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_factor</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span>
+                                <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">other</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">inv_exp</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">other</span>
+            <span class="n">rounded</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">floor</span><span class="p">(</span><span class="n">inv_exp</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">inv_exp</span> <span class="o">-</span> <span class="n">rounded</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.e-10</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="o">%</span> <span class="n">rounded</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">]):</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span><span class="o">**</span><span class="n">other</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">/</span> <span class="n">rounded</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="o">%</span> <span class="n">rounded</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="o">.</span><span class="n">values</span><span class="p">()]):</span>
+                        <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">/</span> <span class="n">rounded</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">names</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">f</span> <span class="o">!=</span> <span class="mf">1.</span><span class="p">:</span>
+                            <span class="n">names</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_names</span><span class="p">):</span>
+                            <span class="n">names</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+                    <span class="k">return</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Only integer and inverse integer exponents allowed&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PhysicalUnit.in_base_units"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.in_base_units">[docs]</a>    <span class="k">def</span> <span class="nf">in_base_units</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the base unit equivalent of this unit.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PhysicalUnit</span>
+<span class="sd">            the equivalent base unit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">unit</span><span class="p">,</span> <span class="n">power</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">power</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">unit</span>
+                <span class="k">if</span> <span class="n">power</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span> <span class="o">+</span> <span class="s1">&#39;**&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="o">-</span><span class="n">power</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">+</span> <span class="n">unit</span>
+                <span class="k">if</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">+</span> <span class="s1">&#39;**&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">num</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">return</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">num</span> <span class="o">+</span> <span class="n">denom</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PhysicalUnit.conversion_tuple_to"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.conversion_tuple_to">[docs]</a>    <span class="k">def</span> <span class="nf">conversion_tuple_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the tuple of (factor, offset) for conversion.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            Another unit.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple with two floats</span>
+<span class="sd">            The conversion factor and offset from this unit to another unit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">_powers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Incompatible units&#39;</span><span class="p">)</span>
+
+        <span class="c1"># let (s1,d1) be the conversion tuple from &#39;self&#39; to base units</span>
+        <span class="c1">#   (ie. (x+d1)*s1 converts a value x from &#39;self&#39; to base units,</span>
+        <span class="c1">#   and (x/s1)-d1 converts x from base to &#39;self&#39; units)</span>
+        <span class="c1"># and (s2,d2) be the conversion tuple from &#39;other&#39; to base units</span>
+        <span class="c1"># then we want to compute the conversion tuple (S,D) from</span>
+        <span class="c1">#   &#39;self&#39; to &#39;other&#39; such that (x+D)*S converts x from &#39;self&#39;</span>
+        <span class="c1">#   units to &#39;other&#39; units</span>
+        <span class="c1"># the formula to convert x from &#39;self&#39; to &#39;other&#39; units via the</span>
+        <span class="c1">#   base units is (by definition of the conversion tuples):</span>
+        <span class="c1">#     ( ((x+d1)*s1) / s2 ) - d2</span>
+        <span class="c1">#   = ( (x+d1) * s1/s2) - d2</span>
+        <span class="c1">#   = ( (x+d1) * s1/s2 ) - (d2*s2/s1) * s1/s2</span>
+        <span class="c1">#   = ( (x+d1) - (d1*s2/s1) ) * s1/s2</span>
+        <span class="c1">#   = (x + d1 - d2*s2/s1) * s1/s2</span>
+        <span class="c1"># thus, D = d1 - d2*s2/s1 and S = s1/s2</span>
+
+        <span class="n">factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span> <span class="o">/</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">-</span> <span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_offset</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">_factor</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">factor</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PhysicalUnit.is_compatible"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.is_compatible">[docs]</a>    <span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check for compatibility with another unit.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : PhysicalUnit</span>
+<span class="sd">            Another unit.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            indicates if two units are compatible</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_powers</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_powers</span></div>
+
+<div class="viewcode-block" id="PhysicalUnit.is_dimensionless"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.is_dimensionless">[docs]</a>    <span class="k">def</span> <span class="nf">is_dimensionless</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dimensionless PQ.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            indicates if this is dimensionless</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PhysicalUnit.is_angle"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.is_angle">[docs]</a>    <span class="k">def</span> <span class="nf">is_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if this PQ is an Angle.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            indicates if this an angle type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">[</span><span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_types</span><span class="p">[</span><span class="s1">&#39;angle&#39;</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_powers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PhysicalUnit.set_name"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.set_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the name.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            the name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">=</span> <span class="n">NumberDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="PhysicalUnit.name"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.PhysicalUnit.name">[docs]</a>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the name of this unit.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            str representation of the unit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">unit</span><span class="p">,</span> <span class="n">power</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">power</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">unit</span>
+                <span class="k">if</span> <span class="n">power</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span> <span class="o">+</span> <span class="s1">&#39;**&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="o">-</span><span class="n">power</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">+</span> <span class="n">unit</span>
+                <span class="k">if</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">+</span> <span class="s1">&#39;**&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">num</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">num</span> <span class="o">+</span> <span class="n">denom</span></div></div>
+
+
+<span class="c1">####################################</span>
+<span class="c1"># Module Functions</span>
+<span class="c1">####################################</span>
+
+<span class="k">def</span> <span class="nf">_new_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">powers</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create new Unit.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The name of the new unit</span>
+<span class="sd">    factor : float</span>
+<span class="sd">        conversion factor to base units</span>
+<span class="sd">    powers : [int, ...]</span>
+<span class="sd">        power of base units</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">powers</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="add_offset_unit"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.add_offset_unit">[docs]</a><span class="k">def</span> <span class="nf">add_offset_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">baseunit</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adding Offset Unit.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The name of the unit</span>
+<span class="sd">    baseunit : str or instance of PhysicalUnit</span>
+<span class="sd">        The unit upon which this offset unit is based.</span>
+<span class="sd">    factor : str</span>
+<span class="sd">        The scaling factor used to define the new unit w.r.t. baseunit</span>
+<span class="sd">    offset : float</span>
+<span class="sd">        zero offset for new unit</span>
+<span class="sd">    comment : str</span>
+<span class="sd">        optional comment to describe unit</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">baseunit</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">baseunit</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">baseunit</span><span class="p">)</span>
+    <span class="c1"># else, baseunit should be a instance of PhysicalUnit</span>
+    <span class="c1"># names, factor, powers, offset=0</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="n">PhysicalUnit</span><span class="p">(</span><span class="n">baseunit</span><span class="o">.</span><span class="n">_names</span><span class="p">,</span> <span class="n">baseunit</span><span class="o">.</span><span class="n">_factor</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span>
+                        <span class="n">baseunit</span><span class="o">.</span><span class="n">_powers</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">set_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_factor</span> <span class="o">!=</span> <span class="n">unit</span><span class="o">.</span><span class="n">_factor</span> <span class="ow">or</span>
+                <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_powers</span> <span class="o">!=</span> <span class="n">unit</span><span class="o">.</span><span class="n">_powers</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Unit </span><span class="si">%s</span><span class="s2"> already defined with &quot;</span> <span class="o">%</span> <span class="n">name</span> <span class="o">+</span>
+                           <span class="s2">&quot;different factor or powers&quot;</span><span class="p">)</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">unit</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">help</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">comment</span><span class="p">,</span> <span class="n">unit</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="add_unit"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.add_unit">[docs]</a><span class="k">def</span> <span class="nf">add_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adding Unit.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The name of the unit being added. For example: &#39;Hz&#39;</span>
+<span class="sd">    unit : str</span>
+<span class="sd">        definition of the unit w.r.t. some other unit.  For example: &#39;1/s&#39;</span>
+<span class="sd">    comment : str</span>
+<span class="sd">        optional comment to describe unit</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">help</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">comment</span><span class="p">,</span> <span class="n">unit</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;__builtins__&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;pi&#39;</span><span class="p">:</span> <span class="n">pi</span><span class="p">},</span>
+                    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">)</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">set_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_factor</span> <span class="o">!=</span> <span class="n">unit</span><span class="o">.</span><span class="n">_factor</span> <span class="ow">or</span>
+                <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_powers</span> <span class="o">!=</span> <span class="n">unit</span><span class="o">.</span><span class="n">_powers</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Unit </span><span class="si">%s</span><span class="s2"> already defined with &quot;</span> <span class="o">%</span> <span class="n">name</span> <span class="o">+</span>
+                           <span class="s2">&quot;different factor or powers&quot;</span><span class="p">)</span>
+
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">unit</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span></div>
+
+
+<span class="n">_UNIT_LIB</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_do_nothing</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make the ConfigParser case sensitive.</span>
+
+<span class="sd">    Defines an optionxform for the units configparser that</span>
+<span class="sd">    does nothing, resulting in a case-sensitive parser.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    string : str</span>
+<span class="sd">        The string to be transformed for the ConfigParser</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        The same string that was given as a parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">string</span>
+
+
+<span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">optionxform</span> <span class="o">=</span> <span class="n">_do_nothing</span>
+
+
+<div class="viewcode-block" id="import_library"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.import_library">[docs]</a><span class="k">def</span> <span class="nf">import_library</span><span class="p">(</span><span class="n">libfilepointer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import a units library, replacing any existing definitions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    libfilepointer : file</span>
+<span class="sd">        new library file to work with</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ConfigParser</span>
+<span class="sd">        newly updated units library for the module</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_UNIT_LIB</span>
+    <span class="k">global</span> <span class="n">_UNIT_CACHE</span>
+    <span class="n">_UNIT_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">_UNIT_LIB</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">optionxform</span> <span class="o">=</span> <span class="n">_do_nothing</span>
+
+    <span class="c1"># New in Python 3.2: read_file() replaces readfp().</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">libfilepointer</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">readfp</span><span class="p">(</span><span class="n">libfilepointer</span><span class="p">)</span>
+
+    <span class="n">required_base_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="s1">&#39;mass&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature&#39;</span><span class="p">,</span> <span class="s1">&#39;angle&#39;</span><span class="p">]</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="c1"># used to is_angle() and other base type checking</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_types</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">prefixes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">help</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">factor</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;prefixes&#39;</span><span class="p">):</span>
+        <span class="n">factor</span><span class="p">,</span> <span class="n">comma</span><span class="p">,</span> <span class="n">comment</span> <span class="o">=</span> <span class="n">factor</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">prefixes</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+
+    <span class="n">base_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;base_units&#39;</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">unit_type</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;base_units&#39;</span><span class="p">)):</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_types</span><span class="p">[</span><span class="n">unit_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">powers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base_list</span><span class="p">)</span>
+        <span class="n">powers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># print &#39;%20s&#39;%unit_type, powers</span>
+        <span class="c1"># cant use add_unit because no base units exist yet</span>
+        <span class="n">_new_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">powers</span><span class="p">)</span>
+        <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="c1"># test for required base types</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">utype</span> <span class="k">for</span> <span class="n">utype</span> <span class="ow">in</span> <span class="n">required_base_types</span>
+               <span class="k">if</span> <span class="n">utype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">base_types</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Not all required base type were present in the&#39;</span>
+                         <span class="s1">&#39; config file. missing: </span><span class="si">%s</span><span class="s1">, at least </span><span class="si">%s</span><span class="s1"> required&#39;</span>
+                         <span class="o">%</span> <span class="p">(</span><span class="n">missing</span><span class="p">,</span> <span class="n">required_base_types</span><span class="p">))</span>
+
+    <span class="c1"># Explicit unitless &#39;unit&#39;.</span>
+    <span class="n">_new_unit</span><span class="p">(</span><span class="s1">&#39;unitless&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">base_list</span><span class="p">))</span>
+    <span class="n">_update_library</span><span class="p">(</span><span class="n">_UNIT_LIB</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_UNIT_LIB</span></div>
+
+
+<div class="viewcode-block" id="update_library"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.update_library">[docs]</a><span class="k">def</span> <span class="nf">update_library</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update units in current library from `filename`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : string or file</span>
+<span class="sd">        Source of units configuration data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rU&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="n">filename</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+        <span class="n">cfg</span><span class="o">.</span><span class="n">optionxform</span> <span class="o">=</span> <span class="n">_do_nothing</span>
+
+        <span class="c1"># New in Python 3.2: read_file() replaces readfp().</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">readfp</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+
+        <span class="n">_update_library</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">inp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">_update_library</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update library from :class:`ConfigParser` `cfg`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cfg : ConfigParser</span>
+<span class="sd">        ConfigParser loaded with unit_lib.ini data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">retry1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">unit</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">unit</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">unit</span><span class="p">,</span> <span class="n">comment</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">add_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">comment</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+                <span class="n">retry1</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">comment</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">factor</span><span class="p">,</span> <span class="n">baseunit</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">comment</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">add_offset_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">baseunit</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">offset</span><span class="p">),</span>
+                                <span class="n">comment</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+                <span class="n">retry1</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">baseunit</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">offset</span><span class="p">),</span>
+                            <span class="n">comment</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unit </span><span class="si">%r</span><span class="s1"> definition </span><span class="si">%r</span><span class="s1"> has invalid format&#39;</span><span class="p">,</span>
+                             <span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+    <span class="n">retry_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">last_retry_count</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">while</span> <span class="n">last_retry_count</span> <span class="o">!=</span> <span class="n">retry_count</span> <span class="ow">and</span> <span class="n">retry1</span><span class="p">:</span>
+        <span class="n">last_retry_count</span> <span class="o">=</span> <span class="n">retry_count</span>
+        <span class="n">retry_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">retry2</span> <span class="o">=</span> <span class="n">retry1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">retry2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">comment</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">add_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">comment</span><span class="p">)</span>
+                    <span class="n">retry1</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+                    <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">name</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">baseunit</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">comment</span> <span class="o">=</span> <span class="n">data</span>
+                    <span class="n">add_offset_unit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">baseunit</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">comment</span><span class="p">)</span>
+                    <span class="n">retry1</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+                    <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">retry1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The following units were not defined because they&#39;</span>
+                         <span class="s1">&#39; could not be resolved as a function of any other&#39;</span>
+                         <span class="s1">&#39; defined units:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">retry1</span><span class="p">])</span>
+
+
+<span class="n">_UNIT_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">_find_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find unit helper function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    unit : str</span>
+<span class="sd">        str representing the desired unit</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    PhysicalUnit</span>
+<span class="sd">        The actual unit object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">unit</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="n">_UNIT_CACHE</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">unit</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;__builtins__&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+
+                <span class="c1"># This unit might include prefixed units that aren&#39;t in the</span>
+                <span class="c1"># unit_table. We must parse them ALL and add them to the</span>
+                <span class="c1"># unit_table.</span>
+
+                <span class="c1"># First character of a unit is always alphabet or $.</span>
+                <span class="c1"># Remaining characters may include numbers.</span>
+                <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;[A-Z,a-z]</span><span class="si">{1}</span><span class="s1">[A-Z,a-z,0-9]*&#39;</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">regex</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+                    <span class="c1"># check if this was a compound unit, so each</span>
+                    <span class="c1"># substring might be a unit</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="nb">eval</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;__builtins__&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+                             <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># maybe is a prefixed unit then</span>
+                        <span class="c1"># check for single letter prefix before unit</span>
+                        <span class="k">if</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">prefixes</span> <span class="ow">and</span>
+                           <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">):</span>
+                            <span class="n">add_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">prefixes</span><span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span>
+                                     <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+
+                        <span class="c1"># check for double letter prefix before unit</span>
+                        <span class="k">elif</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">prefixes</span> <span class="ow">and</span>
+                             <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span> <span class="ow">in</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">):</span>
+                            <span class="n">add_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">prefixes</span><span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]]</span> <span class="o">*</span>
+                                     <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">:]])</span>
+
+                        <span class="c1"># no prefixes found, unknown unit</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="kc">None</span>
+                            <span class="c1"># raise ValueError(&quot;no unit named &#39;%s&#39; is defined&quot;</span>
+                            <span class="c1">#                  % item)</span>
+
+                <span class="n">unit</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;__builtins__&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span> <span class="n">_UNIT_LIB</span><span class="o">.</span><span class="n">unit_table</span><span class="p">)</span>
+
+            <span class="n">_UNIT_CACHE</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">unit</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">PhysicalUnit</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">unit</span>
+
+
+<div class="viewcode-block" id="valid_units"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.valid_units">[docs]</a><span class="k">def</span> <span class="nf">valid_units</span><span class="p">(</span><span class="n">unit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return whether the given units are vaild.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    unit : str</span>
+<span class="sd">        String representation of the units.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        True for valid, False for invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="conversion_to_base_units"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.conversion_to_base_units">[docs]</a><span class="k">def</span> <span class="nf">conversion_to_base_units</span><span class="p">(</span><span class="n">units</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the offset and scaler to convert from given units to base units.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    units : str</span>
+<span class="sd">        String representation of the units.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Offset to get to default unit: m (length), s(time), etc.</span>
+<span class="sd">    float</span>
+<span class="sd">        Mult. factor to get to default unit: m (length), s(time), etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">units</span><span class="p">:</span>  <span class="c1"># dimensionless</span>
+        <span class="k">return</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">unit</span><span class="o">.</span><span class="n">_offset</span><span class="p">,</span> <span class="n">unit</span><span class="o">.</span><span class="n">_factor</span></div>
+
+
+<div class="viewcode-block" id="is_compatible"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.is_compatible">[docs]</a><span class="k">def</span> <span class="nf">is_compatible</span><span class="p">(</span><span class="n">old_units</span><span class="p">,</span> <span class="n">new_units</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether units are compatible in terms of base units.</span>
+
+<span class="sd">    e.g., m/s is compatible with ft/hr</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    old_units : str</span>
+<span class="sd">        original units as a string.</span>
+<span class="sd">    new_units : str or None</span>
+<span class="sd">        new units to return the value in; if None, return in standard units.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        whether the units are compatible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">old_units</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">new_units</span><span class="p">:</span>  <span class="c1"># dimensionless</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="n">old_unit</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">old_units</span><span class="p">)</span>
+    <span class="n">new_unit</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">new_units</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">old_unit</span><span class="o">.</span><span class="n">is_compatible</span><span class="p">(</span><span class="n">new_unit</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_conversion"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.get_conversion">[docs]</a><span class="k">def</span> <span class="nf">get_conversion</span><span class="p">(</span><span class="n">old_units</span><span class="p">,</span> <span class="n">new_units</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return conversion factor and offset between old and new units.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    old_units : str</span>
+<span class="sd">        original units as a string.</span>
+<span class="sd">    new_units : str</span>
+<span class="sd">        new units to return the value in.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (float, float)</span>
+<span class="sd">        Conversion factor and offset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_physical_units</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">new_units</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_physical_units</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert to new units: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_units</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">old_units</span><span class="p">)</span><span class="o">.</span><span class="n">conversion_tuple_to</span><span class="p">(</span><span class="n">new_physical_units</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="convert_units"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/units.html#openmdao.utils.units.convert_units">[docs]</a><span class="k">def</span> <span class="nf">convert_units</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">old_units</span><span class="p">,</span> <span class="n">new_units</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Take a given quantity and return in different units.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    val : float</span>
+<span class="sd">        value in original units.</span>
+<span class="sd">    old_units : str or None</span>
+<span class="sd">        original units as a string or None.</span>
+<span class="sd">    new_units : str or None</span>
+<span class="sd">        new units to return the value in or None.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        value in new units.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">old_units</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">new_units</span><span class="p">:</span>  <span class="c1"># one side has no units</span>
+        <span class="k">return</span> <span class="n">val</span>
+
+    <span class="n">old_unit</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">old_units</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_units</span><span class="p">:</span>
+        <span class="n">new_unit</span> <span class="o">=</span> <span class="n">_find_unit</span><span class="p">(</span><span class="n">new_units</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_unit</span> <span class="o">=</span> <span class="n">old_unit</span><span class="o">.</span><span class="n">in_base_units</span><span class="p">()</span>
+
+    <span class="p">(</span><span class="n">factor</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span> <span class="o">=</span> <span class="n">old_unit</span><span class="o">.</span><span class="n">conversion_tuple_to</span><span class="p">(</span><span class="n">new_unit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">val</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span> <span class="n">factor</span></div>
+
+
+<span class="c1"># Load in the default unit library</span>
+<span class="n">file_path</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span>
+                 <span class="s1">&#39;unit_library.ini&#39;</span><span class="p">))</span>
+<span class="k">with</span> <span class="n">file_path</span> <span class="k">as</span> <span class="n">default_lib</span><span class="p">:</span>
+    <span class="n">import_library</span><span class="p">(</span><span class="n">default_lib</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">returned</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">conversion_to_base_units</span><span class="p">(</span><span class="s1">&#39;cm&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.0e-2</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">conversion_to_base_units</span><span class="p">(</span><span class="s1">&#39;km&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.0e3</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">convert_units</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;mm&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mf">3.0e-3</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">convert_units</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;mm&#39;</span><span class="p">,</span> <span class="s1">&#39;cm&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mf">3.0e-1</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">convert_units</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;degC&#39;</span><span class="p">,</span> <span class="s1">&#39;degF&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mf">212.</span><span class="p">))</span>
+    <span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">returned</span><span class="p">,</span> <span class="s1">&#39;should be&#39;</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

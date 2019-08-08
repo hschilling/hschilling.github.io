@@ -1,0 +1,401 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>array_utils.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="assert_utils.py" href="assert_utils.html" />
+    <link rel="prev" title="openmdao.utils" href="../openmdao.utils.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="assert_utils.html" title="assert_utils.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.utils.html" title="openmdao.utils"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.array_utils">
+<span id="array-utils-py"></span><span id="openmdao-utils-array-utils-py"></span><span id="index-0"></span><h1>array_utils.py<a class="headerlink" href="#module-openmdao.utils.array_utils" title="Permalink to this headline">¶</a></h1>
+<p>Utils for dealing with arrays.</p>
+<dl class="function">
+<dt id="openmdao.utils.array_utils.array_connection_compatible">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">array_connection_compatible</code><span class="sig-paren">(</span><em>shape1</em>, <em>shape2</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#array_connection_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.array_connection_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the two arrays shapes are compatible.</p>
+<p>Array shapes are compatible if the underlying data has the same size and is
+stored in the same contiguous order for the two shapes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>shape1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of int</span></dt>
+<dd><p class="first last">Shape of the first array.</p>
+</dd>
+<dt><strong>shape2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of int</span></dt>
+<dd><p class="first last">Shape of the second array.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd><p class="first last">True if the two shapes are compatible for connection, else False.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.array_viz">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">array_viz</code><span class="sig-paren">(</span><em>arr</em>, <em>prob=None</em>, <em>of=None</em>, <em>wrt=None</em>, <em>stream=&lt;_io.TextIOWrapper name='&lt;stdout&gt;' mode='w' encoding='UTF-8'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#array_viz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.array_viz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display the structure of a boolean array in a compact form.</p>
+<p>If prob, of, and wrt are supplied, print the name of the response alongside
+each row and print the names of the design vars, aligned with each column, at
+the bottom.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>arr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Array being visualized.</p>
+</dd>
+<dt><strong>prob</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Problem or None</span></dt>
+<dd><p class="first last">Problem object.</p>
+</dd>
+<dt><strong>of</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str or None</span></dt>
+<dd><p class="first last">Names of response variables used in derivative calculation.</p>
+</dd>
+<dt><strong>wrt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str or None</span></dt>
+<dd><p class="first last">Names of design variables used in derivative calculation.</p>
+</dd>
+<dt><strong>stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like</span></dt>
+<dd><p class="first last">Stream where output will be written.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.convert_neg">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">convert_neg</code><span class="sig-paren">(</span><em>arr</em>, <em>dim</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#convert_neg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.convert_neg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert any negative indices into their positive equivalent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>arr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Array having negative indices converted.</p>
+</dd>
+<dt><strong>dim</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Dimension of the array.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">The converted array.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.evenly_distrib_idxs">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">evenly_distrib_idxs</code><span class="sig-paren">(</span><em>num_divisions</em>, <em>arr_size</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#evenly_distrib_idxs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.evenly_distrib_idxs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return evenly distributed entries for the given array size.</p>
+<p>Given a number of divisions and the size of an array, chop the array up
+into pieces according to number of divisions, keeping the distribution
+of entries as even as possible.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>num_divisions</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of parts to divide the array into.</p>
+</dd>
+<dt><strong>arr_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of entries in the array.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>tuple</strong></dt>
+<dd><p class="first last">a tuple of (sizes, offsets), where sizes and offsets contain values for all
+divisions.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.get_input_idx_split">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">get_input_idx_split</code><span class="sig-paren">(</span><em>full_idxs</em>, <em>inputs</em>, <em>outputs</em>, <em>use_full_cols</em>, <em>is_total</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#get_input_idx_split"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.get_input_idx_split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split an array of indices into vec outs + ins into two arrays of indices into outs and ins.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>full_idxs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Indices into the full array (which could be outs + ins or just ins)</p>
+</dd>
+<dt><strong>inputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">Inputs vector.</p>
+</dd>
+<dt><strong>outputs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Vector</span></dt>
+<dd><p class="first last">Outputs vector.</p>
+</dd>
+<dt><strong>use_full_cols</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True,  full idxs are into the full outs + ins vector.</p>
+</dd>
+<dt><strong>is_total</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, total derivatives are being computed and wrt vector is the outputs vector.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list of tuples</strong></dt>
+<dd><p class="first last">Each tuple is of the form (array, idxs).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.sub2full_indices">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">sub2full_indices</code><span class="sig-paren">(</span><em>all_names</em>, <em>matching_names</em>, <em>sizes</em>, <em>idx_map=()</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#sub2full_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.sub2full_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the given indices converted into indices into the full vector.</p>
+<p>This routine is used to compute how column indices computed during coloring of a subset
+of the jacobian map to column indices corresponding to the full jacobian.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>all_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ordered iter of str</span></dt>
+<dd><p class="first last">An ordered list of variable names containing all variables of the appropriate type.</p>
+</dd>
+<dt><strong>matching_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">set of str</span></dt>
+<dd><p class="first last">Subset of all_names that make up the reduced index set.</p>
+</dd>
+<dt><strong>sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray of int</span></dt>
+<dd><p class="first last">Array of variable sizes.</p>
+</dd>
+<dt><strong>idx_map</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Mapping of var name to some subset of its full indices.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Full array indices that map to the provided subset of variables.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.take_nth">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">take_nth</code><span class="sig-paren">(</span><em>rank</em>, <em>size</em>, <em>seq</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#take_nth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.take_nth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate returning every nth value.</p>
+<p>Return an iterator over the sequence that returns every
+nth element of seq based on the given rank within a group of
+the given size.  For example, if size = 2, a rank of 0 returns
+even indexed elements and a rank of 1 returns odd indexed elements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">MPI rank of this process.</p>
+</dd>
+<dt><strong>size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Size of the array we’re taking nth entries from.</p>
+</dd>
+<dt><strong>seq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iter</span></dt>
+<dd><p class="first last">Iterator containing the values being returned.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.array_utils.tile_sparse_jac">
+<code class="descclassname">openmdao.utils.array_utils.</code><code class="descname">tile_sparse_jac</code><span class="sig-paren">(</span><em>data</em>, <em>rows</em>, <em>cols</em>, <em>nrow</em>, <em>ncol</em>, <em>num_nodes</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/array_utils.html#tile_sparse_jac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.array_utils.tile_sparse_jac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assemble arrays necessary to define a COO sparse jacobian for a vectorized component.</p>
+<p>These arrays can also be passed to csc_matrix or csr_matrix to create CSC and CSR sparse
+matrices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Array of values</p>
+</dd>
+<dt><strong>rows</strong> <span class="classifier-delimiter">:</span> <span class="classifier">index array</span></dt>
+<dd><p class="first last">Array of row indices.</p>
+</dd>
+<dt><strong>cols</strong> <span class="classifier-delimiter">:</span> <span class="classifier">index array</span></dt>
+<dd><p class="first last">Array of column indices.</p>
+</dd>
+<dt><strong>nrow</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of rows in sub jacobian.</p>
+</dd>
+<dt><strong>ncol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of columns in sub jacobian.</p>
+</dd>
+<dt><strong>num_nodes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of vectorized copies to tile.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray, ndarray, ndarray</strong></dt>
+<dd><p class="first last">Arrays to define a COO sparse jacobian of size num_nodes*nrow by num_nodes*ncol</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="assert_utils.html" title="assert_utils.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../openmdao.utils.html" title="openmdao.utils"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

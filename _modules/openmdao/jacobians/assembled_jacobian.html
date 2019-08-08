@@ -1,0 +1,596 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.jacobians.assembled_jacobian &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.jacobians.assembled_jacobian</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the AssembledJacobian class.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.jacobians.jacobian</span> <span class="k">import</span> <span class="n">Jacobian</span>
+<span class="kn">from</span> <span class="nn">openmdao.matrices.dense_matrix</span> <span class="k">import</span> <span class="n">DenseMatrix</span>
+<span class="kn">from</span> <span class="nn">openmdao.matrices.coo_matrix</span> <span class="k">import</span> <span class="n">COOMatrix</span>
+<span class="kn">from</span> <span class="nn">openmdao.matrices.csr_matrix</span> <span class="k">import</span> <span class="n">CSRMatrix</span>
+<span class="kn">from</span> <span class="nn">openmdao.matrices.csc_matrix</span> <span class="k">import</span> <span class="n">CSCMatrix</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.units</span> <span class="k">import</span> <span class="n">get_conversion</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.array_utils</span> <span class="k">import</span> <span class="n">_flatten_src_indices</span>
+
+<span class="n">_empty_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="AssembledJacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.AssembledJacobian">[docs]</a><span class="k">class</span> <span class="nc">AssembledJacobian</span><span class="p">(</span><span class="n">Jacobian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble a global &lt;Jacobian&gt;.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _view_ranges : dict</span>
+<span class="sd">        Maps system pathnames to jacobian sub-view ranges</span>
+<span class="sd">    _int_mtx : &lt;Matrix&gt;</span>
+<span class="sd">        Global internal Jacobian.</span>
+<span class="sd">    _ext_mtx : {str: &lt;Matrix&gt;, ...}</span>
+<span class="sd">        External Jacobian for each viewing subsystem.</span>
+<span class="sd">    _mask_caches : dict</span>
+<span class="sd">        Contains masking arrays for when a subset of the variables are present in a vector, keyed</span>
+<span class="sd">        by the input._names set.</span>
+<span class="sd">    _matrix_class : type</span>
+<span class="sd">        Class used to create Matrix objects.</span>
+<span class="sd">    _subjac_iters : dict</span>
+<span class="sd">        Mapping of system pathname to tuple of lists of absolute key tuples used to index into</span>
+<span class="sd">        the jacobian.</span>
+<span class="sd">    _in_ranges : dict</span>
+<span class="sd">        Column ranges for inputs.</span>
+<span class="sd">    _out_ranges : dict</span>
+<span class="sd">        Row ranges for outputs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AssembledJacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.AssembledJacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix_class</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        matrix_class : type</span>
+<span class="sd">            Class to use to create internal matrices.</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">Component</span>
+        <span class="c1"># avoid circular imports</span>
+        <span class="kn">from</span> <span class="nn">openmdao.core.component</span> <span class="k">import</span> <span class="n">Component</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">AssembledJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_view_ranges</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_caches</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_matrix_class</span> <span class="o">=</span> <span class="n">matrix_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_in_ranges</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out_ranges</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subjac_iters</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_ranges</span><span class="p">(</span><span class="n">system</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_init_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute row/col ranges for variables of the owning system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ranges</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="s1">&#39;output&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_in_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ranges</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="s1">&#39;input&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allocate the global matrices.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># var_indices are the *global* indices for variables on this proc</span>
+        <span class="n">is_top</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2meta</span>
+        <span class="n">all_meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span> <span class="o">=</span> <span class="n">int_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matrix_class</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+        <span class="n">ext_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matrix_class</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">abs2idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2idx</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">]</span>
+        <span class="n">out_sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="n">in_sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+        <span class="n">out_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out_ranges</span>
+        <span class="n">in_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_ranges</span>
+
+        <span class="n">abs2prom_out</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="n">conns</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">Component</span><span class="p">)</span> <span class="k">else</span> <span class="n">system</span><span class="o">.</span><span class="n">_conn_global_abs_in2out</span>
+        <span class="n">abs_key2shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs_key2shape</span>
+
+        <span class="c1"># create the matrix subjacs</span>
+        <span class="k">for</span> <span class="n">abs_key</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span><span class="p">):</span>
+            <span class="n">res_abs_name</span><span class="p">,</span> <span class="n">wrt_abs_name</span> <span class="o">=</span> <span class="n">abs_key</span>
+            <span class="c1"># because self._subjacs_info is shared among all &#39;related&#39; assembled jacs,</span>
+            <span class="c1"># we use out_ranges (and later in_ranges) to weed out keys outside of this jac</span>
+            <span class="k">if</span> <span class="n">res_abs_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out_ranges</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">res_offset</span><span class="p">,</span> <span class="n">res_end</span> <span class="o">=</span> <span class="n">out_ranges</span><span class="p">[</span><span class="n">res_abs_name</span><span class="p">]</span>
+            <span class="n">res_size</span> <span class="o">=</span> <span class="n">res_end</span> <span class="o">-</span> <span class="n">res_offset</span>
+
+            <span class="k">if</span> <span class="n">wrt_abs_name</span> <span class="ow">in</span> <span class="n">abs2prom_out</span><span class="p">:</span>
+                <span class="n">out_offset</span><span class="p">,</span> <span class="n">out_end</span> <span class="o">=</span> <span class="n">out_ranges</span><span class="p">[</span><span class="n">wrt_abs_name</span><span class="p">]</span>
+                <span class="n">out_size</span> <span class="o">=</span> <span class="n">out_end</span> <span class="o">-</span> <span class="n">out_offset</span>
+                <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">res_size</span><span class="p">,</span> <span class="n">out_size</span><span class="p">)</span>
+                <span class="n">int_mtx</span><span class="o">.</span><span class="n">_add_submat</span><span class="p">(</span><span class="n">abs_key</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">res_offset</span><span class="p">,</span> <span class="n">out_offset</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">wrt_abs_name</span> <span class="ow">in</span> <span class="n">in_ranges</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">wrt_abs_name</span> <span class="ow">in</span> <span class="n">conns</span><span class="p">:</span>  <span class="c1"># connected input</span>
+                    <span class="n">out_abs_name</span> <span class="o">=</span> <span class="n">conns</span><span class="p">[</span><span class="n">wrt_abs_name</span><span class="p">]</span>
+                    <span class="n">meta_in</span> <span class="o">=</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">wrt_abs_name</span><span class="p">]</span>
+                    <span class="n">all_out_meta</span> <span class="o">=</span> <span class="n">all_meta</span><span class="p">[</span><span class="n">out_abs_name</span><span class="p">]</span>
+                    <span class="c1"># calculate unit conversion</span>
+                    <span class="n">in_units</span> <span class="o">=</span> <span class="n">meta_in</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+                    <span class="n">out_units</span> <span class="o">=</span> <span class="n">all_out_meta</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">in_units</span> <span class="ow">and</span> <span class="n">out_units</span> <span class="ow">and</span> <span class="n">in_units</span> <span class="o">!=</span> <span class="n">out_units</span><span class="p">:</span>
+                        <span class="n">factor</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_conversion</span><span class="p">(</span><span class="n">out_units</span><span class="p">,</span> <span class="n">in_units</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">factor</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+                            <span class="n">factor</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">factor</span> <span class="o">=</span> <span class="kc">None</span>
+
+                    <span class="n">out_offset</span><span class="p">,</span> <span class="n">out_end</span> <span class="o">=</span> <span class="n">out_ranges</span><span class="p">[</span><span class="n">out_abs_name</span><span class="p">]</span>
+                    <span class="n">out_size</span> <span class="o">=</span> <span class="n">out_end</span> <span class="o">-</span> <span class="n">out_offset</span>
+                    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">res_size</span><span class="p">,</span> <span class="n">out_size</span><span class="p">)</span>
+                    <span class="n">src_indices</span> <span class="o">=</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">wrt_abs_name</span><span class="p">][</span><span class="s1">&#39;src_indices&#39;</span><span class="p">]</span>
+
+                    <span class="c1"># need to add an entry for d(output)/d(source)</span>
+                    <span class="c1"># instead of d(output)/d(input)</span>
+                    <span class="n">abs_key2</span> <span class="o">=</span> <span class="p">(</span><span class="n">res_abs_name</span><span class="p">,</span> <span class="n">out_abs_name</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">src_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">shape</span> <span class="o">=</span> <span class="n">abs_key2shape</span><span class="p">(</span><span class="n">abs_key2</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">src_indices</span> <span class="o">=</span> <span class="n">_flatten_src_indices</span><span class="p">(</span><span class="n">src_indices</span><span class="p">,</span> <span class="n">meta_in</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">],</span>
+                                                               <span class="n">all_out_meta</span><span class="p">[</span><span class="s1">&#39;global_shape&#39;</span><span class="p">],</span>
+                                                               <span class="n">all_out_meta</span><span class="p">[</span><span class="s1">&#39;global_size&#39;</span><span class="p">])</span>
+                    <span class="n">int_mtx</span><span class="o">.</span><span class="n">_add_submat</span><span class="p">(</span><span class="n">abs_key</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">res_offset</span><span class="p">,</span> <span class="n">out_offset</span><span class="p">,</span>
+                                        <span class="n">src_indices</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_top</span><span class="p">:</span>  <span class="c1"># input is connected to something outside current system</span>
+                    <span class="n">in_offset</span><span class="p">,</span> <span class="n">in_end</span> <span class="o">=</span> <span class="n">in_ranges</span><span class="p">[</span><span class="n">wrt_abs_name</span><span class="p">]</span>
+                    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">res_size</span><span class="p">,</span> <span class="n">in_end</span> <span class="o">-</span> <span class="n">in_offset</span><span class="p">)</span>
+                    <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_add_submat</span><span class="p">(</span><span class="n">abs_key</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">res_offset</span><span class="p">,</span> <span class="n">in_offset</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">out_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">out_sizes</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:])</span>
+
+        <span class="n">int_mtx</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="n">out_size</span><span class="p">,</span> <span class="n">out_size</span><span class="p">,</span> <span class="n">in_ranges</span><span class="p">,</span> <span class="n">out_ranges</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_submats</span><span class="p">:</span>
+            <span class="n">in_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_sizes</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="n">out_size</span><span class="p">,</span> <span class="n">in_size</span><span class="p">,</span> <span class="n">in_ranges</span><span class="p">,</span> <span class="n">out_ranges</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ext_mtx</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span> <span class="o">=</span> <span class="n">ext_mtx</span>
+
+    <span class="k">def</span> <span class="nf">_init_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine the _ext_mtx for a sub-view of the assembled jacobian.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : &lt;System&gt;</span>
+<span class="sd">            The system being solved using a sub-view of the jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abs2meta</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs2meta</span>
+        <span class="n">in_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_ranges</span>
+        <span class="n">out_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out_ranges</span>
+
+        <span class="n">input_names</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs_names</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">input_names</span><span class="p">:</span>
+            <span class="n">min_in_offset</span> <span class="o">=</span> <span class="n">in_ranges</span><span class="p">[</span><span class="n">input_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">max_in_offset</span> <span class="o">=</span> <span class="n">in_ranges</span><span class="p">[</span><span class="n">input_names</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">min_in_offset</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span>
+            <span class="n">max_in_offset</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">output_names</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">output_names</span><span class="p">:</span>
+            <span class="n">min_res_offset</span> <span class="o">=</span> <span class="n">out_ranges</span><span class="p">[</span><span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">max_res_offset</span> <span class="o">=</span> <span class="n">out_ranges</span><span class="p">[</span><span class="n">output_names</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">min_res_offset</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span>
+            <span class="n">max_res_offset</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_view_ranges</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">min_res_offset</span><span class="p">,</span> <span class="n">max_res_offset</span><span class="p">,</span> <span class="n">min_in_offset</span><span class="p">,</span> <span class="n">max_in_offset</span><span class="p">)</span>
+
+        <span class="n">ext_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matrix_class</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+        <span class="n">conns</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">Component</span><span class="p">)</span> <span class="k">else</span> <span class="n">system</span><span class="o">.</span><span class="n">_conn_global_abs_in2out</span>
+
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+        <span class="n">abs2idx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_allprocs_abs2idx</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">]</span>
+        <span class="n">in_offset</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:</span><span class="n">abs2idx</span><span class="p">[</span><span class="n">n</span><span class="p">]])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span>
+                     <span class="n">system</span><span class="o">.</span><span class="n">_var_abs_names</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">conns</span><span class="p">}</span>
+
+        <span class="n">subjacs_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span>
+
+        <span class="n">sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">system_iter</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">include_self</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="n">Component</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">res_abs_name</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">_var_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]:</span>
+                <span class="n">res_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">[</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:</span><span class="n">abs2idx</span><span class="p">[</span><span class="n">res_abs_name</span><span class="p">]])</span>
+                <span class="n">res_size</span> <span class="o">=</span> <span class="n">abs2meta</span><span class="p">[</span><span class="n">res_abs_name</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">in_abs_name</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">_var_abs_names</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">in_abs_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">conns</span><span class="p">:</span>  <span class="c1"># unconnected input</span>
+                        <span class="n">abs_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">res_abs_name</span><span class="p">,</span> <span class="n">in_abs_name</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subjacs_info</span><span class="p">:</span>
+                            <span class="k">continue</span>
+
+                        <span class="n">info</span> <span class="o">=</span> <span class="n">subjacs_info</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span>
+                        <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_add_submat</span><span class="p">(</span><span class="n">abs_key</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">res_offset</span> <span class="o">-</span> <span class="n">ranges</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                            <span class="n">in_offset</span><span class="p">[</span><span class="n">in_abs_name</span><span class="p">]</span> <span class="o">-</span> <span class="n">ranges</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_submats</span><span class="p">:</span>
+            <span class="n">sizes</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span>
+            <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+            <span class="n">out_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="n">in_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="n">out_size</span><span class="p">,</span> <span class="n">in_size</span><span class="p">,</span> <span class="n">in_ranges</span><span class="p">,</span> <span class="n">out_ranges</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ext_mtx</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span> <span class="o">=</span> <span class="n">ext_mtx</span>
+
+    <span class="k">def</span> <span class="nf">_get_subjac_iters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="k">global</span> <span class="n">_empty_dict</span>
+
+        <span class="n">subjac_iters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjac_iters</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">subjac_iters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">int_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span>
+            <span class="n">ext_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span>
+            <span class="n">subjacs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_subjacs_info</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">Component</span><span class="p">):</span>
+                <span class="n">global_conns</span> <span class="o">=</span> <span class="n">_empty_dict</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">global_conns</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_conn_global_abs_in2out</span>
+
+            <span class="n">output_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+
+            <span class="n">rev_conns</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tgt</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">global_conns</span><span class="p">):</span>
+                <span class="n">rev_conns</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tgt</span><span class="p">)</span>
+
+            <span class="c1"># This is the level where the AssembledJacobian is slotted.</span>
+            <span class="c1"># The of and wrt are the inputs and outputs that it sees, if they are in the subjacs.</span>
+            <span class="c1"># TODO - For top level FD, the subjacs might not contain all derivs.</span>
+
+            <span class="n">iters</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">iters_in_ext</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="n">subjacs</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">wrtname</span> <span class="o">=</span> <span class="n">abs_key</span>
+                <span class="k">if</span> <span class="n">wrtname</span> <span class="ow">in</span> <span class="n">output_names</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="n">int_mtx</span><span class="o">.</span><span class="n">_submats</span><span class="p">:</span>
+                        <span class="n">iters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">abs_key</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># This happens when the src is an indepvarcomp that is</span>
+                        <span class="c1"># contained in the system.</span>
+                        <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span> <span class="o">=</span> <span class="n">abs_key</span>
+                        <span class="k">if</span> <span class="n">wrt</span> <span class="ow">in</span> <span class="n">rev_conns</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">tgt</span> <span class="ow">in</span> <span class="n">rev_conns</span><span class="p">[</span><span class="n">wrt</span><span class="p">]:</span>
+                                <span class="k">if</span> <span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">tgt</span><span class="p">)</span> <span class="ow">in</span> <span class="n">int_mtx</span><span class="o">.</span><span class="n">_submats</span><span class="p">:</span>
+                                    <span class="n">iters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">abs_key</span><span class="p">)</span>
+                                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># wrt is an input</span>
+                    <span class="k">if</span> <span class="n">wrtname</span> <span class="ow">in</span> <span class="n">global_conns</span><span class="p">:</span>
+                        <span class="n">iters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">abs_key</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">ext_mtx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">iters_in_ext</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">abs_key</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subjac_iters</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span> <span class="o">=</span> <span class="n">subjac_iters</span> <span class="o">=</span> <span class="p">(</span><span class="n">iters</span><span class="p">,</span> <span class="n">iters_in_ext</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">subjac_iters</span>
+
+    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the user&#39;s sub-Jacobians and set into the global matrix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System that is updating this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># _initialize has been delayed until the first _update call</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_view</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+
+        <span class="n">int_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span>
+        <span class="n">ext_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span>
+        <span class="n">subjacs</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_subjacs_info</span>
+
+        <span class="n">iters</span><span class="p">,</span> <span class="n">iters_in_ext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_subjac_iters</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+
+        <span class="n">int_mtx</span><span class="o">.</span><span class="n">_pre_update</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ext_mtx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_pre_update</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomize</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">iters</span><span class="p">:</span>
+                <span class="n">int_mtx</span><span class="o">.</span><span class="n">_update_submat</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomize_subjac</span><span class="p">(</span><span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">key</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">iters_in_ext</span><span class="p">:</span>
+                <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_update_submat</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomize_subjac</span><span class="p">(</span><span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">key</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">iters</span><span class="p">:</span>
+                <span class="n">int_mtx</span><span class="o">.</span><span class="n">_update_submat</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">iters_in_ext</span><span class="p">:</span>
+                <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_update_submat</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">subjacs</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+
+        <span class="n">int_mtx</span><span class="o">.</span><span class="n">_post_update</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ext_mtx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_post_update</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">d_inputs</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">,</span> <span class="n">d_residuals</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute matrix-vector product.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System that is updating this jacobian.</span>
+<span class="sd">        d_inputs : Vector</span>
+<span class="sd">            inputs linear vector.</span>
+<span class="sd">        d_outputs : Vector</span>
+<span class="sd">            outputs linear vector.</span>
+<span class="sd">        d_residuals : Vector</span>
+<span class="sd">            residuals linear vector.</span>
+<span class="sd">        mode : str</span>
+<span class="sd">            &#39;fwd&#39; or &#39;rev&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">int_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span>
+        <span class="n">ext_mtx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span>
+
+        <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_view_ranges</span><span class="p">[</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">]</span>
+        <span class="n">int_ranges</span> <span class="o">=</span> <span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ranges</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ranges</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ranges</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># TODO: remove the _unscaled_context call here (and in DictionaryJacobian)</span>
+        <span class="c1"># and do it outside so that we can avoid an unnecessary extra unscaling/rescaling</span>
+        <span class="c1"># in _apply_linear</span>
+        <span class="k">with</span> <span class="n">system</span><span class="o">.</span><span class="n">_unscaled_context</span><span class="p">(</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">d_outputs</span><span class="p">],</span> <span class="n">residuals</span><span class="o">=</span><span class="p">[</span><span class="n">d_residuals</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">d_outputs</span><span class="o">.</span><span class="n">_names</span> <span class="ow">and</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span>
+                    <span class="n">d_residuals</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">int_mtx</span><span class="o">.</span><span class="n">_prod</span><span class="p">(</span><span class="n">d_outputs</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">int_ranges</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">ext_mtx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span> <span class="ow">and</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span>
+
+                    <span class="c1"># Masking</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_caches</span><span class="p">[</span><span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">mask</span> <span class="o">=</span> <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_create_mask_cache</span><span class="p">(</span><span class="n">d_inputs</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_caches</span><span class="p">[</span><span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+
+                    <span class="n">d_residuals</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_prod</span><span class="p">(</span><span class="n">d_inputs</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                <span class="n">dresids</span> <span class="o">=</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_data</span>
+                <span class="k">if</span> <span class="n">d_outputs</span><span class="o">.</span><span class="n">_names</span> <span class="ow">and</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span>
+                    <span class="n">d_outputs</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">int_mtx</span><span class="o">.</span><span class="n">_prod</span><span class="p">(</span><span class="n">dresids</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">int_ranges</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">ext_mtx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span> <span class="ow">and</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span>
+
+                    <span class="c1"># Masking</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_caches</span><span class="p">[</span><span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">mask</span> <span class="o">=</span> <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_create_mask_cache</span><span class="p">(</span><span class="n">d_inputs</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_caches</span><span class="p">[</span><span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+
+                    <span class="n">d_inputs</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="n">ext_mtx</span><span class="o">.</span><span class="n">_prod</span><span class="p">(</span><span class="n">dresids</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AssembledJacobian.set_complex_step_mode"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.AssembledJacobian.set_complex_step_mode">[docs]</a>    <span class="k">def</span> <span class="nf">set_complex_step_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turn on or off complex stepping mode.</span>
+
+<span class="sd">        When turned on, the value in each subjac is cast as complex, and when turned</span>
+<span class="sd">        off, they are returned to real values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        active : bool</span>
+<span class="sd">            Complex mode flag; set to True prior to commencing complex step.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AssembledJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_complex_step_mode</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_int_mtx</span><span class="o">.</span><span class="n">set_complex_step_mode</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">mtx</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ext_mtx</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">mtx</span><span class="p">:</span>
+                    <span class="n">mtx</span><span class="o">.</span><span class="n">set_complex_step_mode</span><span class="p">(</span><span class="n">active</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DenseJacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.DenseJacobian">[docs]</a><span class="k">class</span> <span class="nc">DenseJacobian</span><span class="p">(</span><span class="n">AssembledJacobian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble dense global &lt;Jacobian&gt;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DenseJacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.DenseJacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DenseJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">DenseMatrix</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="COOJacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.COOJacobian">[docs]</a><span class="k">class</span> <span class="nc">COOJacobian</span><span class="p">(</span><span class="n">AssembledJacobian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble sparse global &lt;Jacobian&gt; in Coordinate list format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="COOJacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.COOJacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">COOJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">COOMatrix</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CSRJacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.CSRJacobian">[docs]</a><span class="k">class</span> <span class="nc">CSRJacobian</span><span class="p">(</span><span class="n">AssembledJacobian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble sparse global &lt;Jacobian&gt; in Compressed Row Storage format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CSRJacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.CSRJacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CSRJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">CSRMatrix</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CSCJacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.CSCJacobian">[docs]</a><span class="k">class</span> <span class="nc">CSCJacobian</span><span class="p">(</span><span class="n">AssembledJacobian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble sparse global &lt;Jacobian&gt; in Compressed Col Storage format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CSCJacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/assembled_jacobian.html#openmdao.jacobians.assembled_jacobian.CSCJacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CSCJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">CSCMatrix</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

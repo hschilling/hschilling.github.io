@@ -1,0 +1,186 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Release Your Project on pypi &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Upgrading from OpenMDAO 1" href="../api_translation.html" />
+    <link rel="prev" title="Setting Up Travis CI for Your Project" href="travis.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../api_translation.html" title="Upgrading from OpenMDAO 1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="travis.html" title="Setting Up Travis CI for Your Project"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Building a Tool on Top of OpenMDAO</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="release-your-project-on-pypi">
+<span id="release-process"></span><h1>Release Your Project on pypi<a class="headerlink" href="#release-your-project-on-pypi" title="Permalink to this headline">¶</a></h1>
+<p>Releasing your project’s versions on the Python Packaging Index is a great way to keep your users up-to-date, and
+a convenient way to make your project installable with one easy <cite>pip install &lt;yourproject&gt;</cite> command. Here are the instructions
+to make that release happen.</p>
+<div class="section" id="git">
+<h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<p>Make sure everything you want for the release is merged in on Github and has tested successfully on your CI.
+Get your local git repo’s master clean and up to date with <cite>username/projectname&#64;master</cite>; run tests locally.
+If you pass, great, move on.</p>
+<p>Create a local branch named &lt;release number&gt;  (e.g. <cite>1.0.0</cite>), and switch to that branch:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">1.0.0</span></code></p>
+<p>Now update your version number in the <code class="code docutils literal notranslate"><span class="pre">projectname/__init__.py</span></code> file.</p>
+<p>Then, it’s time to write some release notes.  Write release notes in a consistent format,
+latest release notes go on top of the file, not at the end. If it’s your first release, create a
+<code class="code docutils literal notranslate"><span class="pre">release-notes.txt</span></code> at the project’s root level.</p>
+<p>Once again, run all the tests and build the docs, and pass both before continuing.  Make any fixes that need to be done until it all passes.
+Seriously. Actually do this.</p>
+<p>Commit changes with a descriptive message.
+<code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-am</span> <span class="pre">“Updating</span> <span class="pre">versions/notes</span> <span class="pre">for</span> <span class="pre">1.0.0</span> <span class="pre">release”</span></code></p>
+<p>Then push these changes (version number, release notes) to your own fork:
+<code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">myfork</span> <span class="pre">1.0.0</span></code></p>
+<p>Using github.com, create a pull request from, for example,</p>
+<p><code class="code docutils literal notranslate"><span class="pre">username/repo&#64;1.0.0</span> <span class="pre">to</span> <span class="pre">projectname/repo&#64;master</span></code></p>
+<p>Upon creation of this pull request, continuous integration testing will run.  Wait for it to complete successfully.
+If it works, MERGE IT. If it doesn’t work and there’s a problem, close this pull request, fix the problem with a different
+branch and issue a different pull request until that issue is fixed.  Then, basically start this whole process over.</p>
+<p>Once the release pull request from your release branch has been accepted, then another set of post-merge CI tests have passed,
+it’s time to “tag” the release. This must happen before any other commits hit master.
+Typing <code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span></code> will show all the tags that exist up until now.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span> <span class="pre">1.0.0</span></code> will locally create a new tag, 1.0.0.  You can <code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span></code> again to see that it exists now.
+For minor changes to the code, we will increment the third digit, e.g. 1.0.1
+For API changes to the code, we will increment the second digit, e.g. 1.1.0</p>
+<p>Now we need to get that tag up to master:  (Assuming you’re a repository owner for your project, and that <cite>origin</cite> is set to projectname/repo.)
+<code class="code docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">--tags</span></code>
+When you do this, you should see the tags upload to the intended repository.</p>
+<p>You can also go to github.com website and look at OpenMDAO repo…in the same dropdown as branches, there’s a tab for tags also.  Make sure your new tag is there.</p>
+</div>
+<div class="section" id="pypi">
+<h2>pypi<a class="headerlink" href="#pypi" title="Permalink to this headline">¶</a></h2>
+<p>pypi is the <a class="reference external" href="http:pypi.org">Python Package Index</a>, a repository of software for the Python programming language.
+Package authors make their projects pip-installable by using PyPI to distribute their software.</p>
+<p>To make your project pip-installable, go sign up for an account at pypi.org.  Set up your account with information about your project.</p>
+<p>To be able to do any of the following commands on pypi, you’ll need to create, on your local machine, a  ~/.pypirc file that
+looks like this: (your username will obviously be different)</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">distutils</span><span class="p">]</span>
+<span class="n">index</span><span class="o">-</span><span class="n">servers</span> <span class="o">=</span>
+  <span class="n">pypi</span>
+
+<span class="p">[</span><span class="n">pypi</span><span class="p">]</span>
+<span class="n">repository</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">upload</span><span class="o">.</span><span class="n">pypi</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">legacy</span><span class="o">/</span>
+<span class="n">username</span><span class="p">:</span> <span class="n">uname</span>
+<span class="n">password</span><span class="p">:</span> <span class="n">xxxxxxxxxxxxxxxx</span>
+</pre></div>
+</div>
+<p>OK, so how do we USE this to make a release?</p>
+<p>First, we need to build a source distribution, so from the top level, where setup.py lives:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">sdist</span></code></p>
+<p>This will create a <cite>dist/</cite> directory, in which lies a file, <cite>projectname-1.0.0.tar.gz</cite>.</p>
+<p>Finally, you will upload this file to pypi using <a class="reference external" href="https://pypi.org/project/twine">twine</a>
+(you may need to <cite>pip install twine</cite> if you don’t have it in your current environment). Here’s an example upload command:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">twine</span> <span class="pre">upload</span> <span class="pre">dist/projectname-1.0.0.tar.gz</span></code></p>
+<p>You should be able to watch the progress as the dist file uploads. Once the upload completes, go to your page at pypi.org,
+and make sure the new release is visible there.</p>
+<p>Finally, tell the team and users that your release is done.  Wait for everything to fall apart.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../api_translation.html" title="Upgrading from OpenMDAO 1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="travis.html" title="Setting Up Travis CI for Your Project"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Building a Tool on Top of OpenMDAO</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

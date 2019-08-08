@@ -1,0 +1,1342 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.core.driver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.core.driver</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define a base class for all Drivers in OpenMDAO.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="n">string_types</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.total_jac</span> <span class="k">import</span> <span class="n">_TotalJacInfo</span>
+<span class="kn">from</span> <span class="nn">openmdao.recorders.recording_manager</span> <span class="k">import</span> <span class="n">RecordingManager</span>
+<span class="kn">from</span> <span class="nn">openmdao.recorders.recording_iteration_stack</span> <span class="k">import</span> <span class="n">Recording</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.record_util</span> <span class="k">import</span> <span class="n">create_local_meta</span><span class="p">,</span> <span class="n">check_path</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">simple_warning</span><span class="p">,</span> <span class="n">warn_deprecation</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.options_dictionary</span> <span class="k">import</span> <span class="n">OptionsDictionary</span>
+<span class="kn">import</span> <span class="nn">openmdao.utils.coloring</span> <span class="k">as</span> <span class="nn">coloring_mod</span>
+
+
+<span class="k">def</span> <span class="nf">_check_debug_print_opts_valid</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">opts</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check validity of debug_print option for Driver.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The name of the option.</span>
+<span class="sd">    opts : list</span>
+<span class="sd">        The value of the debug_print option set by the user.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Option &#39;</span><span class="si">%s</span><span class="s2">&#39; with value </span><span class="si">%s</span><span class="s2"> is not a list.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
+
+    <span class="n">_valid_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;desvars&#39;</span><span class="p">,</span> <span class="s1">&#39;nl_cons&#39;</span><span class="p">,</span> <span class="s1">&#39;ln_cons&#39;</span><span class="p">,</span> <span class="s1">&#39;objs&#39;</span><span class="p">,</span> <span class="s1">&#39;totals&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">opt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_valid_opts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Option &#39;</span><span class="si">%s</span><span class="s2">&#39; contains value &#39;</span><span class="si">%s</span><span class="s2">&#39; which is not one of </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">_valid_opts</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="Driver"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver">[docs]</a><span class="k">class</span> <span class="nc">Driver</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Top-level container for the systems and drivers.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fail : bool</span>
+<span class="sd">        Reports whether the driver ran successfully.</span>
+<span class="sd">    iter_count : int</span>
+<span class="sd">        Keep track of iterations for case recording.</span>
+<span class="sd">    options : &lt;OptionsDictionary&gt;</span>
+<span class="sd">        Dictionary with general pyoptsparse options.</span>
+<span class="sd">    recording_options : &lt;OptionsDictionary&gt;</span>
+<span class="sd">        Dictionary with driver recording options.</span>
+<span class="sd">    cite : str</span>
+<span class="sd">        Listing of relevant citations that should be referenced when</span>
+<span class="sd">        publishing work that uses this class.</span>
+<span class="sd">    _problem : &lt;Problem&gt;</span>
+<span class="sd">        Pointer to the containing problem.</span>
+<span class="sd">    supports : &lt;OptionsDictionary&gt;</span>
+<span class="sd">        Provides a consistent way for drivers to declare what features they support.</span>
+<span class="sd">    _designvars : dict</span>
+<span class="sd">        Contains all design variable info.</span>
+<span class="sd">    _designvars_discrete : list</span>
+<span class="sd">        List of design variables that are discrete.</span>
+<span class="sd">    _cons : dict</span>
+<span class="sd">        Contains all constraint info.</span>
+<span class="sd">    _objs : dict</span>
+<span class="sd">        Contains all objective info.</span>
+<span class="sd">    _responses : dict</span>
+<span class="sd">        Contains all response info.</span>
+<span class="sd">    _remote_dvs : dict</span>
+<span class="sd">        Dict of design variables that are remote on at least one proc. Values are</span>
+<span class="sd">        (owning rank, size).</span>
+<span class="sd">    _remote_cons : dict</span>
+<span class="sd">        Dict of constraints that are remote on at least one proc. Values are</span>
+<span class="sd">        (owning rank, size).</span>
+<span class="sd">    _remote_objs : dict</span>
+<span class="sd">        Dict of objectives that are remote on at least one proc. Values are</span>
+<span class="sd">        (owning rank, size).</span>
+<span class="sd">    _rec_mgr : &lt;RecordingManager&gt;</span>
+<span class="sd">        Object that manages all recorders added to this driver.</span>
+<span class="sd">    _coloring_info : dict</span>
+<span class="sd">        Metadata pertaining to total coloring.</span>
+<span class="sd">    _total_jac_sparsity : dict, str, or None</span>
+<span class="sd">        Specifies sparsity of sub-jacobians of the total jacobian. Only used by pyOptSparseDriver.</span>
+<span class="sd">    _res_jacs : dict</span>
+<span class="sd">        Dict of sparse subjacobians for use with certain optimizers, e.g. pyOptSparseDriver.</span>
+<span class="sd">    _total_jac : _TotalJacInfo or None</span>
+<span class="sd">        Cached total jacobian handling object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Driver.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the driver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Driver options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span> <span class="o">=</span> <span class="n">RecordingManager</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_objs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_responses</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Driver options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">OptionsDictionary</span><span class="p">(</span><span class="n">parent_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;debug_print&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">check_valid</span><span class="o">=</span><span class="n">_check_debug_print_opts_valid</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;List of what type of Driver variables to print at each &quot;</span>
+                                  <span class="s2">&quot;iteration. Valid items in list are &#39;desvars&#39;, &#39;ln_cons&#39;, &quot;</span>
+                                  <span class="s2">&quot;&#39;nl_cons&#39;, &#39;objs&#39;, &#39;totals&#39;&quot;</span><span class="p">,</span>
+                             <span class="n">default</span><span class="o">=</span><span class="p">[])</span>
+
+        <span class="c1"># Case recording options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span> <span class="o">=</span> <span class="n">OptionsDictionary</span><span class="p">(</span><span class="n">parent_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_model_metadata&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Record metadata for all Systems in the model&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to record design variables at the &#39;</span>
+                                            <span class="s1">&#39;driver level&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_responses&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to record responses at the driver level&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_objectives&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to record objectives at the driver level&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_constraints&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to record constraints at the &#39;</span>
+                                            <span class="s1">&#39;driver level&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;includes&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Patterns for variables to include in recording&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;excludes&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Patterns for vars to exclude in recording &#39;</span>
+                                            <span class="s1">&#39;(processed post-includes)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_derivatives&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to record derivatives at the driver &#39;</span>
+                                            <span class="s1">&#39;level&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;record_inputs&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to record inputs at the driver level&#39;</span><span class="p">)</span>
+
+        <span class="c1"># What the driver supports.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span> <span class="o">=</span> <span class="n">OptionsDictionary</span><span class="p">(</span><span class="n">parent_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;inequality_constraints&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;equality_constraints&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;linear_constraints&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;two_sided_constraints&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;multiple_objectives&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;integer_design_vars&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;gradients&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;active_set&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;simultaneous_derivatives&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;total_jac_sparsity&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cite</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span> <span class="o">=</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_res_jacs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fail</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_declare_options</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">msginfo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return info to prepend to messages.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Info to prepend to messages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+
+<div class="viewcode-block" id="Driver.add_recorder"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.add_recorder">[docs]</a>    <span class="k">def</span> <span class="nf">add_recorder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recorder</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a recorder to the driver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recorder : CaseRecorder</span>
+<span class="sd">           A recorder instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Driver.cleanup"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clean up resources prior to exit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># shut down all recorders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+
+<span class="sd">        This is optionally implemented by subclasses of Driver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_setup_comm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any driver-specific setup of communicators for the model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        comm : MPI.Comm or &lt;FakeComm&gt; or None</span>
+<span class="sd">            The communicator for the Problem.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        MPI.Comm or &lt;FakeComm&gt; or None</span>
+<span class="sd">            The communicator for the Problem model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">comm</span>
+
+    <span class="k">def</span> <span class="nf">_setup_driver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the driver for execution.</span>
+
+<span class="sd">        This is the final thing to run during setup.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        problem : &lt;Problem&gt;</span>
+<span class="sd">            Pointer to the containing problem.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">_recording_iter</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_scaling</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;scaler&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_responses</span><span class="p">)])</span> <span class="ow">or</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;scaler&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span><span class="p">)])</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Determine if any design variables are discrete.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span> <span class="o">=</span> <span class="p">[</span><span class="n">dv</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span>
+                                     <span class="k">if</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_discrete_outputs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;integer_design_vars&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Discrete design variables are not supported by this driver: &quot;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">con_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">obj_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">dv_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remote_dvs</span> <span class="o">=</span> <span class="n">dv_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remote_cons</span> <span class="o">=</span> <span class="n">con_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remote_objs</span> <span class="o">=</span> <span class="n">obj_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Now determine if later we&#39;ll need to allgather cons, objs, or desvars.</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">_subsystems_allprocs</span><span class="p">:</span>
+            <span class="n">local_out_vars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_views</span><span class="p">)</span>
+            <span class="n">remote_dvs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span><span class="p">)</span> <span class="o">-</span> <span class="n">local_out_vars</span>
+            <span class="n">remote_cons</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cons</span><span class="p">)</span> <span class="o">-</span> <span class="n">local_out_vars</span>
+            <span class="n">remote_objs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">)</span> <span class="o">-</span> <span class="n">local_out_vars</span>
+            <span class="n">all_remote_vois</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">allgather</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">remote_dvs</span><span class="p">,</span> <span class="n">remote_cons</span><span class="p">,</span> <span class="n">remote_objs</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">rem_dvs</span><span class="p">,</span> <span class="n">rem_cons</span><span class="p">,</span> <span class="n">rem_objs</span> <span class="ow">in</span> <span class="n">all_remote_vois</span><span class="p">:</span>
+                <span class="n">con_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rem_cons</span><span class="p">)</span>
+                <span class="n">obj_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rem_objs</span><span class="p">)</span>
+                <span class="n">dv_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rem_dvs</span><span class="p">)</span>
+
+            <span class="c1"># If we have remote VOIs, pick an owning rank for each and use that</span>
+            <span class="c1"># to bcast to others later</span>
+            <span class="n">owning_ranks</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_owning_rank</span>
+            <span class="n">sizes</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">vname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_var_allprocs_abs_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]):</span>
+                <span class="n">owner</span> <span class="o">=</span> <span class="n">owning_ranks</span><span class="p">[</span><span class="n">vname</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">vname</span> <span class="ow">in</span> <span class="n">dv_set</span><span class="p">:</span>
+                    <span class="n">dv_dict</span><span class="p">[</span><span class="n">vname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">sizes</span><span class="p">[</span><span class="n">owner</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">vname</span> <span class="ow">in</span> <span class="n">con_set</span><span class="p">:</span>
+                    <span class="n">con_dict</span><span class="p">[</span><span class="n">vname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">sizes</span><span class="p">[</span><span class="n">owner</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">vname</span> <span class="ow">in</span> <span class="n">obj_set</span><span class="p">:</span>
+                    <span class="n">obj_dict</span><span class="p">[</span><span class="n">vname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">sizes</span><span class="p">[</span><span class="n">owner</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remote_responses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_cons</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remote_responses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_remote_objs</span><span class="p">)</span>
+
+        <span class="c1"># set up simultaneous deriv coloring</span>
+        <span class="k">if</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_use_total_sparsity</span><span class="p">:</span>
+            <span class="n">coloring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_static_coloring</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">coloring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;simultaneous_derivatives&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">_owns_approx_jac</span><span class="p">:</span>
+                    <span class="n">coloring</span><span class="o">.</span><span class="n">_check_config_partial</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">coloring</span><span class="o">.</span><span class="n">_check_config_total</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup_simul_coloring</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_check_for_missing_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check for missing objective and raise error if no objectives found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Driver requires objective to be declared&quot;</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_vars_to_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recording_options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get variables to record based on recording options.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recording_options : &lt;OptionsDictionary&gt;</span>
+<span class="sd">            Dictionary with recording options.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">           Dictionary containing lists of variables to record.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+            <span class="c1"># TODO: Eventually, we think we can get rid of this next check.</span>
+            <span class="c1">#       But to be safe, we are leaving it in there.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">is_active</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;RecordingManager.startup should never be called when &quot;</span>
+                                   <span class="s2">&quot;running in parallel on an inactive System&quot;</span><span class="p">)</span>
+            <span class="n">rrank</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+            <span class="n">rowned</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_owning_rank</span>
+
+        <span class="n">incl</span> <span class="o">=</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;includes&#39;</span><span class="p">]</span>
+        <span class="n">excl</span> <span class="o">=</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;excludes&#39;</span><span class="p">]</span>
+
+        <span class="c1"># includes and excludes for outputs are specified using promoted names</span>
+        <span class="c1"># NOTE: only local var names are in abs2prom, all will be gathered later</span>
+        <span class="n">abs2prom</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+
+        <span class="n">all_desvars</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span>
+                       <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="ow">and</span> <span class="n">check_path</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">,</span> <span class="kc">True</span><span class="p">)}</span>
+        <span class="n">all_objectives</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objs</span>
+                          <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="ow">and</span> <span class="n">check_path</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">,</span> <span class="kc">True</span><span class="p">)}</span>
+        <span class="n">all_constraints</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span>
+                           <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="ow">and</span> <span class="n">check_path</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">,</span> <span class="kc">True</span><span class="p">)}</span>
+
+        <span class="c1"># design variables, objectives and constraints are always in the options</span>
+        <span class="n">mydesvars</span> <span class="o">=</span> <span class="n">myobjectives</span> <span class="o">=</span> <span class="n">myconstraints</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                <span class="n">mydesvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_desvars</span> <span class="k">if</span> <span class="n">rrank</span> <span class="o">==</span> <span class="n">rowned</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mydesvars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_desvars</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_objectives&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                <span class="n">myobjectives</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_objectives</span> <span class="k">if</span> <span class="n">rrank</span> <span class="o">==</span> <span class="n">rowned</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">myobjectives</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_objectives</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_constraints&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                <span class="n">myconstraints</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_constraints</span> <span class="k">if</span> <span class="n">rrank</span> <span class="o">==</span> <span class="n">rowned</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">myconstraints</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_constraints</span><span class="p">)</span>
+
+        <span class="n">filtered_vars_to_record</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;des&#39;</span><span class="p">:</span> <span class="n">mydesvars</span><span class="p">,</span>
+            <span class="s1">&#39;obj&#39;</span><span class="p">:</span> <span class="n">myobjectives</span><span class="p">,</span>
+            <span class="s1">&#39;con&#39;</span><span class="p">:</span> <span class="n">myconstraints</span>
+        <span class="p">}</span>
+
+        <span class="c1"># responses (if in options)</span>
+        <span class="k">if</span> <span class="s1">&#39;record_responses&#39;</span> <span class="ow">in</span> <span class="n">recording_options</span><span class="p">:</span>
+            <span class="n">myresponses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_responses&#39;</span><span class="p">]:</span>
+                <span class="n">myresponses</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_responses</span>
+                               <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="ow">and</span> <span class="n">check_path</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">,</span> <span class="kc">True</span><span class="p">)}</span>
+
+                <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                    <span class="n">myresponses</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">myresponses</span> <span class="k">if</span> <span class="n">rrank</span> <span class="o">==</span> <span class="n">rowned</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+
+            <span class="n">filtered_vars_to_record</span><span class="p">[</span><span class="s1">&#39;res&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">myresponses</span><span class="p">)</span>
+
+        <span class="c1"># inputs (if in options)</span>
+        <span class="k">if</span> <span class="s1">&#39;record_inputs&#39;</span> <span class="ow">in</span> <span class="n">recording_options</span><span class="p">:</span>
+            <span class="n">myinputs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_inputs&#39;</span><span class="p">]:</span>
+                <span class="n">myinputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_inputs</span> <span class="k">if</span> <span class="n">check_path</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">)}</span>
+
+                <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                    <span class="c1"># gather the variables from all ranks to rank 0</span>
+                    <span class="n">all_vars</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">myinputs</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">myinputs</span> <span class="o">=</span> <span class="n">all_vars</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">all_vars</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="n">myinputs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+                    <span class="n">myinputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">myinputs</span> <span class="k">if</span> <span class="n">rrank</span> <span class="o">==</span> <span class="n">rowned</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+
+            <span class="n">filtered_vars_to_record</span><span class="p">[</span><span class="s1">&#39;in&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">myinputs</span><span class="p">)</span>
+
+        <span class="c1"># system outputs</span>
+        <span class="n">myoutputs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">incl</span><span class="p">:</span>
+            <span class="n">myoutputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_outputs</span>
+                         <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">abs2prom</span> <span class="ow">and</span> <span class="n">check_path</span><span class="p">(</span><span class="n">abs2prom</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">)}</span>
+
+            <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                <span class="c1"># gather the variables from all ranks to rank 0</span>
+                <span class="n">all_vars</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">myoutputs</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">myoutputs</span> <span class="o">=</span> <span class="n">all_vars</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">all_vars</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="n">myoutputs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+            <span class="c1"># de-duplicate</span>
+            <span class="n">myoutputs</span> <span class="o">=</span> <span class="n">myoutputs</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">all_desvars</span><span class="p">,</span> <span class="n">all_objectives</span><span class="p">,</span> <span class="n">all_constraints</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+                <span class="n">myoutputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">myoutputs</span> <span class="k">if</span> <span class="n">rrank</span> <span class="o">==</span> <span class="n">rowned</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+
+        <span class="n">filtered_vars_to_record</span><span class="p">[</span><span class="s1">&#39;sys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">myoutputs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filtered_vars_to_record</span>
+
+    <span class="k">def</span> <span class="nf">_setup_recording</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up case recording.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filtered_vars_to_record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_vars_to_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">startup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># record the system metadata to the recorders attached to this Driver</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_model_metadata&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">system_iter</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">include_self</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">record_metadata</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_voi_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">remote_vois</span><span class="p">,</span> <span class="n">driver_scaling</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the value of a variable of interest (objective, constraint, or design var).</span>
+
+<span class="sd">        This will retrieve the value if the VOI is remote.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Name of the variable of interest.</span>
+<span class="sd">        meta : dict</span>
+<span class="sd">            Metadata for the variable of interest.</span>
+<span class="sd">        remote_vois : dict</span>
+<span class="sd">            Dict containing (owning_rank, size) for all remote vois of a particular</span>
+<span class="sd">            type (design var, constraint, or objective).</span>
+<span class="sd">        driver_scaling : bool</span>
+<span class="sd">            When True, return values that are scaled according to either the adder and scaler or</span>
+<span class="sd">            the ref and ref0 values that were specified when add_design_var, add_objective, and</span>
+<span class="sd">            add_constraint were called on the model. Default is True.</span>
+<span class="sd">        ignore_indices : bool</span>
+<span class="sd">            Set to True if the full array is desired, not just those indicated by indices.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or ndarray</span>
+<span class="sd">            The value of the named variable of interest.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">comm</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">comm</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_views_flat</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">remote_vois</span><span class="p">:</span>
+            <span class="n">owner</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">remote_vois</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">owner</span> <span class="o">==</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ignore_indices</span><span class="p">:</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">vec</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">vec</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">indices</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ignore_indices</span><span class="p">):</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+            <span class="n">comm</span><span class="o">.</span><span class="n">Bcast</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">owner</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_discrete_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+                <span class="c1"># At present, only integers are supported by OpenMDAO drivers.</span>
+                <span class="c1"># We check the values here.</span>
+                <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Only integer scalars or ndarrays are supported as values for &quot;</span> <span class="o">+</span> \
+                      <span class="s2">&quot;discrete variables when used as a design variable. &quot;</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot;A value of type &#39;</span><span class="si">{}</span><span class="s2">&#39; was specified.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                    <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot;An array of type &#39;</span><span class="si">{}</span><span class="s2">&#39; was specified.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                    <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
+
+                <span class="k">if</span> <span class="n">valid</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ignore_indices</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">vec</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">vec</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">indices</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_scaling</span> <span class="ow">and</span> <span class="n">driver_scaling</span><span class="p">:</span>
+            <span class="c1"># Scale design variable values</span>
+            <span class="n">adder</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;adder&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">adder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">+=</span> <span class="n">adder</span>
+
+            <span class="n">scaler</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;scaler&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">scaler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">*=</span> <span class="n">scaler</span>
+
+        <span class="k">return</span> <span class="n">val</span>
+
+<div class="viewcode-block" id="Driver.get_design_var_values"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.get_design_var_values">[docs]</a>    <span class="k">def</span> <span class="nf">get_design_var_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">driver_scaling</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the design variable values.</span>
+
+<span class="sd">        This is called to gather the initial design variable state.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filter : list</span>
+<span class="sd">            List of desvar names used by recorders.</span>
+<span class="sd">        driver_scaling : bool</span>
+<span class="sd">            When True, return values that are scaled according to either the adder and scaler or</span>
+<span class="sd">            the ref and ref0 values that were specified when add_design_var, add_objective, and</span>
+<span class="sd">            add_constraint were called on the model. Default is True.</span>
+<span class="sd">        ignore_indices : bool</span>
+<span class="sd">            Set to True if the full array is desired, not just those indicated by indices.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">           Dictionary containing values of each design variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="n">dvs</span> <span class="o">=</span> <span class="nb">filter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># use all the designvars</span>
+            <span class="n">dvs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_voi_val</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_dvs</span><span class="p">,</span>
+                                     <span class="n">driver_scaling</span><span class="o">=</span><span class="n">driver_scaling</span><span class="p">,</span>
+                                     <span class="n">ignore_indices</span><span class="o">=</span><span class="n">ignore_indices</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="Driver.set_design_var"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.set_design_var">[docs]</a>    <span class="k">def</span> <span class="nf">set_design_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value of a design variable.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Global pathname of the design variable.</span>
+<span class="sd">        value : float or ndarray</span>
+<span class="sd">            Value for the design variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_dvs</span> <span class="ow">and</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_owning_rank</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">problem</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span><span class="p">:</span>
+            <span class="n">problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_discrete_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">desvar</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_views_flat</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">desvar</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+            <span class="c1"># Undo driver scaling when setting design var values into model.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_scaling</span><span class="p">:</span>
+                <span class="n">scaler</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;scaler&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">scaler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">desvar</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">scaler</span>
+
+                <span class="n">adder</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;adder&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">adder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">desvar</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">-=</span> <span class="n">adder</span></div>
+
+<div class="viewcode-block" id="Driver.get_response_values"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.get_response_values">[docs]</a>    <span class="k">def</span> <span class="nf">get_response_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return response values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filter : list</span>
+<span class="sd">            List of response names used by recorders.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">           Dictionary containing values of each response.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="n">resps</span> <span class="o">=</span> <span class="nb">filter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_responses</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_voi_val</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_responses</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_objs</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">resps</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="Driver.get_objective_values"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.get_objective_values">[docs]</a>    <span class="k">def</span> <span class="nf">get_objective_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">driver_scaling</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return objective values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        driver_scaling : bool</span>
+<span class="sd">            When True, return values that are scaled according to either the adder and scaler or</span>
+<span class="sd">            the ref and ref0 values that were specified when add_design_var, add_objective, and</span>
+<span class="sd">            add_constraint were called on the model. Default is True.</span>
+<span class="sd">        filter : list</span>
+<span class="sd">            List of objective names used by recorders.</span>
+<span class="sd">        ignore_indices : bool</span>
+<span class="sd">            Set to True if the full array is desired, not just those indicated by indices.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">           Dictionary containing values of each objective.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="n">objs</span> <span class="o">=</span> <span class="nb">filter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">objs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objs</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_voi_val</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_objs</span><span class="p">,</span>
+                                     <span class="n">driver_scaling</span><span class="o">=</span><span class="n">driver_scaling</span><span class="p">,</span>
+                                     <span class="n">ignore_indices</span><span class="o">=</span><span class="n">ignore_indices</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="Driver.get_constraint_values"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.get_constraint_values">[docs]</a>    <span class="k">def</span> <span class="nf">get_constraint_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctype</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">lintype</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">driver_scaling</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return constraint values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctype : string</span>
+<span class="sd">            Default is &#39;all&#39;. Optionally return just the inequality constraints</span>
+<span class="sd">            with &#39;ineq&#39; or the equality constraints with &#39;eq&#39;.</span>
+<span class="sd">        lintype : string</span>
+<span class="sd">            Default is &#39;all&#39;. Optionally return just the linear constraints</span>
+<span class="sd">            with &#39;linear&#39; or the nonlinear constraints with &#39;nonlinear&#39;.</span>
+<span class="sd">        driver_scaling : bool</span>
+<span class="sd">            When True, return values that are scaled according to either the adder and scaler or</span>
+<span class="sd">            the ref and ref0 values that were specified when add_design_var, add_objective, and</span>
+<span class="sd">            add_constraint were called on the model. Default is True.</span>
+<span class="sd">        filter : list</span>
+<span class="sd">            List of constraint names used by recorders.</span>
+<span class="sd">        ignore_indices : bool</span>
+<span class="sd">            Set to True if the full array is desired, not just those indicated by indices.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">           Dictionary containing values of each constraint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cons</span> <span class="o">=</span> <span class="nb">filter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span>
+
+        <span class="n">con_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cons</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">lintype</span> <span class="o">==</span> <span class="s1">&#39;linear&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">lintype</span> <span class="o">==</span> <span class="s1">&#39;nonlinear&#39;</span> <span class="ow">and</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">ctype</span> <span class="o">==</span> <span class="s1">&#39;eq&#39;</span> <span class="ow">and</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">ctype</span> <span class="o">==</span> <span class="s1">&#39;ineq&#39;</span> <span class="ow">and</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">con_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_voi_val</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_cons</span><span class="p">,</span>
+                                               <span class="n">driver_scaling</span><span class="o">=</span><span class="n">driver_scaling</span><span class="p">,</span>
+                                               <span class="n">ignore_indices</span><span class="o">=</span><span class="n">ignore_indices</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">con_dict</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_ordered_nl_responses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the names of nonlinear responses in the order used by the driver.</span>
+
+<span class="sd">        Default order is objectives followed by nonlinear constraints.  This is used for</span>
+<span class="sd">        simultaneous derivative coloring and sparsity determination.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of str</span>
+<span class="sd">            The nonlinear response names in order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objs</span><span class="p">)</span>
+        <span class="n">order</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cons</span><span class="p">)</span>
+                     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="s1">&#39;linear&#39;</span> <span class="ow">in</span> <span class="n">meta</span> <span class="ow">and</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">order</span>
+
+    <span class="k">def</span> <span class="nf">_update_voi_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Collect response and design var metadata from the model and size desvars and responses.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model : System</span>
+<span class="sd">            The System that represents the entire model.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Total size of responses, with linear constraints excluded.</span>
+<span class="sd">        int</span>
+<span class="sd">            Total size of design vars.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_objs</span> <span class="o">=</span> <span class="n">objs</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span> <span class="o">=</span> <span class="n">cons</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_responses</span> <span class="o">=</span> <span class="n">resps</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_responses</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">resps</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;con&#39;</span><span class="p">:</span>
+                <span class="n">cons</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">objs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="n">response_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">resps</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ordered_nl_responses</span><span class="p">())</span>
+
+        <span class="c1"># Gather up the information for design vars.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span> <span class="o">=</span> <span class="n">designvars</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">(</span><span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">desvar_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="n">designvars</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">response_size</span><span class="p">,</span> <span class="n">desvar_size</span>
+
+<div class="viewcode-block" id="Driver.run"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute this driver.</span>
+
+<span class="sd">        The base `Driver` just runs the model. All other drivers overload</span>
+<span class="sd">        this method.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            Failure flag; True if failed to converge, False is successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_compute_totals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">of</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s1">&#39;flat_dict&#39;</span><span class="p">,</span> <span class="n">global_names</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute derivatives of desired quantities with respect to desired inputs.</span>
+
+<span class="sd">        All derivatives are returned using driver scaling.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        of : list of variable name strings or None</span>
+<span class="sd">            Variables whose derivatives will be computed. Default is None, which</span>
+<span class="sd">            uses the driver&#39;s objectives and constraints.</span>
+<span class="sd">        wrt : list of variable name strings or None</span>
+<span class="sd">            Variables with respect to which the derivatives will be computed.</span>
+<span class="sd">            Default is None, which uses the driver&#39;s desvars.</span>
+<span class="sd">        return_format : string</span>
+<span class="sd">            Format to return the derivatives. Default is a &#39;flat_dict&#39;, which</span>
+<span class="sd">            returns them in a dictionary whose keys are tuples of form (of, wrt). For</span>
+<span class="sd">            the scipy optimizer, &#39;array&#39; is also supported.</span>
+<span class="sd">        global_names : bool</span>
+<span class="sd">            Set to True when passing in global names to skip some translation steps.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        derivs : object</span>
+<span class="sd">            Derivatives in form requested by &#39;return_format&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
+        <span class="n">total_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac</span>
+        <span class="n">debug_print</span> <span class="o">=</span> <span class="s1">&#39;totals&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span>
+                                                                   <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">debug_print</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="s1">&#39;Driver total derivatives for iteration: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_owns_approx_jac</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;_compute_totals_approx&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">total_jac</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">total_jac</span> <span class="o">=</span> <span class="n">_TotalJacInfo</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">,</span> <span class="n">global_names</span><span class="p">,</span>
+                                              <span class="n">return_format</span><span class="p">,</span> <span class="n">approx</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">debug_print</span><span class="o">=</span><span class="n">debug_print</span><span class="p">)</span>
+
+                    <span class="c1"># Don&#39;t cache linear constraint jacobian</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">total_jac</span><span class="o">.</span><span class="n">has_lin_cons</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac</span> <span class="o">=</span> <span class="n">total_jac</span>
+
+                    <span class="n">totals</span> <span class="o">=</span> <span class="n">total_jac</span><span class="o">.</span><span class="n">compute_totals_approx</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">totals</span> <span class="o">=</span> <span class="n">total_jac</span><span class="o">.</span><span class="n">compute_totals_approx</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">total_jac</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">total_jac</span> <span class="o">=</span> <span class="n">_TotalJacInfo</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">of</span><span class="p">,</span> <span class="n">wrt</span><span class="p">,</span> <span class="n">global_names</span><span class="p">,</span> <span class="n">return_format</span><span class="p">,</span>
+                                          <span class="n">debug_print</span><span class="o">=</span><span class="n">debug_print</span><span class="p">)</span>
+
+                <span class="c1"># don&#39;t cache linear constraint jacobian</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">total_jac</span><span class="o">.</span><span class="n">has_lin_cons</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac</span> <span class="o">=</span> <span class="n">total_jac</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;_compute_totals&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">totals</span> <span class="o">=</span> <span class="n">total_jac</span><span class="o">.</span><span class="n">compute_totals</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">_recorders</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_derivatives&#39;</span><span class="p">]:</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">create_local_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">())</span>
+            <span class="n">total_jac</span><span class="o">.</span><span class="n">record_derivatives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">totals</span>
+
+<div class="viewcode-block" id="Driver.record_iteration"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.record_iteration">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record an iteration of the current Driver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Get the data to record (collective calls that get across all ranks)</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span>
+        <span class="n">filt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered_vars_to_record</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]:</span>
+            <span class="n">des_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_design_var_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">des_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_objectives&#39;</span><span class="p">]:</span>
+            <span class="n">obj_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_constraints&#39;</span><span class="p">]:</span>
+            <span class="n">con_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraint_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">con_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_responses&#39;</span><span class="p">]:</span>
+            <span class="c1"># res_vars = self.get_response_values()  # not really working yet</span>
+            <span class="n">res_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">des_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">des_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;des&#39;</span><span class="p">]}</span>
+        <span class="n">obj_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">obj_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">]}</span>
+        <span class="n">con_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">con_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;con&#39;</span><span class="p">]}</span>
+        <span class="c1"># res_vars = {name: res_vars[name] for name in filt[&#39;res&#39;]}</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="n">names</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_names</span>
+        <span class="n">views</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_views</span>
+        <span class="n">sys_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;sys&#39;</span><span class="p">]}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_inputs&#39;</span><span class="p">]:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_inputs</span><span class="o">.</span><span class="n">_names</span>
+            <span class="n">views</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_inputs</span><span class="o">.</span><span class="n">_views</span>
+            <span class="n">in_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;in&#39;</span><span class="p">]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">in_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+            <span class="n">des_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_vars</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">des_vars</span><span class="p">)</span>
+            <span class="n">res_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_vars</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">res_vars</span><span class="p">)</span>
+            <span class="n">obj_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_vars</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">obj_vars</span><span class="p">)</span>
+            <span class="n">con_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_vars</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">con_vars</span><span class="p">)</span>
+            <span class="n">sys_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_vars</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sys_vars</span><span class="p">)</span>
+            <span class="n">in_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_vars</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">in_vars</span><span class="p">)</span>
+
+        <span class="n">outs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">des_vars</span><span class="p">)</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">res_vars</span><span class="p">)</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_vars</span><span class="p">)</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">con_vars</span><span class="p">)</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sys_vars</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;out&#39;</span><span class="p">:</span> <span class="n">outs</span><span class="p">,</span>
+            <span class="s1">&#39;in&#39;</span><span class="p">:</span> <span class="n">in_vars</span>
+        <span class="p">}</span>
+
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">create_local_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_gather_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">local_vars</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gather and return only variables listed in `local_vars` from the `root` System.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        root : &lt;System&gt;</span>
+<span class="sd">            the root System for the Problem</span>
+<span class="sd">        local_vars : dict</span>
+<span class="sd">            local variable names and values</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dct : dict</span>
+<span class="sd">            variable names and values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># if trace:</span>
+        <span class="c1">#     debug(&quot;gathering vars for recording in %s&quot; % root.pathname)</span>
+        <span class="n">all_vars</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">local_vars</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># if trace:</span>
+        <span class="c1">#     debug(&quot;DONE gathering rec vars for %s&quot; % root.pathname)</span>
+
+        <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">dct</span> <span class="o">=</span> <span class="n">all_vars</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">all_vars</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">dct</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dct</span>
+
+    <span class="k">def</span> <span class="nf">_get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get name of current Driver.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Name of current Driver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;Driver&quot;</span>
+
+<div class="viewcode-block" id="Driver.set_total_jac_sparsity"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.set_total_jac_sparsity">[docs]</a>    <span class="k">def</span> <span class="nf">set_total_jac_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the sparsity of sub-jacobians of the total jacobian.</span>
+
+<span class="sd">        Note: This currently will have no effect if you are not using the pyOptSparseDriver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sparsity : str or dict</span>
+
+<span class="sd">            ::</span>
+
+<span class="sd">                # Sparsity is a nested dictionary where the outer keys are response</span>
+<span class="sd">                # names, the inner keys are design variable names, and the value is a tuple of</span>
+<span class="sd">                # the form (row_list, col_list, shape).</span>
+<span class="sd">                {</span>
+<span class="sd">                    resp1: {</span>
+<span class="sd">                        dv1: (rows, cols, shape),  # for sub-jac d_resp1/d_dv1</span>
+<span class="sd">                        dv2: (rows, cols, shape),</span>
+<span class="sd">                          ...</span>
+<span class="sd">                    },</span>
+<span class="sd">                    resp2: {</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    }</span>
+<span class="sd">                    ...</span>
+<span class="sd">                }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;total_jac_sparsity&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_total_jac_sparsity</span> <span class="o">=</span> <span class="n">sparsity</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Driver &#39;</span><span class="si">%s</span><span class="s2">&#39; does not support setting of total jacobian sparsity.&quot;</span> <span class="o">%</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Driver.declare_coloring"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.declare_coloring">[docs]</a>    <span class="k">def</span> <span class="nf">declare_coloring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_full_jacs</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="p">[</span><span class="s1">&#39;num_full_jacs&#39;</span><span class="p">],</span>
+                         <span class="n">tol</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="p">[</span><span class="s1">&#39;tol&#39;</span><span class="p">],</span>
+                         <span class="n">orders</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="p">[</span><span class="s1">&#39;orders&#39;</span><span class="p">],</span>
+                         <span class="n">perturb_size</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="p">[</span><span class="s1">&#39;perturb_size&#39;</span><span class="p">],</span>
+                         <span class="n">show_summary</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="p">[</span><span class="s1">&#39;show_summary&#39;</span><span class="p">],</span>
+                         <span class="n">show_sparsity</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DEF_COMP_SPARSITY_ARGS</span><span class="p">[</span><span class="s1">&#39;show_sparsity&#39;</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set options for total deriv coloring.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        num_full_jacs : int</span>
+<span class="sd">            Number of times to repeat partial jacobian computation when computing sparsity.</span>
+<span class="sd">        tol : float</span>
+<span class="sd">            Tolerance used to determine if an array entry is nonzero during sparsity determination.</span>
+<span class="sd">        orders : int</span>
+<span class="sd">            Number of orders above and below the tolerance to check during the tolerance sweep.</span>
+<span class="sd">        perturb_size : float</span>
+<span class="sd">            Size of input/output perturbation during generation of sparsity.</span>
+<span class="sd">        show_summary : bool</span>
+<span class="sd">            If True, display summary information after generating coloring.</span>
+<span class="sd">        show_sparsity : bool</span>
+<span class="sd">            If True, display sparsity with coloring info after generating coloring.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;num_full_jacs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_full_jacs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;tol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;orders&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">orders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;perturb_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">perturb_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DYN_COLORING</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;show_summary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">show_summary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;show_sparsity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">show_sparsity</span></div>
+
+<div class="viewcode-block" id="Driver.use_fixed_coloring"><a class="viewcode-back" href="../../../features/core_features/working_with_derivatives/simul_derivs.html#openmdao.core.driver.Driver.use_fixed_coloring">[docs]</a>    <span class="k">def</span> <span class="nf">use_fixed_coloring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coloring</span><span class="o">=</span><span class="n">coloring_mod</span><span class="o">.</span><span class="n">_STD_COLORING_FNAME</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tell the driver to use a precomputed coloring.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coloring : str</span>
+<span class="sd">            A coloring filename.  If no arg is passed, filename will be determined</span>
+<span class="sd">            automatically.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;simultaneous_derivatives&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_force_dyn_coloring</span> <span class="ow">and</span> <span class="n">coloring</span> <span class="ow">is</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_STD_COLORING_FNAME</span><span class="p">:</span>
+                <span class="c1"># force the generation of a dynamic coloring this time</span>
+                <span class="n">coloring</span> <span class="o">=</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_DYN_COLORING</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coloring</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Driver &#39;</span><span class="si">%s</span><span class="s2">&#39; does not support simultaneous derivatives.&quot;</span> <span class="o">%</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Driver.set_simul_deriv_color"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.Driver.set_simul_deriv_color">[docs]</a>    <span class="k">def</span> <span class="nf">set_simul_deriv_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coloring</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        See use_fixed_coloring. This method is deprecated.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coloring : str or Coloring</span>
+<span class="sd">            Information about simultaneous coloring for design vars and responses.  If a</span>
+<span class="sd">            string, then coloring is assumed to be the name of a file that contains the</span>
+<span class="sd">            coloring information in pickle format. Otherwise it must be a Coloring object.</span>
+<span class="sd">            See the docstring for Coloring for details.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;set_simul_deriv_color is deprecated.  Use use_fixed_coloring instead.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_fixed_coloring</span><span class="p">(</span><span class="n">coloring</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_setup_tot_jac_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up total jacobian subjac sparsity.</span>
+
+<span class="sd">        Drivers that can use subjac sparsity should override this.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_get_static_coloring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the Coloring for this driver.</span>
+
+<span class="sd">        If necessary, load the Coloring from a file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Coloring or None</span>
+<span class="sd">            The pre-existing or loaded Coloring, or None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coloring_info</span>
+        <span class="n">coloring</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coloring</span><span class="p">,</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">Coloring</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">coloring</span>
+
+        <span class="k">if</span> <span class="n">coloring</span> <span class="ow">is</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_STD_COLORING_FNAME</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coloring</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">coloring</span> <span class="ow">is</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_STD_COLORING_FNAME</span><span class="p">:</span>
+                <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_total_coloring_fname</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fname</span> <span class="o">=</span> <span class="n">coloring</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loading total coloring from file </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">fname</span><span class="p">)</span>
+            <span class="n">coloring</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;coloring&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">Coloring</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">coloring</span><span class="o">.</span><span class="n">_meta</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">coloring</span>
+
+    <span class="k">def</span> <span class="nf">_get_total_coloring_fname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;coloring_dir&#39;</span><span class="p">],</span> <span class="s1">&#39;total_coloring.pkl&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_simul_coloring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up metadata for coloring of total derivative solution.</span>
+
+<span class="sd">        If set_coloring was called with a filename, load the coloring file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># command line simul_coloring uses this env var to turn pre-existing coloring off</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">coloring_mod</span><span class="o">.</span><span class="n">_use_total_sparsity</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_use_derivatives</span><span class="p">:</span>
+            <span class="n">simple_warning</span><span class="p">(</span><span class="s2">&quot;Derivatives are turned off.  Skipping simul deriv coloring.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">total_coloring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_static_coloring</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">total_coloring</span><span class="o">.</span><span class="n">_rev</span> <span class="ow">and</span> <span class="n">problem</span><span class="o">.</span><span class="n">_orig_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;rev&#39;</span><span class="p">,</span> <span class="s1">&#39;auto&#39;</span><span class="p">):</span>
+            <span class="n">revcol</span> <span class="o">=</span> <span class="n">total_coloring</span><span class="o">.</span><span class="n">_rev</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">revcol</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Simultaneous coloring does reverse solves but mode has &quot;</span>
+                                   <span class="s2">&quot;been set to &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">problem</span><span class="o">.</span><span class="n">_orig_mode</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">total_coloring</span><span class="o">.</span><span class="n">_fwd</span> <span class="ow">and</span> <span class="n">problem</span><span class="o">.</span><span class="n">_orig_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;fwd&#39;</span><span class="p">,</span> <span class="s1">&#39;auto&#39;</span><span class="p">):</span>
+            <span class="n">fwdcol</span> <span class="o">=</span> <span class="n">total_coloring</span><span class="o">.</span><span class="n">_fwd</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">fwdcol</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Simultaneous coloring does forward solves but mode has &quot;</span>
+                                   <span class="s2">&quot;been set to &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">problem</span><span class="o">.</span><span class="n">_orig_mode</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pre_run_model_debug_print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optionally print some debugging information before the model runs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">debug_opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">debug_opt</span> <span class="ow">or</span> <span class="n">debug_opt</span> <span class="o">==</span> <span class="p">[</span><span class="s1">&#39;totals&#39;</span><span class="p">]:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="s1">&#39;Driver debug print for iter coord: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_recording_iter</span><span class="o">.</span><span class="n">get_formatted_iteration_coordinate</span><span class="p">())</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;desvars&#39;</span> <span class="ow">in</span> <span class="n">debug_opt</span><span class="p">:</span>
+            <span class="n">desvar_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_design_var_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Design Vars&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">desvar_vals</span><span class="p">:</span>
+
+                    <span class="c1"># Print desvars in non_flattened state.</span>
+                    <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_var_allprocs_abs2meta</span>
+                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">desvar_vals</span><span class="p">:</span>
+                        <span class="n">shape</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span>
+                        <span class="n">desvar_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">desvar_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+                    <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">desvar_vals</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">()</span>
+
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_post_run_model_debug_print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optionally print some debugging information after the model runs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;nl_cons&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]:</span>
+            <span class="n">cons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraint_values</span><span class="p">(</span><span class="n">lintype</span><span class="o">=</span><span class="s1">&#39;nonlinear&#39;</span><span class="p">,</span> <span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Nonlinear constraints&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cons</span><span class="p">:</span>
+                    <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">cons</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="s1">&#39;ln_cons&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]:</span>
+            <span class="n">cons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraint_values</span><span class="p">(</span><span class="n">lintype</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Linear constraints&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cons</span><span class="p">:</span>
+                    <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">cons</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="s1">&#39;objs&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;debug_print&#39;</span><span class="p">]:</span>
+            <span class="n">objs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">MPI</span> <span class="ow">or</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Objectives&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">objs</span><span class="p">:</span>
+                    <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">()</span>
+
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RecordingDebugging"><a class="viewcode-back" href="../../../_srcdocs/packages/core/driver.html#openmdao.core.driver.RecordingDebugging">[docs]</a><span class="k">class</span> <span class="nc">RecordingDebugging</span><span class="p">(</span><span class="n">Recording</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class that acts as a context manager.</span>
+
+<span class="sd">    Handles doing the case recording and also the Driver</span>
+<span class="sd">    debugging printing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Do things before the code inside the &#39;with RecordingDebugging&#39; block.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : object</span>
+<span class="sd">            self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RecordingDebugging</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_requester</span><span class="o">.</span><span class="n">_pre_run_model_debug_print</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Do things after the code inside the &#39;with RecordingDebugging&#39; block.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : array</span>
+<span class="sd">            Solver recording requires extra args.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording_requester</span><span class="o">.</span><span class="n">_post_run_model_debug_print</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RecordingDebugging</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

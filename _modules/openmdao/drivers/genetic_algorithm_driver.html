@@ -1,0 +1,923 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.drivers.genetic_algorithm_driver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.drivers.genetic_algorithm_driver</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Driver for a simple genetic algorithm.</span>
+
+<span class="sd">This is the Simple Genetic Algorithm implementation based on 2009 AAE550: MDO Lecture notes of</span>
+<span class="sd">Prof. William A. Crossley.</span>
+
+<span class="sd">This basic GA algorithm is compartmentalized into the GeneticAlgorithm class so that it can be</span>
+<span class="sd">used in more complicated driver.</span>
+
+<span class="sd">The following reference is only for the automatic population sizing:</span>
+<span class="sd">Williams E.A., Crossley W.A. (1998) Empirically-Derived Population Size and Mutation Rate</span>
+<span class="sd">Guidelines for a Genetic Algorithm with Uniform Crossover. In: Chawdhry P.K., Roy R., Pant R.K.</span>
+<span class="sd">(eds) Soft Computing in Engineering Design and Manufacturing. Springer, London.</span>
+
+<span class="sd">The following reference is only for the penalty function:</span>
+<span class="sd">Smith, A. E., Coit, D. W. (1995) Penalty functions. In: Handbook of Evolutionary Computation, 97(1).</span>
+
+<span class="sd">The following reference is only for weighted sum multi-objective optimization:</span>
+<span class="sd">Sobieszczanski-Sobieski, J., Morris, A. J., van Tooren, M. J. L. (2015)</span>
+<span class="sd">Multidisciplinary Design Optimization Supported by Knowledge Based Engineering.</span>
+<span class="sd">John Wiley &amp; Sons, Ltd.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="nb">next</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span><span class="p">,</span> <span class="nb">zip</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pyDOE2</span> <span class="k">import</span> <span class="n">lhs</span>
+
+<span class="kn">import</span> <span class="nn">openmdao</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.driver</span> <span class="k">import</span> <span class="n">Driver</span><span class="p">,</span> <span class="n">RecordingDebugging</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.concurrent</span> <span class="k">import</span> <span class="n">concurrent_eval</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.analysis_error</span> <span class="k">import</span> <span class="n">AnalysisError</span>
+
+
+<div class="viewcode-block" id="SimpleGADriver"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver">[docs]</a><span class="k">class</span> <span class="nc">SimpleGADriver</span><span class="p">(</span><span class="n">Driver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Driver for a simple genetic algorithm.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _concurrent_pop_size : int</span>
+<span class="sd">        Number of points to run concurrently when model is a parallel one.</span>
+<span class="sd">    _concurrent_color : int</span>
+<span class="sd">        Color of current rank when running a parallel model.</span>
+<span class="sd">    _desvar_idx : dict</span>
+<span class="sd">        Keeps track of the indices for each desvar, since GeneticAlgorithm sees an array of</span>
+<span class="sd">        design variables.</span>
+<span class="sd">    _ga : &lt;GeneticAlgorithm&gt;</span>
+<span class="sd">        Main genetic algorithm lies here.</span>
+<span class="sd">    _randomstate : np.random.RandomState, int</span>
+<span class="sd">         Random state (or seed-number) which controls the seed and random draws.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SimpleGADriver.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the SimpleGADriver driver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Driver options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleGADriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># What we support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;integer_design_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;inequality_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;equality_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;multiple_objectives&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># What we don&#39;t support yet</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;two_sided_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;linear_constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;simultaneous_derivatives&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supports</span><span class="p">[</span><span class="s1">&#39;active_set&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_desvar_idx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ga</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># random state can be set for predictability during testing</span>
+        <span class="k">if</span> <span class="s1">&#39;SimpleGADriver_seed&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_randomstate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SimpleGADriver_seed&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_randomstate</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Support for Parallel models.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_pop_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_color</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;bits&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">{},</span> <span class="n">types</span><span class="o">=</span><span class="p">(</span><span class="nb">dict</span><span class="p">),</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of bits of resolution. Default is an empty dict, where &#39;</span>
+                             <span class="s1">&#39;every unspecified variable is assumed to be integer, and the number &#39;</span>
+                             <span class="s1">&#39;of bits is calculated automatically. If you have a continuous var, &#39;</span>
+                             <span class="s1">&#39;you should set a bits value as a key in this dictionary.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;elitism&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;If True, replace worst performing point with best from previous&#39;</span>
+                             <span class="s1">&#39; generation each iteration.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;max_gen&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of generations before termination.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;pop_size&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of points in the GA. Set to 0 and it will be computed &#39;</span>
+                             <span class="s1">&#39;as four times the number of bits.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;run_parallel&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to execute the points in a generation in parallel.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;procs_per_model&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of processors to give each model under MPI.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;penalty_parameter&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Penalty function parameter.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;penalty_exponent&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Penalty function exponent.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;Pc&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Crossover rate.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;Pm&#39;</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Mutation rate.&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
+                             <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;multi_obj_weights&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">{},</span> <span class="n">types</span><span class="o">=</span><span class="p">(</span><span class="nb">dict</span><span class="p">),</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Weights of objectives for multi-objective optimization.&#39;</span>
+                             <span class="s1">&#39;Weights are specified as a dictionary with the absolute names&#39;</span>
+                             <span class="s1">&#39;of the objectives. The same weights for all objectives are assumed, &#39;</span>
+                             <span class="s1">&#39;if not given.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;multi_obj_exponent&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Multi-objective weighting exponent.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_driver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the driver for execution.</span>
+
+<span class="sd">        This is the final thing to run during setup.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        problem : &lt;Problem&gt;</span>
+<span class="sd">            Pointer to the containing problem.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleGADriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup_driver</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+        <span class="n">model_mpi</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">comm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">comm</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_pop_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">model_mpi</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_pop_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_color</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;run_parallel&#39;</span><span class="p">]:</span>
+            <span class="n">comm</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ga</span> <span class="o">=</span> <span class="n">GeneticAlgorithm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objective_callback</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">comm</span><span class="p">,</span> <span class="n">model_mpi</span><span class="o">=</span><span class="n">model_mpi</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_comm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any driver-specific setup of communicators for the model.</span>
+
+<span class="sd">        Here, we generate the model communicators.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        comm : MPI.Comm or &lt;FakeComm&gt; or None</span>
+<span class="sd">            The communicator for the Problem.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        MPI.Comm or &lt;FakeComm&gt; or None</span>
+<span class="sd">            The communicator for the Problem model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">procs_per_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;procs_per_model&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">MPI</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;run_parallel&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">procs_per_model</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+
+            <span class="n">full_size</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">full_size</span> <span class="o">//</span> <span class="n">procs_per_model</span>
+            <span class="k">if</span> <span class="n">full_size</span> <span class="o">!=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">procs_per_model</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The total number of processors is not evenly divisible by the &quot;</span>
+                                   <span class="s2">&quot;specified number of processors per model.</span><span class="se">\n</span><span class="s2"> Provide a &quot;</span>
+                                   <span class="s2">&quot;number of processors that is a multiple of </span><span class="si">%d</span><span class="s2">, or &quot;</span>
+                                   <span class="s2">&quot;specify a number of processors per model that divides &quot;</span>
+                                   <span class="s2">&quot;into </span><span class="si">%d</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">procs_per_model</span><span class="p">,</span> <span class="n">full_size</span><span class="p">))</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">%</span> <span class="n">size</span>
+            <span class="n">model_comm</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Split</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+
+            <span class="c1"># Everything we need to figure out which case to run.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_pop_size</span> <span class="o">=</span> <span class="n">size</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_color</span> <span class="o">=</span> <span class="n">color</span>
+
+            <span class="k">return</span> <span class="n">model_comm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_pop_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_color</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">comm</span>
+
+    <span class="k">def</span> <span class="nf">_get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get name of current Driver.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Name of current Driver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;SimpleGA&quot;</span>
+
+<div class="viewcode-block" id="SimpleGADriver.run"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the genetic algorithm.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            Failure flag; True if failed to converge, False is successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">ga</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ga</span>
+
+        <span class="n">ga</span><span class="o">.</span><span class="n">elite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;elitism&#39;</span><span class="p">]</span>
+        <span class="n">pop_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;pop_size&#39;</span><span class="p">]</span>
+        <span class="n">max_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_gen&#39;</span><span class="p">]</span>
+        <span class="n">user_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;bits&#39;</span><span class="p">]</span>
+        <span class="n">Pm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;Pm&#39;</span><span class="p">]</span>  <span class="c1"># if None, it will be calculated in execute_ga()</span>
+        <span class="n">Pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;Pc&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_for_missing_objective</span><span class="p">()</span>
+
+        <span class="c1"># Size design variables.</span>
+        <span class="n">desvars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span>
+        <span class="n">desvar_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_design_var_values</span><span class="p">()</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">desvars</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">desvar_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_desvar_idx</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">count</span> <span class="o">+</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="n">size</span>
+
+        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">count</span><span class="p">,</span> <span class="p">))</span>
+        <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">count</span><span class="p">,</span> <span class="p">))</span>
+        <span class="n">outer_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">count</span><span class="p">,</span> <span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">count</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+
+        <span class="c1"># Figure out bounds vectors and initial design vars</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">desvars</span><span class="p">):</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desvar_idx</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">lower_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+            <span class="n">upper_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+            <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">desvar_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="c1"># Bits of resolution</span>
+        <span class="n">abs2prom</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_var_abs2prom</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">desvars</span><span class="p">):</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desvar_idx</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars_discrete</span><span class="p">:</span>
+                <span class="n">prom_name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">prom_name</span> <span class="o">=</span> <span class="n">abs2prom</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">user_bits</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">user_bits</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="k">elif</span> <span class="n">prom_name</span> <span class="ow">in</span> <span class="n">user_bits</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">user_bits</span><span class="p">[</span><span class="n">prom_name</span><span class="p">]</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If the user does not declare a bits for this variable, we assume they want it to</span>
+                <span class="c1"># be encoded as an integer. Encoding requires a power of 2 in the range, so we need</span>
+                <span class="c1"># to pad additional values above the upper range, and adjust accordingly. Design</span>
+                <span class="c1"># points with values above the upper bound will be discarded by the GA.</span>
+                <span class="n">log_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">upper_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">lower_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">log_range</span>  <span class="c1"># default case -- no padding required</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">log_range</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="mi">0</span>  <span class="c1"># mask for vars requiring padding</span>
+                <span class="n">val</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">log_range</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+                <span class="n">outer_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">upper_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span>
+                <span class="n">upper_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">log_range</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">lower_bound</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span>
+
+            <span class="n">bits</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+        <span class="c1"># Automatic population size.</span>
+        <span class="k">if</span> <span class="n">pop_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pop_size</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+
+        <span class="n">desvar_new</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">nfit</span> <span class="o">=</span> <span class="n">ga</span><span class="o">.</span><span class="n">execute_ga</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">,</span> <span class="n">outer_bound</span><span class="p">,</span>
+                                              <span class="n">bits</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">,</span> <span class="n">max_gen</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">_randomstate</span><span class="p">,</span> <span class="n">Pm</span><span class="p">,</span> <span class="n">Pc</span><span class="p">)</span>
+
+        <span class="c1"># Pull optimal parameters back into framework and re-run, so that</span>
+        <span class="c1"># framework is left in the right final state</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">desvars</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desvar_idx</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">desvar_new</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_design_var</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="SimpleGADriver.objective_callback"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.SimpleGADriver.objective_callback">[docs]</a>    <span class="k">def</span> <span class="nf">objective_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">icase</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate problem objective at the requested point.</span>
+
+<span class="sd">        In case of multi-objective optimization, a simple weighted sum method is used:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">           f = (\sum_{k=1}^{N_f} w_k \cdot f_k)^a</span>
+
+<span class="sd">        where :math:`N_f` is the number of objectives and :math:`a&gt;0` is an exponential</span>
+<span class="sd">        weight. Choosing :math:`a=1` is equivalent to the conventional weighted sum method.</span>
+
+<span class="sd">        The weights given in the options are normalized, so:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \sum_{k=1}^{N_f} w_k = 1</span>
+
+<span class="sd">        If one of the objectives :math:`f_k` is not a scalar, its elements will have the same</span>
+<span class="sd">        weights, and it will be normed with length of the vector.</span>
+
+<span class="sd">        Takes into account constraints with a penalty function.</span>
+
+<span class="sd">        All constraints are converted to the form of :math:`g_i(x) \leq 0` for</span>
+<span class="sd">        inequality constraints and :math:`h_i(x) = 0` for equality constraints.</span>
+<span class="sd">        The constraint vector for inequality constraints is the following:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">           g = [g_1, g_2  \dots g_N], g_i \in R^{N_{g_i}}</span>
+
+<span class="sd">           h = [h_1, h_2  \dots h_N], h_i \in R^{N_{h_i}}</span>
+
+<span class="sd">        The number of all constraints:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">           N_g = \sum_{i=1}^N N_{g_i},  N_h = \sum_{i=1}^N N_{h_i}</span>
+
+<span class="sd">        The fitness function is constructed with the penalty parameter :math:`p`</span>
+<span class="sd">        and the exponent :math:`\kappa`:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">           \Phi(x) = f(x) + p \cdot \sum_{k=1}^{N^g}(\delta_k \cdot g_k)^{\kappa}</span>
+<span class="sd">           + p \cdot \sum_{k=1}^{N^h}|h_k|^{\kappa}</span>
+
+<span class="sd">        where :math:`\delta_k = 0` if :math:`g_k` is satisfied, 1 otherwise</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            The values of :math:`\kappa` and :math:`p` can be defined as driver options.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : ndarray</span>
+<span class="sd">            Value of design variables.</span>
+<span class="sd">        icase : int</span>
+<span class="sd">            Case number, used for identification when run in parallel.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Objective value</span>
+<span class="sd">        bool</span>
+<span class="sd">            Success flag, True if successful</span>
+<span class="sd">        int</span>
+<span class="sd">            Case number, used for identification when run in parallel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">objs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">()</span>
+        <span class="n">nr_objectives</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span>
+
+        <span class="c1"># Single objective, if there is nly one objective, which has only one element</span>
+        <span class="n">is_single_objective</span> <span class="o">=</span> <span class="p">(</span><span class="n">nr_objectives</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">itervalues</span><span class="p">(</span><span class="n">objs</span><span class="p">)))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">obj_exponent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;multi_obj_exponent&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;multi_obj_weights&#39;</span><span class="p">]:</span>  <span class="c1"># not empty</span>
+            <span class="n">obj_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;multi_obj_weights&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Same weight for all objectives, if not specified</span>
+            <span class="n">obj_weights</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="mf">1.</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">objs</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="n">sum_weights</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">itervalues</span><span class="p">(</span><span class="n">obj_weights</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desvar_idx</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_design_var</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">])</span>
+
+        <span class="c1"># a very large number, but smaller than the result of nan_to_num in Numpy</span>
+        <span class="n">almost_inf</span> <span class="o">=</span> <span class="n">openmdao</span><span class="o">.</span><span class="n">INF_BOUND</span>
+
+        <span class="c1"># Execute the model</span>
+        <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+
+            <span class="c1"># Tell the optimizer that this is a bad point.</span>
+            <span class="k">except</span> <span class="n">AnalysisError</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_clear_iprint</span><span class="p">()</span>
+                <span class="n">success</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">obj_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">is_single_objective</span><span class="p">:</span>  <span class="c1"># Single objective optimization</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">itervalues</span><span class="p">(</span><span class="n">obj_values</span><span class="p">))</span>  <span class="c1"># First and only key in the dict</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># Multi-objective optimization with weighted sums</span>
+                <span class="n">weighted_objectives</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">obj_values</span><span class="p">):</span>
+                    <span class="c1"># element-wise multiplication with scalar</span>
+                    <span class="c1"># takes the average, if an objective is a vector</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">weighted_obj</span> <span class="o">=</span> <span class="n">val</span> <span class="o">*</span> <span class="n">obj_weights</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">/</span> <span class="n">val</span><span class="o">.</span><span class="n">size</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Name &quot;</span><span class="si">{}</span><span class="s1">&quot; in &quot;multi_obj_weights&quot; option &#39;</span>
+                               <span class="s1">&#39;is not an absolute name of an objective.&#39;</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+                    <span class="n">weighted_objectives</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">weighted_objectives</span><span class="p">,</span> <span class="n">weighted_obj</span><span class="p">))</span>
+
+                <span class="n">obj</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">weighted_objectives</span> <span class="o">/</span> <span class="n">sum_weights</span><span class="p">)</span><span class="o">**</span><span class="n">obj_exponent</span>
+
+            <span class="c1"># Parameters of the penalty method</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;penalty_parameter&#39;</span><span class="p">]</span>
+            <span class="n">exponent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;penalty_exponent&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">penalty</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fun</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">constraint_violations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraint_values</span><span class="p">()):</span>
+                    <span class="n">con</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cons</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="c1"># The not used fields will either None or a very large number</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">almost_inf</span><span class="p">):</span>
+                        <span class="n">diff</span> <span class="o">=</span> <span class="n">val</span> <span class="o">-</span> <span class="n">con</span><span class="p">[</span><span class="s1">&#39;lower&#39;</span><span class="p">]</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">diff</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">almost_inf</span><span class="p">):</span>
+                        <span class="n">diff</span> <span class="o">=</span> <span class="n">val</span> <span class="o">-</span> <span class="n">con</span><span class="p">[</span><span class="s1">&#39;upper&#39;</span><span class="p">]</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">diff</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">almost_inf</span><span class="p">):</span>
+                        <span class="n">diff</span> <span class="o">=</span> <span class="n">val</span> <span class="o">-</span> <span class="n">con</span><span class="p">[</span><span class="s1">&#39;equals&#39;</span><span class="p">]</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+                    <span class="n">constraint_violations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">constraint_violations</span><span class="p">,</span> <span class="n">violation</span><span class="p">))</span>
+                <span class="n">fun</span> <span class="o">=</span> <span class="n">obj</span> <span class="o">+</span> <span class="n">penalty</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">constraint_violations</span><span class="p">,</span> <span class="n">exponent</span><span class="p">))</span>
+            <span class="c1"># Record after getting obj to assure they have</span>
+            <span class="c1"># been gathered in MPI.</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">abs</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">rec</span><span class="o">.</span><span class="n">rel</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># print(&quot;Functions calculated&quot;)</span>
+        <span class="c1"># print(x)</span>
+        <span class="c1"># print(obj)</span>
+        <span class="k">return</span> <span class="n">fun</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span> <span class="n">icase</span></div></div>
+
+
+<div class="viewcode-block" id="GeneticAlgorithm"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm">[docs]</a><span class="k">class</span> <span class="nc">GeneticAlgorithm</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple Genetic Algorithm.</span>
+
+<span class="sd">    This is the Simple Genetic Algorithm implementation based on 2009 AAE550: MDO Lecture notes of</span>
+<span class="sd">    Prof. William A. Crossley. It can be used standalone or as part of the OpenMDAO Driver.</span>
+
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    comm : MPI communicator or None</span>
+<span class="sd">        The MPI communicator that will be used objective evaluation for each generation.</span>
+<span class="sd">    elite : bool</span>
+<span class="sd">        Elitism flag.</span>
+<span class="sd">    lchrom : int</span>
+<span class="sd">        Chromosome length.</span>
+<span class="sd">    model_mpi : None or tuple</span>
+<span class="sd">        If the model in objfun is also parallel, then this will contain a tuple with the the</span>
+<span class="sd">        total number of population points to evaluate concurrently, and the color of the point</span>
+<span class="sd">        to evaluate on this rank.</span>
+<span class="sd">    npop : int</span>
+<span class="sd">        Population size.</span>
+<span class="sd">    objfun : function</span>
+<span class="sd">        Objective function callback.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GeneticAlgorithm.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objfun</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_mpi</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize genetic algorithm object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        objfun : function</span>
+<span class="sd">            Objective callback function.</span>
+<span class="sd">        comm : MPI communicator or None</span>
+<span class="sd">            The MPI communicator that will be used objective evaluation for each generation.</span>
+<span class="sd">        model_mpi : None or tuple</span>
+<span class="sd">            If the model in objfun is also parallel, then this will contain a tuple with the the</span>
+<span class="sd">            total number of population points to evaluate concurrently, and the color of the point</span>
+<span class="sd">            to evaluate on this rank.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objfun</span> <span class="o">=</span> <span class="n">objfun</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">comm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lchrom</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">npop</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elite</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_mpi</span> <span class="o">=</span> <span class="n">model_mpi</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.execute_ga"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.execute_ga">[docs]</a>    <span class="k">def</span> <span class="nf">execute_ga</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">vlb</span><span class="p">,</span> <span class="n">vub</span><span class="p">,</span> <span class="n">vob</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">,</span> <span class="n">max_gen</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span> <span class="n">Pm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Pc</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the genetic algorithm.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x0 : ndarray</span>
+<span class="sd">            Initial design values</span>
+<span class="sd">        vlb : ndarray</span>
+<span class="sd">            Lower bounds array.</span>
+<span class="sd">        vub : ndarray</span>
+<span class="sd">            Upper bounds array. This includes over-allocation so that every point falls on an</span>
+<span class="sd">            integer value.</span>
+<span class="sd">        vob : ndarray</span>
+<span class="sd">            Outer bounds array. This is purely for bounds check.</span>
+<span class="sd">        bits : ndarray</span>
+<span class="sd">            Number of bits to encode the design space for each element of the design vector.</span>
+<span class="sd">        pop_size : int</span>
+<span class="sd">            Number of points in the population.</span>
+<span class="sd">        max_gen : int</span>
+<span class="sd">            Number of generations to run the GA.</span>
+<span class="sd">        random_state : np.random.RandomState, int</span>
+<span class="sd">            Random state (or seed-number) which controls the seed and random draws.</span>
+<span class="sd">        Pm : float or None</span>
+<span class="sd">            Mutation rate</span>
+<span class="sd">        Pc : float</span>
+<span class="sd">            Crossover rate</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Best design point</span>
+<span class="sd">        float</span>
+<span class="sd">            Objective value at best design point.</span>
+<span class="sd">        int</span>
+<span class="sd">            Number of successful function evaluations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">comm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span>
+        <span class="n">xopt</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">vlb</span><span class="p">)</span>
+        <span class="n">fopt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lchrom</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bits</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">pop_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">pop_size</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">npop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">pop_size</span><span class="p">)</span>
+        <span class="n">fitness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">npop</span><span class="p">,</span> <span class="p">))</span>
+
+        <span class="c1"># If mutation rate is not provided as input</span>
+        <span class="k">if</span> <span class="n">Pm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Pm</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lchrom</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">pop_size</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bits</span><span class="p">))</span>
+        <span class="n">elite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elite</span>
+
+        <span class="n">new_gen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">lhs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lchrom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">npop</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                               <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">))</span>
+        <span class="n">new_gen</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">vlb</span><span class="p">,</span> <span class="n">vub</span><span class="p">,</span> <span class="n">bits</span><span class="p">)</span>
+
+        <span class="c1"># Main Loop</span>
+        <span class="n">nfit</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">generation</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_gen</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">old_gen</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">new_gen</span><span class="p">)</span>
+            <span class="n">x_pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">old_gen</span><span class="p">,</span> <span class="n">vlb</span><span class="p">,</span> <span class="n">vub</span><span class="p">,</span> <span class="n">bits</span><span class="p">)</span>
+
+            <span class="c1"># Evaluate points in this generation.</span>
+            <span class="k">if</span> <span class="n">comm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Parallel</span>
+
+                <span class="c1"># Since GA is random, ranks generate different new populations, so just take one</span>
+                <span class="c1"># and use it on all.</span>
+                <span class="n">x_pop</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">x_pop</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="n">cases</span> <span class="o">=</span> <span class="p">[((</span><span class="n">item</span><span class="p">,</span> <span class="n">ii</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x_pop</span><span class="p">)</span>
+                         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">item</span> <span class="o">-</span> <span class="n">vob</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)]</span>
+
+                <span class="c1"># Pad the cases with some dummy cases to make the cases divisible amongst the procs.</span>
+                <span class="c1"># TODO: Add a load balancing option to this driver.</span>
+                <span class="n">extra</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cases</span><span class="p">)</span> <span class="o">%</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span>
+                <span class="k">if</span> <span class="n">extra</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">extra</span><span class="p">):</span>
+                        <span class="n">cases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cases</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+                <span class="n">results</span> <span class="o">=</span> <span class="n">concurrent_eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objfun</span><span class="p">,</span> <span class="n">cases</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">allgather</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                          <span class="n">model_mpi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_mpi</span><span class="p">)</span>
+
+                <span class="n">fitness</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                    <span class="n">returns</span><span class="p">,</span> <span class="n">traceback</span> <span class="o">=</span> <span class="n">result</span>
+
+                    <span class="k">if</span> <span class="n">returns</span><span class="p">:</span>
+                        <span class="n">val</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span> <span class="n">ii</span> <span class="o">=</span> <span class="n">returns</span>
+                        <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+                            <span class="n">fitness</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                            <span class="n">nfit</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Print the traceback if it fails</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;A case failed:&#39;</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">traceback</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Serial</span>
+                <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npop</span><span class="p">):</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">x_pop</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">vob</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="c1"># Exceeded bounds for integer variables that are over-allocated.</span>
+                        <span class="n">success</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">fitness</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">success</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objfun</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+                        <span class="n">nfit</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">fitness</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+            <span class="c1"># Elitism means replace worst performing point with best from previous generation.</span>
+            <span class="k">if</span> <span class="n">elite</span> <span class="ow">and</span> <span class="n">generation</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">max_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">fitness</span><span class="p">)</span>
+                <span class="n">old_gen</span><span class="p">[</span><span class="n">max_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_gen</span>
+                <span class="n">x_pop</span><span class="p">[</span><span class="n">max_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_x</span>
+                <span class="n">fitness</span><span class="p">[</span><span class="n">max_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_fit</span>
+
+            <span class="c1"># Find best performing point in this generation.</span>
+            <span class="n">min_fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">fitness</span><span class="p">)</span>
+            <span class="n">min_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">fitness</span><span class="p">)</span>
+            <span class="n">min_gen</span> <span class="o">=</span> <span class="n">old_gen</span><span class="p">[</span><span class="n">min_index</span><span class="p">]</span>
+            <span class="n">min_x</span> <span class="o">=</span> <span class="n">x_pop</span><span class="p">[</span><span class="n">min_index</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">min_fit</span> <span class="o">&lt;</span> <span class="n">fopt</span><span class="p">:</span>
+                <span class="n">fopt</span> <span class="o">=</span> <span class="n">min_fit</span>
+                <span class="n">xopt</span> <span class="o">=</span> <span class="n">min_x</span>
+
+            <span class="c1"># Evolve new generation.</span>
+            <span class="n">new_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tournament</span><span class="p">(</span><span class="n">old_gen</span><span class="p">,</span> <span class="n">fitness</span><span class="p">)</span>
+            <span class="n">new_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="p">(</span><span class="n">new_gen</span><span class="p">,</span> <span class="n">Pc</span><span class="p">)</span>
+            <span class="n">new_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">new_gen</span><span class="p">,</span> <span class="n">Pm</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">xopt</span><span class="p">,</span> <span class="n">fopt</span><span class="p">,</span> <span class="n">nfit</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.tournament"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.tournament">[docs]</a>    <span class="k">def</span> <span class="nf">tournament</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_gen</span><span class="p">,</span> <span class="n">fitness</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply tournament selection and keep the best points.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        old_gen : ndarray</span>
+<span class="sd">            Points in current generation</span>
+
+<span class="sd">        fitness : ndarray</span>
+<span class="sd">            Objective value of each point.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            New generation with best points.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_gen</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">npop</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">old_gen</span><span class="p">,</span> <span class="n">i_shuffled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">old_gen</span><span class="p">)</span>
+            <span class="n">fitness</span> <span class="o">=</span> <span class="n">fitness</span><span class="p">[</span><span class="n">i_shuffled</span><span class="p">]</span>
+
+            <span class="c1"># Each point competes with its neighbor; save the best.</span>
+            <span class="n">i_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">fitness</span><span class="p">[</span><span class="n">idx</span><span class="p">]],</span> <span class="p">[</span><span class="n">fitness</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">selected</span> <span class="o">=</span> <span class="n">i_min</span> <span class="o">+</span> <span class="n">idx</span>
+            <span class="n">new_gen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">old_gen</span><span class="p">[</span><span class="n">selected</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_gen</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">old_gen</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.crossover"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.crossover">[docs]</a>    <span class="k">def</span> <span class="nf">crossover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_gen</span><span class="p">,</span> <span class="n">Pc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply crossover to the current generation.</span>
+
+<span class="sd">        Crossover flips two adjacent genes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        old_gen : ndarray</span>
+<span class="sd">            Points in current generation</span>
+
+<span class="sd">        Pc : float</span>
+<span class="sd">            Probability of crossover.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Current generation with crossovers applied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_gen</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">old_gen</span><span class="p">)</span>
+        <span class="n">num_sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">npop</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">sites</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_sites</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lchrom</span><span class="p">)</span>
+        <span class="n">idx</span><span class="p">,</span> <span class="n">idy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sites</span> <span class="o">&lt;</span> <span class="n">Pc</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">idy</span><span class="p">):</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ii</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">new_gen</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">old_gen</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
+            <span class="n">new_gen</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">old_gen</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">new_gen</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.mutate"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.mutate">[docs]</a>    <span class="k">def</span> <span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_gen</span><span class="p">,</span> <span class="n">Pm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply mutations to the current generation.</span>
+
+<span class="sd">        A mutation flips the state of the gene from 0 to 1 or 1 to 0.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        current_gen : ndarray</span>
+<span class="sd">            Points in current generation</span>
+
+<span class="sd">        Pm : float</span>
+<span class="sd">            Probability of mutation.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Current generation with mutations applied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lchrom</span><span class="p">)</span>
+        <span class="n">idx</span><span class="p">,</span> <span class="n">idy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">temp</span> <span class="o">&lt;</span> <span class="n">Pm</span><span class="p">)</span>
+        <span class="n">current_gen</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">idy</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">current_gen</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">idy</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">current_gen</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.shuffle"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.shuffle">[docs]</a>    <span class="k">def</span> <span class="nf">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_gen</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shuffle (reorder) the points in the population.</span>
+
+<span class="sd">        Used in tournament selection.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        old_gen : ndarray</span>
+<span class="sd">            Old population.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            New shuffled population.</span>
+<span class="sd">        ndarray(dtype=np.int)</span>
+<span class="sd">            Index array that maps the shuffle from old to new.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npop</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">old_gen</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">index</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.decode"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.decode">[docs]</a>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gen</span><span class="p">,</span> <span class="n">vlb</span><span class="p">,</span> <span class="n">vub</span><span class="p">,</span> <span class="n">bits</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decode from binary array to real value array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gen : ndarray</span>
+<span class="sd">            Population of points, encoded.</span>
+<span class="sd">        vlb : ndarray</span>
+<span class="sd">            Lower bound array.</span>
+<span class="sd">        vub : ndarray</span>
+<span class="sd">            Upper bound array.</span>
+<span class="sd">        bits : ndarray</span>
+<span class="sd">            Number of bits for decoding.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Decoded design variable values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_desvar</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+        <span class="n">interval</span> <span class="o">=</span> <span class="p">(</span><span class="n">vub</span> <span class="o">-</span> <span class="n">vlb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">npop</span><span class="p">,</span> <span class="n">num_desvar</span><span class="p">))</span>
+        <span class="n">sbit</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ebit</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_desvar</span><span class="p">):</span>
+            <span class="n">exponents</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">ebit</span> <span class="o">+=</span> <span class="n">bits</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
+            <span class="n">fact</span> <span class="o">=</span> <span class="n">exponents</span> <span class="o">*</span> <span class="p">(</span><span class="n">gen</span><span class="p">[:,</span> <span class="n">sbit</span><span class="p">:</span><span class="n">ebit</span><span class="p">])</span>
+            <span class="n">x</span><span class="p">[:,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij-&gt;i&#39;</span><span class="p">,</span> <span class="n">fact</span><span class="p">)</span> <span class="o">*</span> <span class="n">interval</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">+</span> <span class="n">vlb</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
+            <span class="n">sbit</span> <span class="o">=</span> <span class="n">ebit</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+<div class="viewcode-block" id="GeneticAlgorithm.encode"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/genetic_algorithm_driver.html#openmdao.drivers.genetic_algorithm_driver.GeneticAlgorithm.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">vlb</span><span class="p">,</span> <span class="n">vub</span><span class="p">,</span> <span class="n">bits</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Encode array of real values to array of binary arrays.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : ndarray</span>
+<span class="sd">            Design variable values.</span>
+<span class="sd">        vlb : ndarray</span>
+<span class="sd">            Lower bound array.</span>
+<span class="sd">        vub : ndarray</span>
+<span class="sd">            Upper bound array.</span>
+<span class="sd">        bits : int</span>
+<span class="sd">            Number of bits for decoding.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Population of points, encoded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">interval</span> <span class="o">=</span> <span class="p">(</span><span class="n">vub</span> <span class="o">-</span> <span class="n">vlb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">vlb</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">vub</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">vlb</span><span class="p">)</span> <span class="o">/</span> <span class="n">interval</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="n">byte_str</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;0&quot;</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="nb">bin</span><span class="p">(</span><span class="n">i</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])[</span><span class="o">-</span><span class="n">b</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bits</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">byte_str</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

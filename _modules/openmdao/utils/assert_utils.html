@@ -1,0 +1,502 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.utils.assert_utils &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.utils.assert_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions for making assertions about OpenMDAO Systems.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">isnan</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">raise_from</span><span class="p">,</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">zip</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.component</span> <span class="k">import</span> <span class="n">Component</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.group</span> <span class="k">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">openmdao.jacobians.dictionary_jacobian</span> <span class="k">import</span> <span class="n">DictionaryJacobian</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">pad_name</span><span class="p">,</span> <span class="n">reset_warning_registry</span>
+
+
+<div class="viewcode-block" id="assert_warning"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.assert_warning">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">assert_warning</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Context manager asserting that a warning is issued.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    category : class</span>
+<span class="sd">        The class of the expected warning.</span>
+<span class="sd">    msg : str</span>
+<span class="sd">        The text of the expected warning.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    AssertionError</span>
+<span class="sd">        If the expected warning is not raised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">reset_warning_registry</span><span class="p">():</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+            <span class="k">yield</span>
+
+    <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">w</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">warn</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">category</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">warn</span><span class="o">.</span><span class="n">message</span><span class="p">)</span> <span class="o">==</span> <span class="n">msg</span><span class="p">):</span>
+            <span class="k">break</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">&quot;Did not see expected </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">category</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="assert_check_partials"><a class="viewcode-back" href="../../../features/core_features/working_with_derivatives/unit_testing_partials.html#openmdao.utils.assert_utils.assert_check_partials">[docs]</a><span class="k">def</span> <span class="nf">assert_check_partials</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise assertion if any entry from the return from check_partials is above a tolerance.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : dict of dicts of dicts</span>
+<span class="sd">            First key:</span>
+<span class="sd">                is the component name;</span>
+<span class="sd">            Second key:</span>
+<span class="sd">                is the (output, input) tuple of strings;</span>
+<span class="sd">            Third key:</span>
+<span class="sd">                is one of [&#39;rel error&#39;, &#39;abs error&#39;, &#39;magnitude&#39;, &#39;J_fd&#39;, &#39;J_fwd&#39;, &#39;J_rev&#39;];</span>
+
+<span class="sd">            For &#39;rel error&#39;, &#39;abs error&#39;, &#39;magnitude&#39; the value is: A tuple containing norms for</span>
+<span class="sd">                forward - fd, adjoint - fd, forward - adjoint.</span>
+<span class="sd">            For &#39;J_fd&#39;, &#39;J_fwd&#39;, &#39;J_rev&#39; the value is: A numpy array representing the computed</span>
+<span class="sd">                Jacobian for the three different methods of computation.</span>
+<span class="sd">    atol : float</span>
+<span class="sd">        absolute error. Default is 1e-6.</span>
+<span class="sd">    rtol : float</span>
+<span class="sd">        relative error. Default is 1e-6.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">error_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">absrel_header</span> <span class="o">=</span> <span class="s1">&#39;abs/rel&#39;</span>
+    <span class="n">wrt_header</span> <span class="o">=</span> <span class="s1">&#39;&lt; output &gt; wrt &lt; variable &gt;&#39;</span>
+    <span class="n">norm_value_header</span> <span class="o">=</span> <span class="s1">&#39;norm value&#39;</span>
+    <span class="n">len_absrel_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">absrel_header</span><span class="p">)</span>
+    <span class="n">norm_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;fwd-fd&#39;</span><span class="p">,</span> <span class="s1">&#39;rev-fd&#39;</span><span class="p">,</span> <span class="s1">&#39;fd-rev&#39;</span><span class="p">]</span>
+    <span class="n">len_norm_type_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">norm_types</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="c1"># First do a pass to get the max widths for the columns. Also check to see if any over tol</span>
+        <span class="c1">#  in this Component</span>
+        <span class="n">len_wrt_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrt_header</span><span class="p">)</span>
+        <span class="n">len_norm_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">norm_value_header</span><span class="p">)</span>
+        <span class="n">over_tol</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">comp</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">error_type</span><span class="p">,</span> <span class="n">tolerance</span> <span class="ow">in</span> <span class="p">[(</span><span class="s1">&#39;abs error&#39;</span><span class="p">,</span> <span class="n">atol</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;rel error&#39;</span><span class="p">,</span> <span class="n">rtol</span><span class="p">),</span> <span class="p">]:</span>
+                <span class="n">actual</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">][</span><span class="n">error_type</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">norm</span><span class="p">,</span> <span class="n">norm_type</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">norm_types</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">norm</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">tolerance</span><span class="p">):</span>
+                            <span class="n">over_tol</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">wrt_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> wrt </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+                            <span class="n">norm_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+                            <span class="n">len_wrt_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">len_wrt_width</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrt_string</span><span class="p">))</span>
+                            <span class="n">len_norm_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">len_norm_width</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">norm_string</span><span class="p">))</span>
+
+                    <span class="k">elif</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s1">&#39;abs error&#39;</span> <span class="ow">and</span> <span class="n">norm_type</span> <span class="o">==</span> <span class="s1">&#39;fwd-fd&#39;</span><span class="p">:</span>
+                        <span class="c1"># Capturing case where computed partials or output are NaN.</span>
+                        <span class="n">over_tol</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">wrt_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> wrt </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+                        <span class="n">norm_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+                        <span class="n">len_wrt_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">len_wrt_width</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrt_string</span><span class="p">))</span>
+                        <span class="n">len_norm_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">len_norm_width</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">norm_string</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">over_tol</span><span class="p">:</span>
+            <span class="n">comp_error_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">comp</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">error_type</span><span class="p">,</span> <span class="n">tolerance</span> <span class="ow">in</span> <span class="p">[(</span><span class="s1">&#39;abs error&#39;</span><span class="p">,</span> <span class="n">atol</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;rel error&#39;</span><span class="p">,</span> <span class="n">rtol</span><span class="p">),</span> <span class="p">]:</span>
+                    <span class="n">actual</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">][</span><span class="n">error_type</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">norm</span><span class="p">,</span> <span class="n">norm_type</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">norm_types</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">norm</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">tolerance</span><span class="p">):</span>
+                                <span class="n">wrt_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> wrt </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+                                <span class="n">norm_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+                                <span class="n">err_msg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> | </span><span class="si">{1}</span><span class="s1"> | </span><span class="si">{2}</span><span class="s1"> | </span><span class="si">{3}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                    <span class="n">pad_name</span><span class="p">(</span><span class="n">wrt_string</span><span class="p">,</span> <span class="n">len_wrt_width</span><span class="p">),</span>
+                                    <span class="n">pad_name</span><span class="p">(</span><span class="n">error_type</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">len_absrel_width</span><span class="p">),</span>
+                                    <span class="n">pad_name</span><span class="p">(</span><span class="n">norm_type</span><span class="p">,</span> <span class="n">len_norm_type_width</span><span class="p">),</span>
+                                    <span class="n">pad_name</span><span class="p">(</span><span class="n">norm_string</span><span class="p">,</span> <span class="n">len_norm_width</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+                                <span class="n">comp_error_string</span> <span class="o">+=</span> <span class="n">err_msg</span>
+
+                        <span class="k">elif</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s1">&#39;abs error&#39;</span> <span class="ow">and</span> <span class="n">norm_type</span> <span class="o">==</span> <span class="s1">&#39;fwd-fd&#39;</span><span class="p">:</span>
+                            <span class="c1"># Capturing case where computed partials or output are NaN.</span>
+                            <span class="n">wrt_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> wrt </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">wrt</span><span class="p">)</span>
+                            <span class="n">norm_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+                            <span class="n">err_msg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> | </span><span class="si">{1}</span><span class="s1"> | </span><span class="si">{2}</span><span class="s1"> | </span><span class="si">{3}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">pad_name</span><span class="p">(</span><span class="n">wrt_string</span><span class="p">,</span> <span class="n">len_wrt_width</span><span class="p">),</span>
+                                <span class="n">pad_name</span><span class="p">(</span><span class="n">error_type</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">len_absrel_width</span><span class="p">),</span>
+                                <span class="n">pad_name</span><span class="p">(</span><span class="n">norm_type</span><span class="p">,</span> <span class="n">len_norm_type_width</span><span class="p">),</span>
+                                <span class="n">pad_name</span><span class="p">(</span><span class="n">norm_string</span><span class="p">,</span> <span class="n">len_norm_width</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+                            <span class="n">comp_error_string</span> <span class="o">+=</span> <span class="n">err_msg</span>
+
+            <span class="n">name_header</span> <span class="o">=</span> <span class="s1">&#39;Component: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+            <span class="n">len_name_header</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">name_header</span><span class="p">)</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">len_name_header</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="n">name_header</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="n">len_name_header</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> | </span><span class="si">{1}</span><span class="s1"> | </span><span class="si">{2}</span><span class="s1"> | </span><span class="si">{3}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">pad_name</span><span class="p">(</span><span class="n">wrt_header</span><span class="p">,</span> <span class="n">len_wrt_width</span><span class="p">),</span>
+                <span class="n">pad_name</span><span class="p">(</span><span class="n">absrel_header</span><span class="p">,</span> <span class="n">len_absrel_width</span><span class="p">),</span>
+                <span class="n">pad_name</span><span class="p">(</span><span class="s1">&#39;norm&#39;</span><span class="p">,</span> <span class="n">len_norm_type_width</span><span class="p">),</span>
+                <span class="n">pad_name</span><span class="p">(</span><span class="n">norm_value_header</span><span class="p">,</span> <span class="n">len_norm_width</span><span class="p">),</span>
+            <span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> | </span><span class="si">{1}</span><span class="s1"> | </span><span class="si">{2}</span><span class="s1"> | </span><span class="si">{3}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">len_wrt_width</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+                <span class="n">len_absrel_width</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+                <span class="n">len_norm_type_width</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+                <span class="n">len_norm_width</span> <span class="o">*</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">comp_error_string</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">comp_error_string</span>
+            <span class="n">error_string</span> <span class="o">+=</span> <span class="n">comp_error_string</span>
+
+    <span class="c1"># if error string then raise error with that string</span>
+    <span class="k">if</span> <span class="n">error_string</span><span class="p">:</span>
+        <span class="n">header_line1</span> <span class="o">=</span> <span class="s1">&#39;Assert Check Partials failed for the following Components&#39;</span>
+        <span class="n">header_line2</span> <span class="o">=</span> <span class="s1">&#39;with absolute tolerance = </span><span class="si">{}</span><span class="s1"> and relative tolerance = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">atol</span><span class="p">,</span> <span class="n">rtol</span><span class="p">)</span>
+        <span class="n">header_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header_line1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">header_line2</span><span class="p">))</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">header_width</span> <span class="o">*</span> <span class="s1">&#39;=&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="n">header_line1</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="n">header_line2</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="n">header_width</span> <span class="o">*</span> <span class="s1">&#39;=&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">error_string</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_string</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="assert_no_approx_partials"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.assert_no_approx_partials">[docs]</a><span class="k">def</span> <span class="nf">assert_no_approx_partials</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">include_self</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise assertion error if any component within system is using approximated partials.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : System</span>
+<span class="sd">        The system under which to search for approximated partials.</span>
+<span class="sd">    include_self : bool</span>
+<span class="sd">        If True, include this system in the iteration.</span>
+<span class="sd">    recurse : bool</span>
+<span class="sd">        If True, iterate over the whole tree under this system.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    AssertionError</span>
+<span class="sd">        If a subsystem of group is found to be using approximated partials.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">has_approx_partials</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;The following components use approximated partials:</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">system_iter</span><span class="p">(</span><span class="n">include_self</span><span class="o">=</span><span class="n">include_self</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="n">recurse</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">Component</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">_approx_schemes</span><span class="p">:</span>
+                <span class="n">has_approx_partials</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">approx_partials</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">_declared_partials</span><span class="p">)</span>
+                                   <span class="k">if</span> <span class="s1">&#39;method&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]]</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;    &#39;</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">pathname</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">approx_partials</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;        of=</span><span class="si">{0:12s}</span><span class="s1">    wrt=</span><span class="si">{1:12s}</span><span class="s1">    method=</span><span class="si">{2:2s}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                                         <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                                                                         <span class="n">method</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_approx_partials</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="assert_no_dict_jacobians"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.assert_no_dict_jacobians">[docs]</a><span class="k">def</span> <span class="nf">assert_no_dict_jacobians</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">include_self</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise an assertion error if any Group within system is found to be using dictionary jacobians.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    system : System</span>
+<span class="sd">        The system under which to search for approximated partials.</span>
+<span class="sd">    include_self : bool</span>
+<span class="sd">        If True, include this system in the iteration.</span>
+<span class="sd">    recurse : bool</span>
+<span class="sd">        If True, iterate over the whole tree under this system.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    AssertionError</span>
+<span class="sd">        If a subsystem of group is found to be using approximated partials.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;The following groups use dictionary jacobians:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">system_iter</span><span class="p">(</span><span class="n">include_self</span><span class="o">=</span><span class="n">include_self</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="n">recurse</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="n">Group</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">_jacobian</span><span class="p">,</span> <span class="n">DictionaryJacobian</span><span class="p">):</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;    &#39;</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">pathname</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="assert_rel_error"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.assert_rel_error">[docs]</a><span class="k">def</span> <span class="nf">assert_rel_error</span><span class="p">(</span><span class="n">test_case</span><span class="p">,</span> <span class="n">actual</span><span class="p">,</span> <span class="n">desired</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check relative error.</span>
+
+<span class="sd">    Determine that the relative error between `actual` and `desired`</span>
+<span class="sd">    is within `tolerance`. If `desired` is zero, then use absolute error.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    test_case : :class:`unittest.TestCase`</span>
+<span class="sd">        TestCase instance used for assertions.</span>
+<span class="sd">    actual : float, array-like, dict</span>
+<span class="sd">        The value from the test.</span>
+<span class="sd">    desired : float, array-like, dict</span>
+<span class="sd">        The value expected.</span>
+<span class="sd">    tolerance : float</span>
+<span class="sd">        Maximum relative error ``(actual - desired) / desired``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        The error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">desired</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+
+        <span class="n">actual_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">desired_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">desired</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">actual_keys</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">desired_keys</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Actual and desired keys differ. Actual extra keys: </span><span class="si">{}</span><span class="s1">, Desired extra keys: </span><span class="si">{}</span><span class="s1">&#39;</span>
+            <span class="n">actual_extra</span> <span class="o">=</span> <span class="n">actual_keys</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">desired_keys</span><span class="p">)</span>
+            <span class="n">desired_extra</span> <span class="o">=</span> <span class="n">desired_keys</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">actual_keys</span><span class="p">)</span>
+            <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">actual_extra</span><span class="p">,</span> <span class="n">desired_extra</span><span class="p">))</span>
+
+        <span class="n">error</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">actual_keys</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">new_error</span> <span class="o">=</span> <span class="n">assert_rel_error</span><span class="p">(</span><span class="n">test_case</span><span class="p">,</span> <span class="n">actual</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">desired</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">tolerance</span><span class="p">)</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">new_error</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">test_case</span><span class="o">.</span><span class="n">failureException</span> <span class="k">as</span> <span class="n">exception</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
+                <span class="n">raise_from</span><span class="p">(</span><span class="n">test_case</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="n">msg</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">desired</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isnan</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">isnan</span><span class="p">(</span><span class="n">desired</span><span class="p">):</span>
+            <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;actual nan, desired </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">desired</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">desired</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="n">actual</span> <span class="o">-</span> <span class="n">desired</span><span class="p">)</span> <span class="o">/</span> <span class="n">desired</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">actual</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;actual </span><span class="si">%s</span><span class="s1">, desired </span><span class="si">%s</span><span class="s1">, rel error </span><span class="si">%s</span><span class="s1">, tolerance </span><span class="si">%s</span><span class="s1">&#39;</span>
+                           <span class="o">%</span> <span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">desired</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">))</span>
+
+    <span class="c1"># array values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">actual</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span>
+        <span class="n">desired</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">desired</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">actual</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">desired</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span>
+                <span class="s1">&#39;actual and desired have differing shapes.&#39;</span>
+                <span class="s1">&#39; actual </span><span class="si">{}</span><span class="s1">, desired </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">desired</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">desired</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">actual</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">desired</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;actual </span><span class="si">%s</span><span class="s1">, desired </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">desired</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;actual and desired values have non-matching nan&#39;</span>
+                               <span class="s1">&#39; values&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">desired</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">actual</span> <span class="o">-</span> <span class="n">desired</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">desired</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">actual</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="ow">and</span> <span class="n">desired</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;actual </span><span class="si">%s</span><span class="s1">, desired </span><span class="si">%s</span><span class="s1">, rel error </span><span class="si">%s</span><span class="s1">, tolerance </span><span class="si">%s</span><span class="s1">&#39;</span>
+                               <span class="o">%</span> <span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">desired</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">test_case</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;arrays do not match, rel error </span><span class="si">%.3e</span><span class="s1"> &gt; tol (</span><span class="si">%.3e</span><span class="s1">)&#39;</span> <span class="o">%</span>
+                               <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">error</span></div>
+
+
+<div class="viewcode-block" id="assert_equal_arrays"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.assert_equal_arrays">[docs]</a><span class="k">def</span> <span class="nf">assert_equal_arrays</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check that two arrays are equal.</span>
+
+<span class="sd">    This is a simplified method useful when the arrays to be compared may</span>
+<span class="sd">    not be numeric. It simply compares the shapes of the two arrays and then</span>
+<span class="sd">    does a value by value comparison.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a1 : array</span>
+<span class="sd">        The first array to compare.</span>
+<span class="sd">    a2 : array</span>
+<span class="sd">        The second array to compare.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">a1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">a2</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a1</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">a2</span><span class="o">.</span><span class="n">flat</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="skip_helper"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.skip_helper">[docs]</a><span class="k">def</span> <span class="nf">skip_helper</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise a SkipTest.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    msg : str</span>
+<span class="sd">        The skip messaage.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    SkipTest</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SkipParameterized"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.SkipParameterized">[docs]</a><span class="k">class</span> <span class="nc">SkipParameterized</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replaces the parameterized class, skipping decorated test cases.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SkipParameterized.expand"><a class="viewcode-back" href="../../../_srcdocs/packages/utils/assert_utils.html#openmdao.utils.assert_utils.SkipParameterized.expand">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">name_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doc_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skip_on_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">legacy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decorate a test so that it raises a SkipTest.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input : iterable</span>
+<span class="sd">            Not used (part of parameterized API).</span>
+<span class="sd">        name_func : function</span>
+<span class="sd">            Not used (part of parameterized API).</span>
+<span class="sd">        doc_func : function</span>
+<span class="sd">            Not used (part of parameterized API).</span>
+<span class="sd">        skip_on_empty : bool</span>
+<span class="sd">            Not used (part of parameterized API).</span>
+<span class="sd">        **legacy : dict</span>
+<span class="sd">            Not used (part of parameterized API).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        function</span>
+<span class="sd">            The wrapper function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">skip_msg</span> <span class="o">=</span> <span class="s2">&quot;requires &#39;parameterized&#39; (install openmdao[test])&quot;</span>
+
+        <span class="k">def</span> <span class="nf">parameterized_expand_wrapper</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Wrap a function so that it raises a SkipTest.</span>
+
+<span class="sd">            f : function</span>
+<span class="sd">                Function to be wrapped.</span>
+<span class="sd">            instance : None</span>
+<span class="sd">                Not used (part of parameterized API).</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            function</span>
+<span class="sd">                The wrapped function.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">skip_helper</span><span class="p">(</span><span class="n">skip_msg</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">parameterized_expand_wrapper</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

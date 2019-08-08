@@ -1,0 +1,623 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>coloring.py &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="concurrent.py" href="concurrent.html" />
+    <link rel="prev" title="code_utils.py" href="code_utils.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concurrent.html" title="concurrent.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="code_utils.html" title="code_utils.py"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" accesskey="U">openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-openmdao.utils.coloring">
+<span id="coloring-py"></span><span id="openmdao-utils-coloring-py"></span><span id="index-0"></span><h1>coloring.py<a class="headerlink" href="#module-openmdao.utils.coloring" title="Permalink to this headline">¶</a></h1>
+<p>Routines to compute coloring for use with simultaneous derivatives.</p>
+<dl class="class">
+<dt id="openmdao.utils.coloring.Coloring">
+<em class="property">class </em><code class="descclassname">openmdao.utils.coloring.</code><code class="descname">Coloring</code><span class="sig-paren">(</span><em>sparsity</em>, <em>row_vars=None</em>, <em>row_var_sizes=None</em>, <em>col_vars=None</em>, <em>col_var_sizes=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container for all information relevant to a coloring.</p>
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>sparsity</em>, <em>row_vars=None</em>, <em>row_var_sizes=None</em>, <em>col_vars=None</em>, <em>col_var_sizes=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize data structures.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>sparsity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Full jacobian sparsity matrix (dense bool form).</p>
+</dd>
+<dt><strong>row_vars</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str or None</span></dt>
+<dd><p class="first last">Names of variables corresponding to rows.</p>
+</dd>
+<dt><strong>row_var_sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray or None</span></dt>
+<dd><p class="first last">Sizes of row variables.</p>
+</dd>
+<dt><strong>col_vars</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str or None</span></dt>
+<dd><p class="first last">Names of variables corresponding to columns.</p>
+</dd>
+<dt><strong>col_var_sizes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray or None</span></dt>
+<dd><p class="first last">Sizes of column variables.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.color_iter">
+<code class="descname">color_iter</code><span class="sig-paren">(</span><em>direction</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.color_iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.color_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a direction, yield an iterator over column (or row) groups.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>direction</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Derivative direction (‘fwd’ or ‘rev’).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.color_nonzero_iter">
+<code class="descname">color_nonzero_iter</code><span class="sig-paren">(</span><em>direction</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.color_nonzero_iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.color_nonzero_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a direction, yield an iterator over (columns, nz_rows) or (rows, nz_columns).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>direction</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Indicates which coloring subdict (‘fwd’ or ‘rev’) to use.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.display">
+<code class="descname">display</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.display" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display a plot of the sparsity pattern, showing grouping by color.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.display_txt">
+<code class="descname">display_txt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.display_txt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.display_txt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the structure of a boolean array with coloring info for each nonzero value.</p>
+<p>Forward mode colored nonzeros are denoted by ‘f’, reverse mode nonzeros by ‘r’,
+overlapping nonzeros by ‘O’ and uncolored nonzeros by ‘x’.  Zeros are denoted by ‘.’.
+Note that x’s and O’s should never appear unless there is a bug in the coloring
+algorithm.</p>
+<p>If names and sizes of row and column vars are known, print the name of the row var
+alongside each row and print the names of the column vars, aligned with each column,
+at the bottom.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.get_declare_partials_calls">
+<code class="descname">get_declare_partials_calls</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.get_declare_partials_calls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.get_declare_partials_calls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a string containing declare_partials() calls based on the subjac sparsity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">A string containing a declare_partials() call for each nonzero subjac. This
+string may be cut and pasted into a component’s setup() method.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.get_dense_sparsity">
+<code class="descname">get_dense_sparsity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.get_dense_sparsity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.get_dense_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dense bool array representing the full sparsity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Dense sparsity matrix.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.get_row_col_map">
+<code class="descname">get_row_col_map</code><span class="sig-paren">(</span><em>direction</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.get_row_col_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.get_row_col_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return mapping of nonzero rows to each column (fwd) or nonzeros columns to each row (rev).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>direction</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Indicator of forward mode (‘fwd’) or reverse mode (‘rev’).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>list of lists of int</strong></dt>
+<dd><p class="first last">List where each entry contains list of nonzero rows/cols for the index corresponding
+to each column/row.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.get_row_var_coloring">
+<code class="descname">get_row_var_coloring</code><span class="sig-paren">(</span><em>varname</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.get_row_var_coloring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.get_row_var_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of fwd and rev solves needed for a particular row variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>varname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of the row variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">Number of forward solves needed for the given variable.</p>
+</dd>
+<dt><strong>int</strong></dt>
+<dd><p class="first last">Number of reverse solves needed for the given variable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.get_subjac_sparsity">
+<code class="descname">get_subjac_sparsity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.get_subjac_sparsity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.get_subjac_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the sparsity structure of each subjacobian based on the full jac sparsity.</p>
+<p>If row/col variables and sizes are not known, returns None.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict or None</strong></dt>
+<dd><p class="first last">Mapping of (of, wrt) keys to thier corresponding (nzrows, nzcols, shape).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="openmdao.utils.coloring.Coloring.load">
+<em class="property">static </em><code class="descname">load</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the coloring object from the given pickle file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>fname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of file to read from.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Coloring</strong></dt>
+<dd><p class="first last">See docstring for Coloring class.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.modes">
+<code class="descname">modes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.modes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.modes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a tuple containing the modes included in this coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>tuple</strong></dt>
+<dd><p class="first last">Tuple containing some subset of (‘fwd’, ‘rev’).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the coloring object to the given stream, creating intermediate dirs if needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>fname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">File to save to.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.summary">
+<code class="descname">summary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a summary of this coloring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>stream</strong> <span class="classifier-delimiter">:</span> <span class="classifier">file-like</span></dt>
+<dd><p class="first last">Where the output will go.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="openmdao.utils.coloring.Coloring.total_solves">
+<code class="descname">total_solves</code><span class="sig-paren">(</span><em>do_fwd=True</em>, <em>do_rev=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#Coloring.total_solves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.Coloring.total_solves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return total number of solves required based on the given coloring info.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>do_fwd</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, add fwd colors to total.</p>
+</dd>
+<dt><strong>do_rev</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, add rev colors to total.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>int</strong></dt>
+<dd><p class="first last">Total number of solves required to compute the jacobian.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.coloring.MNCO_bidir">
+<code class="descclassname">openmdao.utils.coloring.</code><code class="descname">MNCO_bidir</code><span class="sig-paren">(</span><em>J</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#MNCO_bidir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.MNCO_bidir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute bidirectional coloring using Minimum Nonzero Count Order (MNCO).</p>
+<p>Based on the algorithm found in Coleman, T.F., Verma, A. (1998) The efficient Computation
+of Sparse Jacobian Matrices Using Automatic Differentiation. SIAM Journal on Scientific
+Computing, 19(4), 1210-1233.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>J</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">Dense Jacobian sparsity matrix (boolean)</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Coloring</strong></dt>
+<dd><p class="first last">See docstring for Coloring class.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.coloring.compute_total_coloring">
+<code class="descclassname">openmdao.utils.coloring.</code><code class="descname">compute_total_coloring</code><span class="sig-paren">(</span><em>problem</em>, <em>mode=None</em>, <em>num_full_jacs=3</em>, <em>tol=1e-25</em>, <em>orders=None</em>, <em>setup=False</em>, <em>run_model=False</em>, <em>bool_jac=None</em>, <em>fname=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#compute_total_coloring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.compute_total_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute simultaneous derivative colorings for the total jacobian of the given problem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>problem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Problem or None</span></dt>
+<dd><p class="first last">The Problem being analyzed.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">The direction for computing derivatives.  If None, use problem._mode.</p>
+</dd>
+<dt><strong>num_full_jacs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of times to repeat total jacobian computation.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Tolerance used to determine if an array entry is nonzero.</p>
+</dd>
+<dt><strong>orders</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of orders above and below the tolerance to check during the tolerance sweep.</p>
+</dd>
+<dt><strong>setup</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, run setup before calling compute_totals.</p>
+</dd>
+<dt><strong>run_model</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, run run_model before calling compute_totals.</p>
+</dd>
+<dt><strong>bool_jac</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">If problem is not supplied, a previously computed boolean jacobian can be used.</p>
+</dd>
+<dt><strong>fname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">filename or None</span></dt>
+<dd><p class="first last">File where output coloring info will be written. If None, no info will be written.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Coloring</strong></dt>
+<dd><p class="first last">See docstring for Coloring class.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.coloring.dynamic_derivs_sparsity">
+<code class="descclassname">openmdao.utils.coloring.</code><code class="descname">dynamic_derivs_sparsity</code><span class="sig-paren">(</span><em>driver</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#dynamic_derivs_sparsity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.dynamic_derivs_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute deriv sparsity during runtime.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>driver</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;Driver&gt;</span></dt>
+<dd><p class="first last">The driver performing the optimization.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.coloring.dynamic_total_coloring">
+<code class="descclassname">openmdao.utils.coloring.</code><code class="descname">dynamic_total_coloring</code><span class="sig-paren">(</span><em>driver</em>, <em>run_model=True</em>, <em>fname=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#dynamic_total_coloring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.dynamic_total_coloring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute simultaneous deriv coloring during runtime.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>driver</strong> <span class="classifier-delimiter">:</span> <span class="classifier">&lt;Driver&gt;</span></dt>
+<dd><p class="first last">The driver performing the optimization.</p>
+</dd>
+<dt><strong>run_model</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, call run_model before computing coloring.</p>
+</dd>
+<dt><strong>fname</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd><p class="first last">Name of file where coloring will be saved.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Coloring</strong></dt>
+<dd><p class="first last">The computed coloring.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="openmdao.utils.coloring.get_tot_jac_sparsity">
+<code class="descclassname">openmdao.utils.coloring.</code><code class="descname">get_tot_jac_sparsity</code><span class="sig-paren">(</span><em>problem</em>, <em>mode='fwd'</em>, <em>num_full_jacs=3</em>, <em>tol=1e-25</em>, <em>setup=False</em>, <em>run_model=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/openmdao/utils/coloring.html#get_tot_jac_sparsity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openmdao.utils.coloring.get_tot_jac_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute derivative sparsity for the given problem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>problem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Problem</span></dt>
+<dd><p class="first last">The Problem being analyzed.</p>
+</dd>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Derivative direction.</p>
+</dd>
+<dt><strong>num_full_jacs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of times to repeat total jacobian computation.</p>
+</dd>
+<dt><strong>tol</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Tolerance used to determine if an array entry is nonzero.</p>
+</dd>
+<dt><strong>setup</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, run setup before calling compute_totals.</p>
+</dd>
+<dt><strong>run_model</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, run run_model before calling compute_totals.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dict</strong></dt>
+<dd><p class="first last">A nested dict specifying subjac sparsity for each total deriv, e.g., sparsity[resp][dv].</p>
+</dd>
+<dt><strong>ndarray</strong></dt>
+<dd><p class="first last">Boolean sparsity matrix.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concurrent.html" title="concurrent.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="code_utils.html" title="code_utils.py"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Source Docs</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../openmdao.utils.html" >openmdao.utils</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

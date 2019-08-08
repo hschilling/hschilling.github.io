@@ -1,0 +1,310 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.approximation_schemes.complex_step &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.approximation_schemes.complex_step</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Complex Step derivative approximations.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.approximation_schemes.approximation_scheme</span> <span class="k">import</span> <span class="n">ApproximationScheme</span><span class="p">,</span> \
+    <span class="n">_gather_jac_results</span><span class="p">,</span> <span class="n">_get_wrt_subjacs</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">simple_warning</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.array_utils</span> <span class="k">import</span> <span class="n">sub2full_indices</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.coloring</span> <span class="k">import</span> <span class="n">Coloring</span>
+
+
+<span class="n">_full_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ComplexStep"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/complex_step.html#openmdao.approximation_schemes.complex_step.ComplexStep">[docs]</a><span class="k">class</span> <span class="nc">ComplexStep</span><span class="p">(</span><span class="n">ApproximationScheme</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Approximation scheme using complex step to calculate derivatives.</span>
+
+<span class="sd">    For example, using  a step size of &#39;h&#39; will approximate the derivative in</span>
+<span class="sd">    the following way:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        f&#39;(x) = \Im{\frac{f(x+ih)}{h}}.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _fd : &lt;FiniteDifference&gt;</span>
+<span class="sd">        When nested complex step is detected, we switch to Finite Difference.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DEFAULT_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">1e-40</span><span class="p">,</span>
+        <span class="s1">&#39;directional&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="ComplexStep.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/complex_step.html#openmdao.approximation_schemes.complex_step.ComplexStep.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ApproximationScheme.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ComplexStep</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Only used when nested under complex step.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fd</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="ComplexStep.add_approximation"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/complex_step.html#openmdao.approximation_schemes.complex_step.ComplexStep.add_approximation">[docs]</a>    <span class="k">def</span> <span class="nf">add_approximation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abs_key</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use this approximation scheme to approximate the derivative d(of)/d(wrt).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        abs_key : tuple(str,str)</span>
+<span class="sd">            Absolute name pairing of (of, wrt) for the derivative.</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Containing System.</span>
+<span class="sd">        kwargs : dict</span>
+<span class="sd">            Additional keyword arguments, to be interpreted by sub-classes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_OPTIONS</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">abs_key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">],</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;directional&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">abs_key</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_approx_groups</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># force later regen of approx_groups</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_approx_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given approximation metadata, compute necessary delta for complex step.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System whose derivatives are being approximated.</span>
+<span class="sd">        data : tuple</span>
+<span class="sd">            Tuple of the form (wrt, delta, directional)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Delta needed for complex step perturbation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">delta</span> <span class="o">*=</span> <span class="mi">1</span><span class="n">j</span>
+        <span class="k">return</span> <span class="n">delta</span>
+
+<div class="viewcode-block" id="ComplexStep.compute_approximations"><a class="viewcode-back" href="../../../_srcdocs/packages/approximation_schemes/complex_step.html#openmdao.approximation_schemes.complex_step.ComplexStep.compute_approximations">[docs]</a>    <span class="k">def</span> <span class="nf">compute_approximations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the system to compute the approximate sub-Jacobians.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System on which the execution is run.</span>
+<span class="sd">        jac : dict-like</span>
+<span class="sd">            Approximations are stored in the given dict-like object.</span>
+<span class="sd">        total : bool</span>
+<span class="sd">            If True total derivatives are being approximated, else partials.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">under_complex_step</span><span class="p">:</span>
+
+            <span class="c1"># If we are nested under another complex step, then warn and swap to FD.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fd</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">openmdao.approximation_schemes.finite_difference</span> <span class="k">import</span> <span class="n">FiniteDifference</span>
+
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Nested complex step detected. Finite difference will be used for &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span>
+                <span class="n">simple_warning</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">)</span>
+
+                <span class="n">fd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fd</span> <span class="o">=</span> <span class="n">FiniteDifference</span><span class="p">()</span>
+                <span class="n">empty</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">lst</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exec_dict</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">apprx</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
+                        <span class="n">fd</span><span class="o">.</span><span class="n">add_approximation</span><span class="p">(</span><span class="n">apprx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">system</span><span class="p">,</span> <span class="n">empty</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fd</span><span class="o">.</span><span class="n">compute_approximations</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Turn on complex step.</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_set_complex_step_mode</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_approximations</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">under_cs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Turn off complex step.</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_set_complex_step_mode</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a multiplier to be applied to the jacobian.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        delta :  complex</span>
+<span class="sd">            Complex number used to compute the multiplier.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            multiplier to apply to the jacobian.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+
+    <span class="k">def</span> <span class="nf">_transform_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the imaginary part of the given array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        array : ndarray of complex</span>
+<span class="sd">            Result array after doing a complex step.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Imaginary part of the result array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">array</span><span class="o">.</span><span class="n">imag</span>
+
+    <span class="k">def</span> <span class="nf">_run_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">idx_info</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">result_array</span><span class="p">,</span> <span class="n">total</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perturb the system inputs with a complex step, run, and return the results.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            The system having its derivs approximated.</span>
+<span class="sd">        idx_info : tuple of (ndarray of int, ndarray of float)</span>
+<span class="sd">            Tuple of wrt indices and corresponding data array to perturb.</span>
+<span class="sd">        delta : complex</span>
+<span class="sd">            Perturbation amount.</span>
+<span class="sd">        result_array : ndarray</span>
+<span class="sd">            An array used to store the results.</span>
+<span class="sd">        total : bool</span>
+<span class="sd">            If True total derivatives are being approximated, else partials.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Vector</span>
+<span class="sd">            Copy of the results from running the perturbed system.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">arr</span><span class="p">,</span> <span class="n">idxs</span> <span class="ow">in</span> <span class="n">idx_info</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">arr</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span> <span class="o">+=</span> <span class="n">delta</span>
+
+        <span class="k">if</span> <span class="n">total</span><span class="p">:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+            <span class="n">results_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_outputs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">run_apply_nonlinear</span><span class="p">()</span>
+            <span class="n">results_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_residuals</span>
+
+        <span class="n">result_array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">results_vec</span><span class="o">.</span><span class="n">_data</span>
+
+        <span class="k">for</span> <span class="n">arr</span><span class="p">,</span> <span class="n">idxs</span> <span class="ow">in</span> <span class="n">idx_info</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">arr</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span> <span class="o">-=</span> <span class="n">delta</span>
+
+        <span class="k">return</span> <span class="n">result_array</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

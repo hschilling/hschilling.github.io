@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Scaling Variables in OpenMDAO &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How Total Derivatives are Computed" href="total_derivs/total_derivs_theory.html" />
+    <link rel="prev" title="OpenMDAO Solvers" href="solver_api.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="total_derivs/total_derivs_theory.html" title="How Total Derivatives are Computed"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="solver_api.html" title="OpenMDAO Solvers"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="scaling-variables-in-openmdao">
+<span id="theory-scaling"></span><h1>Scaling Variables in OpenMDAO<a class="headerlink" href="#scaling-variables-in-openmdao" title="Permalink to this headline">¶</a></h1>
+<p>In the <a class="reference internal" href="../features/core_features/defining_components/scaling.html#scale-outputs-and-resids"><span class="std std-ref">section of the documentation that covers scaling variables</span></a>, you learned how you can specify multiplicative and additive scale factors
+that are applied to the output and residual variables to aid solver convergence. This theory document shows how that scaling is handled internally.</p>
+<p>When OpenMDAO runs a model, all of the numerical data from connections is assembled into a set of vectors called the “inputs” and “outputs”
+vectors. When a component calls its “compute” function, it is passed a sub-vector that contains views to just the data relevant to that component.
+A vector called “residuals” with the same size as “outputs” is also created to house implicit and cycle-induced residuals. Each vector can transform all of its data
+or a portion of its data into a scaled or unscaled state when requested. Doing so requires multiplication with a vector of scalers and
+addition with a vector of adders.  There is a small amount of cost to this, so OpenMDAO tries to scale/unscale only when necessary and only over
+as tight a scope as required.</p>
+<p>Scaling is used primarily as an aid to solver convergence (both linear and nonlinear). Whenver a user interacts with OpenMDAO, or whenever a component
+calls a user-written function like “compute”, the vectors will always be in an unscaled state. The following tables summarize this:</p>
+<p><strong>outputs and residuals (linear and nonlinear) are in an unscaled state</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Before <cite>run_model</cite> is called</li>
+<li>After <cite>run_model</cite> is finished</li>
+<li>During ExplicitComponent API calls to <cite>compute</cite>, <cite>compute_partials</cite></li>
+<li>During ImplicitComponent API calls to <cite>apply_nonlinear</cite>, <cite>linearize</cite></li>
+<li>During <cite>guess_nonlinear</cite></li>
+<li>When a Driver runs the model or computes a total derivative</li>
+</ul>
+</div></blockquote>
+<p><strong>outputs and residuals (linear and nonlinear) are in a scaled state</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>During solver iteration (computing next step, determining convergence)</li>
+<li>When data is passed from outputs to inputs</li>
+<li>When OpenMDAO loops over the model hieararchy</li>
+</ul>
+</div></blockquote>
+<p>The scaling system is also used to handle unit conversion. This proves to be a good fit because every unit in the unit library can be represented
+as a multiplication and an addition.  Unit conversion happens upon the passing of data from outputs to inputs. You cannot specify scaling for
+inputs, but they are automatically given one that amalgamates the scaling of the connected output with the unit conversion factors. In operation,
+the inputs vector is transformed into a scaled state prior to passing the data, and then unscaled afterwards. The unscale transformation removes
+the output scaling and applies the conversion between output and input units.</p>
+<p>Note that OpenMDAO also supports another independent scaling that is used by many drivers. These are specified when calling “add_design_var”,
+“add_constraint”, or “add_objective”, and are only seen by drivers. They have no impact on and no interaction with the vector scaling described
+in this theory document.</p>
+<div class="section" id="scenarios-run-model">
+<h2>Scenarios: run_model<a class="headerlink" href="#scenarios-run-model" title="Permalink to this headline">¶</a></h2>
+<p>This sequence diagram shows the simplest possible operation – executing a single explicit component with an input that comes from an IndepVarComp
+and solved using the RunOnce solver.  It shows how the outputs and residuals vectors are placed into an unscaled state right before compute is
+called on the <cite>Paraboloid</cite>. You can also see where unit conversion takes places during data passing.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/scaling_run_model.png"><img alt="Sequence diagrams for scaling during run_model" src="../_images/scaling_run_model.png" style="width: 100%;" /></a>
+</div>
+</div>
+<div class="section" id="scenarios-computing-total-derivatives-with-a-directsolver">
+<h2>Scenarios: computing total derivatives with a DirectSolver<a class="headerlink" href="#scenarios-computing-total-derivatives-with-a-directsolver" title="Permalink to this headline">¶</a></h2>
+<p>This sequence diagram shows computation of derivatives using a DirectSolver for the same model as above, so now we also include the linear vectors
+which are used in the computation of derivatives. We also include the Jacobian, which is never scaled. There are two phases here during which the vectors
+are converted to a scaled state for the overall operation, and then unscaled for user calls.</p>
+<p>The first phase is linearize, where compute_partials is called on the Paraboloid. During this phase, the entire jacobian is assembled from the component
+subjacobians. Note that, while for a single iteration it might seem like a waste to scale at the start of the linearization, keep in mind that linearize
+normally occurs immediately after execution, so the model is already in a scaled state.</p>
+<p>The second phase loops over the right hand sides and performs the LU solve. This essentially takes the contents of the linear residuals (or outputs in “rev” mode)
+and multiplies with the inverse jacobian, placing the results in the linear outputs (or residuals in “rev” mode).  This operation is always done with
+the vectors unscaled. You might ask why we don’t just scale the jacobian, but that would involve n**2 multiplications compared to 2*n so for any problem
+larger than a few variables, it is considerably more efficient to just scale the vectors as needed.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/scaling_compute_totals_direct.png"><img alt="Sequence diagrams for scaling during compute_totals with a DirectSolver" src="../_images/scaling_compute_totals_direct.png" style="width: 100%;" /></a>
+</div>
+</div>
+<div class="section" id="scenarios-computing-total-derivatives-with-scipykrylov">
+<h2>Scenarios: computing total derivatives with ScipyKrylov<a class="headerlink" href="#scenarios-computing-total-derivatives-with-scipykrylov" title="Permalink to this headline">¶</a></h2>
+<p>This sequence shows computation of derivatives with a Krylov iterative solver rather than a direct solver. Aside from the additional looping, the main
+difference is that unit conversion of the derivatives are also handled by unscaling the linear inputs vector when it is passed rather than being baked in
+to the assembled jacobian.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/scaling_compute_totals_gmres.png"><img alt="Sequence diagrams for scaling during compute_totals with ScipyKrylov" src="../_images/scaling_compute_totals_gmres.png" style="width: 100%;" /></a>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="total_derivs/total_derivs_theory.html" title="How Total Derivatives are Computed"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="solver_api.html" title="OpenMDAO Solvers"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Theory Manual</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

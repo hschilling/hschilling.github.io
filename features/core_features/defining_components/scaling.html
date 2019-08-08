@@ -1,0 +1,413 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Scaling Variables &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Component Options (Arguments to Components)" href="options.html" />
+    <link rel="prev" title="Specifying Units for Variables" href="units.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="options.html" title="Component Options (Arguments to Components)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="units.html" title="Specifying Units for Variables"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Working with Components</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="scaling-variables">
+<span id="scale-outputs-and-resids"></span><h1>Scaling Variables<a class="headerlink" href="#scaling-variables" title="Permalink to this headline">¶</a></h1>
+<p>As we saw in <a class="reference internal" href="declaring_variables.html#declaring-variables"><span class="std std-ref">Declaring Variables</span></a>, we can specify scaling parameters for outputs and residuals.
+Scaling can be important for the efficiency of some linear solvers and can have an impact on some gradient free
+nonlinear solvers such as Broyden. Knowing when and how to use scaling can be tricky, but in general, it is a good
+idea to scale outputs and residuals so that both have values that are <span class="math notranslate nohighlight">\(\mathcal{O}(1)\)</span> and so that they have
+roughly the same range of variation in your design space.</p>
+<p>For example, consider a value that is expected to have a value around 2500. Then you might scale it by dividing
+by 1000. However, if the value was going to have an expected range between 2400 and 2500, then you might want to subtract out
+2400 then divide by 100.</p>
+<p>OpenMDAO supports this kind of linear scaling of both output and residual values through a set of user defined reference
+values specified when the variables are defined. These are described below.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When you apply scaling to your variables, it does not affect the inputs and outputs you work with in your components.
+These are still worked with in physical, dimensional quantities. The scaling is only applied internally when values
+are given to solvers.</p>
+</div>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>For outputs, scaling can be specified using the <code class="code docutils literal notranslate"><span class="pre">ref</span></code> argument to <code class="code docutils literal notranslate"><span class="pre">add_output</span></code>.
+This argument is named as such because it represents the reference physical value that will be scaled to 1.
+The table below shows some example physical values and their scaled values for the a given <code class="code docutils literal notranslate"><span class="pre">ref</span></code>.</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="33%" />
+<col width="38%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><code class="code docutils literal notranslate"><span class="pre">ref</span></code></th>
+<th class="head">Physical value</th>
+<th class="head">Normalized value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>10000</td>
+<td>0</td>
+<td>0.0</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>10000</td>
+<td>1.0</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>25000</td>
+<td>2.5</td>
+</tr>
+<tr class="row-odd"><td>0.0001</td>
+<td>0.0000</td>
+<td>0.0</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>0.0001</td>
+<td>1.0</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>0.0003</td>
+<td>3.0</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>For residuals, scaling works the same way, except that the argument to <code class="code docutils literal notranslate"><span class="pre">add_output</span></code> is <code class="code docutils literal notranslate"><span class="pre">res_ref</span></code>.</p>
+</div>
+<div class="section" id="scaling-with-an-offset">
+<h2>Scaling with an offset<a class="headerlink" href="#scaling-with-an-offset" title="Permalink to this headline">¶</a></h2>
+<p>It can be desirable to scale with an offset when the variable values are very large but they only vary by a small amount.
+In these situations, we can specify a second argument, <code class="code docutils literal notranslate"><span class="pre">ref0</span></code>, to <code class="code docutils literal notranslate"><span class="pre">add_output</span></code>.
+This argument is named as such because <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> represents the physical value when the scaled value is 0.</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="22%" />
+<col width="26%" />
+<col width="30%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><code class="code docutils literal notranslate"><span class="pre">ref</span></code></th>
+<th class="head"><code class="code docutils literal notranslate"><span class="pre">ref0</span></code></th>
+<th class="head">Physical value</th>
+<th class="head">Normalized value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>10001</td>
+<td>10000</td>
+<td>9999.5</td>
+<td>-0.5</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>10000.0</td>
+<td>0.0</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>10001.0</td>
+<td>1.0</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>10003.2</td>
+<td>3.2</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Residual scaling works the same way with <code class="code docutils literal notranslate"><span class="pre">res_ref</span></code>, though there is no offset for residuals.
+In explicit components, <code class="code docutils literal notranslate"><span class="pre">res_ref</span></code> defaults to <code class="code docutils literal notranslate"><span class="pre">ref</span></code>.</p>
+</div>
+<div class="section" id="using-scaling-with-units">
+<h2>Using scaling with units<a class="headerlink" href="#using-scaling-with-units" title="Permalink to this headline">¶</a></h2>
+<p>Now, we address the situation in which we use scaling in conjunction with units.
+Let us say we specify to <code class="code docutils literal notranslate"><span class="pre">add_output</span></code> the <code class="code docutils literal notranslate"><span class="pre">units</span></code> argument along with <code class="code docutils literal notranslate"><span class="pre">ref</span></code> and <code class="code docutils literal notranslate"><span class="pre">ref0</span></code>.
+Then, the values pass in for <code class="code docutils literal notranslate"><span class="pre">ref</span></code> and <code class="code docutils literal notranslate"><span class="pre">ref0</span></code> are assumed to be in the units given by the <code class="code docutils literal notranslate"><span class="pre">units</span></code> argument.
+For instance, if <code class="code docutils literal notranslate"><span class="pre">ref=10001.</span></code> and <code class="code docutils literal notranslate"><span class="pre">units='Pa'</span></code>, then a scaled value of 1 represents <code class="code docutils literal notranslate"><span class="pre">10001.</span> <span class="pre">Pa</span></code>.</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="18%" />
+<col width="18%" />
+<col width="21%" />
+<col width="24%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><code class="code docutils literal notranslate"><span class="pre">units</span></code></th>
+<th class="head"><code class="code docutils literal notranslate"><span class="pre">ref</span></code></th>
+<th class="head"><code class="code docutils literal notranslate"><span class="pre">ref0</span></code></th>
+<th class="head">Physical value</th>
+<th class="head">Normalized value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>kPa</td>
+<td>100</td>
+<td>–</td>
+<td>0 kPa</td>
+<td>0.0</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>100 kPa</td>
+<td>1.0</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>250 kPa</td>
+<td>2.5</td>
+</tr>
+<tr class="row-odd"><td>Pa</td>
+<td>100100</td>
+<td>100000</td>
+<td>99900 Pa</td>
+<td>-0.1</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>100000 Pa</td>
+<td>0.0</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>100100 Pa</td>
+<td>0.1</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">residual scaling is separate and independent of output scaling in implicit components.
+In explicit components, the requested output scaling is applied to the residuals as well
+unless <code class="code docutils literal notranslate"><span class="pre">res_ref</span></code> is also specified.</p>
+</div>
+</div>
+<div class="section" id="specifying-a-scaler-on-an-output">
+<h2>Specifying a scaler on an output<a class="headerlink" href="#specifying-a-scaler-on-an-output" title="Permalink to this headline">¶</a></h2>
+<p>This example shows how to specify a scaler on outputs ‘y1’ and ‘y2’. The scaling used here
+assures that the outputs (which are states in this implicit component) are in the same order
+of magnitude when the solver interacts with them.  Note that whenever a user function is called
+(like <cite>apply_nonlinear</cite> here), all outputs and residuals are reverted to unscaled dimensional
+form.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ScalingExample1</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">100.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">5000.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">200.</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">1e2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">6000.</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">1e3</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span>
+
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span><span class="o">/</span><span class="n">y1</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">y2</span><span class="p">)</span><span class="o">/</span><span class="n">y2</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="specifying-a-scaler-and-offset-on-an-output">
+<h2>Specifying a scaler and offset on an output<a class="headerlink" href="#specifying-a-scaler-and-offset-on-an-output" title="Permalink to this headline">¶</a></h2>
+<p>This example shows how to specify a scaler and an offset on outputs ‘y1’ and ‘y2’.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ScalingExample2</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">100.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">5000.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">200.</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">300.0</span><span class="p">,</span> <span class="n">ref0</span><span class="o">=</span><span class="mf">100.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">6000.</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">11000.0</span><span class="p">,</span> <span class="n">ref0</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span>
+
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span><span class="o">/</span><span class="n">y1</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">y2</span><span class="p">)</span><span class="o">/</span><span class="n">y2</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="specifying-a-scaler-on-a-residual">
+<h2>Specifying a scaler on a residual<a class="headerlink" href="#specifying-a-scaler-on-a-residual" title="Permalink to this headline">¶</a></h2>
+<p>This example shows how to specify a scaler on the residuals for variables ‘y1’ and ‘y2’.
+This choice of scaler values assures that the residuals are of the same order of magnitude when
+the solver interacts with them.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ScalingExample3</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">100.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">5000.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">200.</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">1e2</span><span class="p">,</span> <span class="n">res_ref</span><span class="o">=</span><span class="mf">1e5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">6000.</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">res_ref</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span>
+
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span><span class="o">/</span><span class="n">y1</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">y2</span><span class="p">)</span><span class="o">/</span><span class="n">y2</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="specifying-a-vector-of-scalers">
+<h2>Specifying a vector of scalers<a class="headerlink" href="#specifying-a-vector-of-scalers" title="Permalink to this headline">¶</a></h2>
+<p>When you have a vector output, you can also specify a vector scaling factor with individually
+selected elements.  For this, the <cite>ref</cite>, <cite>ref0</cite> or <cite>res_ref</cite> must have the same shape as the
+variable value.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ScalingExampleVector</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ImplicitComponent</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">100.</span><span class="p">,</span> <span class="mf">5000.</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">200.</span><span class="p">,</span> <span class="mf">6000.</span><span class="p">]),</span>
+                        <span class="n">ref</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e2</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">]),</span>
+                        <span class="n">res_ref</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e5</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">]))</span>
+
+    <span class="k">def</span> <span class="nf">apply_nonlinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">residuals</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</div></blockquote>
+<div class="admonition-tags admonition" id="tag-0">
+<p class="first admonition-title">Tags</p>
+<p class="last"><a class="reference internal" href="../../../tags/Scaling.html#scaling"><span class="std std-ref">Scaling</span></a>, <a class="reference internal" href="../../../tags/Outputs.html#outputs"><span class="std std-ref">Outputs</span></a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="options.html" title="Component Options (Arguments to Components)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="units.html" title="Specifying Units for Variables"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Features</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Core Features</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Working with Components</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

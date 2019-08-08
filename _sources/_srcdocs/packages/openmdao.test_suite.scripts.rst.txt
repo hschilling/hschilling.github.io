@@ -1,0 +1,13 @@
+openmdao.test_suite.scripts
+---------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    test_suite.scripts/beam_opt
+    test_suite.scripts/circle_opt
+    test_suite.scripts/circuit
+    test_suite.scripts/circuit_analysis
+    test_suite.scripts/circuit_with_unconnected_input
+    test_suite.scripts/multipoint_beam_opt
+    test_suite.scripts/sellar

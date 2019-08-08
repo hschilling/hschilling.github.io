@@ -1,0 +1,765 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.components.exec_comp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.components.exec_comp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the ExecComp class, a component that evaluates an expression.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="k">import</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="nb">complex</span> <span class="k">as</span> <span class="n">npcomplex</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">string_types</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.explicitcomponent</span> <span class="k">import</span> <span class="n">ExplicitComponent</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.units</span> <span class="k">import</span> <span class="n">valid_units</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+
+<span class="c1"># regex to check for variable names.</span>
+<span class="n">VAR_RGX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;([.]*[_a-zA-Z]\w*[ ]*\(?)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Names of metadata entries allowed for ExecComp variables.</span>
+<span class="n">_allowed_meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="s1">&#39;res_units&#39;</span><span class="p">,</span> <span class="s1">&#39;desc&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;ref&#39;</span><span class="p">,</span> <span class="s1">&#39;ref0&#39;</span><span class="p">,</span> <span class="s1">&#39;res_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="s1">&#39;src_indices&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;flat_src_indices&#39;</span><span class="p">,</span> <span class="s1">&#39;tags&#39;</span><span class="p">}</span>
+
+<span class="c1"># Names that are not allowed for input or output variables (keywords for options)</span>
+<span class="n">_disallowed_names</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;has_diag_partials&#39;</span><span class="p">,</span> <span class="s1">&#39;vectorize&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="check_option"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.check_option">[docs]</a><span class="k">def</span> <span class="nf">check_option</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check option for validity.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    option : str</span>
+<span class="sd">        The name of the option</span>
+<span class="sd">    value : any</span>
+<span class="sd">        The value of the option</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">option</span> <span class="ow">is</span> <span class="s1">&#39;units&#39;</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">valid_units</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The units &#39;</span><span class="si">%s</span><span class="s2">&#39; are invalid.&quot;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="array_idx_iter"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.array_idx_iter">[docs]</a><span class="k">def</span> <span class="nf">array_idx_iter</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an iterator over the indices into a n-dimensional array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shape : tuple</span>
+<span class="sd">        shape of the array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">]):</span>
+        <span class="k">yield</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="ExecComp"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.ExecComp">[docs]</a><span class="k">class</span> <span class="nc">ExecComp</span><span class="p">(</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A component defined by an expression string.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _kwargs : dict of named args</span>
+<span class="sd">        Initial values of variables.</span>
+<span class="sd">    _exprs : list</span>
+<span class="sd">        List of expressions.</span>
+<span class="sd">    _codes : list</span>
+<span class="sd">        List of code objects.</span>
+<span class="sd">    _has_diag_partials : bool</span>
+<span class="sd">        If True, treat all array/array partials as diagonal if both arrays have size &gt; 1.</span>
+<span class="sd">        All arrays with size &gt; 1 must have the same flattened size or an exception will be raised.</span>
+<span class="sd">    _units : str or None</span>
+<span class="sd">        Units to be assigned to all variables in this component.</span>
+<span class="sd">        Default is None, which means units are provided for variables individually.</span>
+<span class="sd">    complex_stepsize : double</span>
+<span class="sd">        Step size used for complex step which is used for derivatives.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ExecComp.initialize"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.ExecComp.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;has_diag_partials&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;If True, treat all array/array partials as diagonal if both &#39;</span>
+                                  <span class="s1">&#39;arrays have size &gt; 1. All arrays with size &gt; 1 must have the &#39;</span>
+                                  <span class="s1">&#39;same flattened size or an exception will be raised.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Units to be assigned to all variables in this component. &#39;</span>
+                                  <span class="s1">&#39;Default is None, which means units are provided for variables &#39;</span>
+                                  <span class="s1">&#39;individually.&#39;</span><span class="p">,</span>
+                             <span class="n">check_valid</span><span class="o">=</span><span class="n">check_option</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;shape&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Shape to be assigned to all variables in this component. &#39;</span>
+                                  <span class="s1">&#39;Default is None, which means shape is provided for variables &#39;</span>
+                                  <span class="s1">&#39;individually.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExecComp.__init__"><a class="viewcode-back" href="../../../features/building_blocks/components/exec_comp.html#openmdao.components.exec_comp.ExecComp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exprs</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a &lt;Component&gt; using only an expression string.</span>
+
+<span class="sd">        Given a list of assignment statements, this component creates</span>
+<span class="sd">        input and output variables at construction time.  All variables</span>
+<span class="sd">        appearing on the left-hand side of an assignment are outputs,</span>
+<span class="sd">        and the rest are inputs.  Each variable is assumed to be of</span>
+<span class="sd">        type float unless the initial value for that variable is supplied</span>
+<span class="sd">        in \*\*kwargs.  Derivatives are calculated using complex step.</span>
+
+<span class="sd">        The following functions are available for use in expressions:</span>
+
+<span class="sd">        =========================  ====================================</span>
+<span class="sd">        Function                   Description</span>
+<span class="sd">        =========================  ====================================</span>
+<span class="sd">        abs(x)                     Absolute value of x</span>
+<span class="sd">        acos(x)                    Inverse cosine of x</span>
+<span class="sd">        acosh(x)                   Inverse hyperbolic cosine of x</span>
+<span class="sd">        arange(start, stop, step)  Array creation</span>
+<span class="sd">        arccos(x)                  Inverse cosine of x</span>
+<span class="sd">        arccosh(x)                 Inverse hyperbolic cosine of x</span>
+<span class="sd">        arcsin(x)                  Inverse sine of x</span>
+<span class="sd">        arcsinh(x)                 Inverse hyperbolic sine of x</span>
+<span class="sd">        arctan(x)                  Inverse tangent of x</span>
+<span class="sd">        asin(x)                    Inverse sine of x</span>
+<span class="sd">        asinh(x)                   Inverse hyperbolic sine of x</span>
+<span class="sd">        atan(x)                    Inverse tangent of x</span>
+<span class="sd">        cos(x)                     Cosine of x</span>
+<span class="sd">        cosh(x)                    Hyperbolic cosine of x</span>
+<span class="sd">        dot(x, y)                  Dot product of x and y</span>
+<span class="sd">        e                          Euler&#39;s number</span>
+<span class="sd">        erf(x)                     Error function</span>
+<span class="sd">        erfc(x)                    Complementary error function</span>
+<span class="sd">        exp(x)                     Exponential function</span>
+<span class="sd">        expm1(x)                   exp(x) - 1</span>
+<span class="sd">        factorial(x)               Factorial of all numbers in x</span>
+<span class="sd">        fmax(x, y)                 Element-wise maximum of x and y</span>
+<span class="sd">        fmin(x, y)                 Element-wise minimum of x and y</span>
+<span class="sd">        inner(x, y)                Inner product of arrays x and y</span>
+<span class="sd">        isinf(x)                   Element-wise detection of np.inf</span>
+<span class="sd">        isnan(x)                   Element-wise detection of np.nan</span>
+<span class="sd">        kron(x, y)                 Kronecker product of arrays x and y</span>
+<span class="sd">        linspace(x, y, N)          Numpy linear spaced array creation</span>
+<span class="sd">        log(x)                     Natural logarithm of x</span>
+<span class="sd">        log10(x)                   Base-10 logarithm of x</span>
+<span class="sd">        log1p(x)                   log(1+x)</span>
+<span class="sd">        matmul(x, y)               Matrix multiplication of x and y</span>
+<span class="sd">        maximum(x, y)              Element-wise maximum of x and y</span>
+<span class="sd">        minimum(x, y)              Element-wise minimum of x and y</span>
+<span class="sd">        ones(N)                    Create an array of ones</span>
+<span class="sd">        outer(x, y)                Outer product of x and y</span>
+<span class="sd">        pi                         Pi</span>
+<span class="sd">        power(x, y)                Element-wise x**y</span>
+<span class="sd">        prod(x)                    The product of all elements in x</span>
+<span class="sd">        sin(x)                     Sine of x</span>
+<span class="sd">        sinh(x)                    Hyperbolic sine of x</span>
+<span class="sd">        sum(x)                     The sum of all elements in x</span>
+<span class="sd">        tan(x)                     Tangent of x</span>
+<span class="sd">        tanh(x)                    Hyperbolic tangent of x</span>
+<span class="sd">        tensordot(x, y)            Tensor dot product of x and y</span>
+<span class="sd">        zeros(N)                   Create an array of zeros</span>
+<span class="sd">        =========================  ====================================</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exprs : str, tuple of str or list of str</span>
+<span class="sd">            An assignment statement or iter of them. These express how the</span>
+<span class="sd">            outputs are calculated based on the inputs.  In addition to</span>
+<span class="sd">            standard Python operators, a subset of numpy and scipy functions</span>
+<span class="sd">            is supported.</span>
+
+<span class="sd">        **kwargs : dict of named args</span>
+<span class="sd">            Initial values of variables can be set by setting a named</span>
+<span class="sd">            arg with the var name.  If the value is a dict it is assumed</span>
+<span class="sd">            to contain metadata.  To set the initial value in addition to</span>
+<span class="sd">            other metadata, assign the initial value to the &#39;value&#39; entry</span>
+<span class="sd">            of the dict.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        If a variable has an initial value that is anything other than 1.0,</span>
+<span class="sd">        either because it has a different type than float or just because its</span>
+<span class="sd">        initial value is != 1.0, you must use a keyword arg</span>
+<span class="sd">        to set the initial value.  For example, let&#39;s say we have an</span>
+<span class="sd">        ExecComp that takes an array &#39;x&#39; as input and outputs a float variable</span>
+<span class="sd">        &#39;y&#39; which is the sum of the entries in &#39;x&#39;.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            import numpy</span>
+<span class="sd">            import openmdao.api as om</span>
+<span class="sd">            excomp = om.ExecComp(&#39;y=sum(x)&#39;, x=numpy.ones(10,dtype=float))</span>
+
+<span class="sd">        In this example, &#39;y&#39; would be assumed to be the default type of float</span>
+<span class="sd">        and would be given the default initial value of 1.0, while &#39;x&#39; would be</span>
+<span class="sd">        initialized with a size 10 float array of ones.</span>
+
+<span class="sd">        If you want to assign certain metadata for &#39;x&#39; in addition to its</span>
+<span class="sd">        initial value, you can do it as follows:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            excomp = ExecComp(&#39;y=sum(x)&#39;,</span>
+<span class="sd">                              x={&#39;value&#39;: numpy.ones(10,dtype=float),</span>
+<span class="sd">                                 &#39;units&#39;: &#39;ft&#39;})</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># separate disallowed var names from kwargs, pass them as options to __init__</span>
+        <span class="k">if</span> <span class="s1">&#39;vectorize&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;vectorize&#39; option is deprecated.  &quot;</span>
+                             <span class="s2">&quot;Please use &#39;has_diag_partials&#39; instead.&quot;</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;has_diag_partials&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;vectorize&#39;</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;vectorize&#39;</span><span class="p">]</span>
+
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_disallowed_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">options</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">ExecComp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+
+        <span class="c1"># if complex step is used for derivatives, this is the stepsize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">complex_stepsize</span> <span class="o">=</span> <span class="mf">1.e-40</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exprs</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+            <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="n">exprs</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exprs</span> <span class="o">=</span> <span class="n">exprs</span><span class="p">[:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_codes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+
+<div class="viewcode-block" id="ExecComp.setup"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.ExecComp.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up variable name and metadata lists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exprs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: No valid expressions provided to ExecComp(): </span><span class="si">%s</span><span class="s2">.&quot;</span>
+                               <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exprs</span><span class="p">))</span>
+        <span class="n">outs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">allvars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exprs</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span>
+
+        <span class="n">units</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span>
+
+        <span class="c1"># find all of the variables and which ones are outputs</span>
+        <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">exprs</span><span class="p">:</span>
+            <span class="n">lhs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_for_out_vars</span><span class="p">(</span><span class="n">lhs</span><span class="p">))</span>
+            <span class="n">allvars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_for_vars</span><span class="p">(</span><span class="n">expr</span><span class="p">))</span>
+
+        <span class="n">kwargs2</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">init_vals</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># make sure all kwargs are legit</span>
+        <span class="k">for</span> <span class="n">arg</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allvars</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: arg &#39;</span><span class="si">%s</span><span class="s2">&#39; in call to ExecComp() &quot;</span>
+                                   <span class="s2">&quot;does not refer to any variable in the &quot;</span>
+                                   <span class="s2">&quot;expressions </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span>
+                                                       <span class="n">arg</span><span class="p">,</span> <span class="n">exprs</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="n">_allowed_meta</span>
+                <span class="k">if</span> <span class="n">diff</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: the following metadata names were not &quot;</span>
+                                       <span class="s2">&quot;recognized for variable &#39;</span><span class="si">%s</span><span class="s2">&#39;: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                                       <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">diff</span><span class="p">)))</span>
+
+                <span class="n">kwargs2</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">units</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;units&#39;</span> <span class="ow">in</span> <span class="n">val</span> <span class="ow">and</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">units</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: units of &#39;</span><span class="si">%s</span><span class="s2">&#39; have been specified for &quot;</span>
+                                           <span class="s2">&quot;variable &#39;</span><span class="si">%s</span><span class="s2">&#39;, but units of &#39;</span><span class="si">%s</span><span class="s2">&#39; have been &quot;</span>
+                                           <span class="s2">&quot;specified for the entire component.&quot;</span> <span class="o">%</span>
+                                           <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">],</span> <span class="n">arg</span><span class="p">,</span> <span class="n">units</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">kwargs2</span><span class="p">[</span><span class="n">arg</span><span class="p">][</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">units</span>
+
+                <span class="k">if</span> <span class="n">shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;shape&#39;</span> <span class="ow">in</span> <span class="n">val</span> <span class="ow">and</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: shape of </span><span class="si">%s</span><span class="s2"> has been specified for &quot;</span>
+                                           <span class="s2">&quot;variable &#39;</span><span class="si">%s</span><span class="s2">&#39;, but shape of </span><span class="si">%s</span><span class="s2"> has been &quot;</span>
+                                           <span class="s2">&quot;specified for the entire component.&quot;</span> <span class="o">%</span>
+                                           <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">],</span> <span class="n">arg</span><span class="p">,</span> <span class="n">shape</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="s1">&#39;value&#39;</span> <span class="ow">in</span> <span class="n">val</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: value of shape </span><span class="si">%s</span><span class="s2"> has been specified for &quot;</span>
+                                           <span class="s2">&quot;variable &#39;</span><span class="si">%s</span><span class="s2">&#39;, but shape of </span><span class="si">%s</span><span class="s2"> has been &quot;</span>
+                                           <span class="s2">&quot;specified for the entire component.&quot;</span> <span class="o">%</span>
+                                           <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                            <span class="n">arg</span><span class="p">,</span> <span class="n">shape</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">init_vals</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="s1">&#39;value&#39;</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                    <span class="n">init_vals</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+                    <span class="k">del</span> <span class="n">kwargs2</span><span class="p">[</span><span class="n">arg</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="s1">&#39;shape&#39;</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">init_vals</span><span class="p">:</span>
+                        <span class="n">init_vals</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">init_vals</span><span class="p">[</span><span class="n">arg</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: shape of </span><span class="si">%s</span><span class="s2"> has been specified for variable &quot;</span>
+                                           <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39;, but a value of shape </span><span class="si">%s</span><span class="s2"> has been provided.&quot;</span> <span class="o">%</span>
+                                           <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]),</span> <span class="n">arg</span><span class="p">,</span>
+                                            <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">init_vals</span><span class="p">[</span><span class="n">arg</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span><span class="p">)))</span>
+                    <span class="k">del</span> <span class="n">kwargs2</span><span class="p">[</span><span class="n">arg</span><span class="p">][</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">init_vals</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">allvars</span><span class="p">):</span>
+            <span class="c1"># if user supplied an initial value, use it, otherwise set to 1.0</span>
+            <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">init_vals</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">init_vals</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">init_vals</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">kwargs2</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="n">units</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="n">shape</span><span class="p">})</span>
+
+            <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">outs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">meta</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">meta</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;has_diag_partials&#39;</span><span class="p">]:</span>
+            <span class="c1"># check that sizes of any input/output vars match or one of them is size 1</span>
+            <span class="n">osorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_var_rel_names</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_var_rel_names</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]):</span>
+                <span class="n">ival</span> <span class="o">=</span> <span class="n">init_vals</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span>
+                <span class="n">iarray</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ival</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ival</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">osorted</span><span class="p">:</span>
+                    <span class="n">oval</span> <span class="o">=</span> <span class="n">init_vals</span><span class="p">[</span><span class="n">out</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">iarray</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">oval</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">oval</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">oval</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">ival</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: has_diag_partials is True but partial(</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">) &quot;</span>
+                                               <span class="s2">&quot;is not square (shape=(</span><span class="si">%d</span><span class="s2">, </span><span class="si">%d</span><span class="s2">)).&quot;</span> <span class="o">%</span>
+                                               <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">oval</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ival</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+                        <span class="c1"># partial will be declared as diagonal</span>
+                        <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">oval</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">inds</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">inp</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">inds</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">inds</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># All derivatives are defined as dense</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_codes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compile_exprs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exprs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_compile_exprs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exprs</span><span class="p">):</span>
+        <span class="n">compiled</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">expr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">exprs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">compiled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">compile</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: failed to compile expression &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span> <span class="o">%</span>
+                                   <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">exprs</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">compiled</span>
+
+    <span class="k">def</span> <span class="nf">_parse_for_out_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">vnames</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">VAR_RGX</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+                      <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;(&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vnames</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_expr_dict</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: cannot assign to variable &#39;</span><span class="si">%s</span><span class="s2">&#39; &quot;</span>
+                                <span class="s2">&quot;because it&#39;s already defined as an internal &quot;</span>
+                                <span class="s2">&quot;function or constant.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">vnames</span>
+
+    <span class="k">def</span> <span class="nf">_parse_for_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">vnames</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">VAR_RGX</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+                      <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;(&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)])</span>
+        <span class="n">to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vnames</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_disallowed_names</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: cannot use variable name &#39;</span><span class="si">%s</span><span class="s2">&#39; because &quot;</span>
+                                <span class="s2">&quot;it&#39;s a reserved keyword.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_expr_dict</span><span class="p">:</span>
+                <span class="n">expvar</span> <span class="o">=</span> <span class="n">_expr_dict</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">expvar</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: cannot use &#39;</span><span class="si">%s</span><span class="s2">&#39; as a variable because &quot;</span>
+                                    <span class="s2">&quot;it&#39;s already defined as an internal &quot;</span>
+                                    <span class="s2">&quot;function.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vnames</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return state as a dict.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            State to get.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;_codes&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">state</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Restore state from `state`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        state : dict</span>
+<span class="sd">            State to restore.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_codes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compile_exprs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exprs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExecComp.compute"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.ExecComp.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute this component&#39;s assignment statements.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : `Vector`</span>
+<span class="sd">            `Vector` containing inputs.</span>
+
+<span class="sd">        outputs : `Vector`</span>
+<span class="sd">            `Vector` containing outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_codes</span><span class="p">:</span>
+            <span class="n">exec</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">_expr_dict</span><span class="p">,</span> <span class="n">_IODict</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ExecComp.compute_partials"><a class="viewcode-back" href="../../../_srcdocs/packages/components/exec_comp.html#openmdao.components.exec_comp.ExecComp.compute_partials">[docs]</a>    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use complex step method to update the given Jacobian.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inputs : `VecWrapper`</span>
+<span class="sd">            `VecWrapper` containing parameters. (p)</span>
+
+<span class="sd">        partials : `Jacobian`</span>
+<span class="sd">            Contains sub-jacobians.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complex_stepsize</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span>
+        <span class="n">out_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_allprocs_prom2abs_list</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
+        <span class="n">inv_stepsize</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">complex_stepsize</span>
+        <span class="n">has_diag_partials</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;has_diag_partials&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+
+            <span class="n">pwrap</span> <span class="o">=</span> <span class="n">_TmpDict</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">pval</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
+            <span class="n">psize</span> <span class="o">=</span> <span class="n">pval</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">pwrap</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pval</span><span class="p">,</span> <span class="n">npcomplex</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">has_diag_partials</span> <span class="ow">or</span> <span class="n">psize</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># set a complex param value</span>
+                <span class="n">pwrap</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">+=</span> <span class="n">step</span>
+
+                <span class="n">uwrap</span> <span class="o">=</span> <span class="n">_TmpDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">return_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="c1"># solve with complex param value</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="o">.</span><span class="n">set_const</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">pwrap</span><span class="p">,</span> <span class="n">uwrap</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">out_names</span><span class="p">:</span>
+                    <span class="n">partials</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">param</span><span class="p">)]</span> <span class="o">=</span> <span class="n">imag</span><span class="p">(</span><span class="n">uwrap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">*</span> <span class="n">inv_stepsize</span><span class="p">)</span><span class="o">.</span><span class="n">flat</span>
+
+                <span class="c1"># restore old param value</span>
+                <span class="n">pwrap</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">-=</span> <span class="n">step</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">array_idx_iter</span><span class="p">(</span><span class="n">pwrap</span><span class="p">[</span><span class="n">param</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)):</span>
+                    <span class="c1"># set a complex param value</span>
+                    <span class="n">pwrap</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">step</span>
+
+                    <span class="n">uwrap</span> <span class="o">=</span> <span class="n">_TmpDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">return_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="c1"># solve with complex param value</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="o">.</span><span class="n">set_const</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">pwrap</span><span class="p">,</span> <span class="n">uwrap</span><span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">out_names</span><span class="p">:</span>
+                        <span class="c1"># set the column in the Jacobian entry</span>
+                        <span class="n">partials</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">param</span><span class="p">)][:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">imag</span><span class="p">(</span><span class="n">uwrap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">*</span> <span class="n">inv_stepsize</span><span class="p">)</span><span class="o">.</span><span class="n">flat</span>
+
+                    <span class="c1"># restore old param value</span>
+                    <span class="n">pwrap</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">-=</span> <span class="n">step</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">_TmpDict</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dict wrapper that allows modification without changing the wrapped dict.</span>
+
+<span class="sd">    It will allow getting of values</span>
+<span class="sd">    from its inner dict unless those values get modified via</span>
+<span class="sd">    __setitem__.  After values have been modified they are managed</span>
+<span class="sd">    thereafter by the wrapper.  This protects the inner dict from</span>
+<span class="sd">    modification.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _inner : dict-like</span>
+<span class="sd">        The dictionary to be wrapped.</span>
+<span class="sd">    _changed : dict-like</span>
+<span class="sd">        The key names for the values that were changed.</span>
+<span class="sd">    _complex : bool</span>
+<span class="sd">        If True, return a complex version of values from __getitem__.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inner</span><span class="p">,</span> <span class="n">return_complex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct the dictionary object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        inner : dict-like</span>
+<span class="sd">            The dictionary to be wrapped.</span>
+<span class="sd">        return_complex : bool, optional</span>
+<span class="sd">            If True, return a complex version of values from __getitem__</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">inner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span> <span class="o">=</span> <span class="n">return_complex</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">npcomplex</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">npcomplex</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_IODict</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict wrapper that contains 2 different dicts.</span>
+
+<span class="sd">    Items are first looked for in the outputs</span>
+<span class="sd">    and then the inputs.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _inputs : dict-like</span>
+<span class="sd">        The inputs object to be wrapped.</span>
+<span class="sd">    _outputs : dict-like</span>
+<span class="sd">        The outputs object to be wrapped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the dict wrapper.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        outputs : dict-like</span>
+<span class="sd">            The outputs object to be wrapped.</span>
+
+<span class="sd">        inputs : dict-like</span>
+<span class="sd">            The inputs object to be wrapped.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># will raise KeyError</span>
+
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span>
+
+
+<span class="k">def</span> <span class="nf">_import_functs</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map attributes attrs from the given module into the given dict.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mod : object</span>
+<span class="sd">        Module to check.</span>
+<span class="sd">    dct : dict</span>
+<span class="sd">        Dictionary that will contain the mapping</span>
+<span class="sd">    names : iter of str, optional</span>
+<span class="sd">        If supplied, only map attrs that match the given names</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">dir</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">alias</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">alias</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+            <span class="n">dct</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">dct</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">dct</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+
+<span class="c1"># this dict will act as the local scope when we eval our expressions</span>
+<span class="n">_expr_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="n">_import_functs</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="n">_expr_dict</span><span class="p">,</span>
+               <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;arange&#39;</span><span class="p">,</span> <span class="s1">&#39;ones&#39;</span><span class="p">,</span> <span class="s1">&#39;zeros&#39;</span><span class="p">,</span> <span class="s1">&#39;linspace&#39;</span><span class="p">,</span>  <span class="c1"># Array creation</span>
+                      <span class="s1">&#39;e&#39;</span><span class="p">,</span> <span class="s1">&#39;pi&#39;</span><span class="p">,</span>  <span class="c1"># Constants</span>
+                      <span class="s1">&#39;isinf&#39;</span><span class="p">,</span> <span class="s1">&#39;isnan&#39;</span><span class="p">,</span>  <span class="c1"># Logic</span>
+                      <span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="s1">&#39;log10&#39;</span><span class="p">,</span> <span class="s1">&#39;log1p&#39;</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span>  <span class="c1"># Math operations</span>
+                      <span class="s1">&#39;exp&#39;</span><span class="p">,</span> <span class="s1">&#39;expm1&#39;</span><span class="p">,</span> <span class="s1">&#39;fmax&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;fmin&#39;</span><span class="p">,</span> <span class="s1">&#39;maximum&#39;</span><span class="p">,</span> <span class="s1">&#39;minimum&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="s1">&#39;dot&#39;</span><span class="p">,</span> <span class="s1">&#39;prod&#39;</span><span class="p">,</span>  <span class="c1"># Reductions</span>
+                      <span class="s1">&#39;tensordot&#39;</span><span class="p">,</span> <span class="s1">&#39;matmul&#39;</span><span class="p">,</span>  <span class="c1"># Linear algebra</span>
+                      <span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="s1">&#39;kron&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;sin&#39;</span><span class="p">,</span> <span class="s1">&#39;cos&#39;</span><span class="p">,</span> <span class="s1">&#39;tan&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;arcsin&#39;</span><span class="p">,</span> <span class="s1">&#39;asin&#39;</span><span class="p">),</span>  <span class="c1"># Trig</span>
+                      <span class="p">(</span><span class="s1">&#39;arccos&#39;</span><span class="p">,</span> <span class="s1">&#39;acos&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;arctan&#39;</span><span class="p">,</span> <span class="s1">&#39;atan&#39;</span><span class="p">),</span>
+                      <span class="s1">&#39;sinh&#39;</span><span class="p">,</span> <span class="s1">&#39;cosh&#39;</span><span class="p">,</span> <span class="s1">&#39;tanh&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;arcsinh&#39;</span><span class="p">,</span> <span class="s1">&#39;asinh&#39;</span><span class="p">),</span>  <span class="c1"># Hyperbolic trig</span>
+                      <span class="p">(</span><span class="s1">&#39;arccosh&#39;</span><span class="p">,</span> <span class="s1">&#39;acosh&#39;</span><span class="p">)])</span>
+
+
+<span class="c1"># if scipy is available, add some functions</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">scipy.special</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">_import_functs</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="p">,</span> <span class="n">_expr_dict</span><span class="p">,</span>
+                   <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;factorial&#39;</span><span class="p">,</span> <span class="s1">&#39;erf&#39;</span><span class="p">,</span> <span class="s1">&#39;erfc&#39;</span><span class="p">])</span>
+
+
+<span class="c1"># Put any functions here that need special versions to work under</span>
+<span class="c1"># complex step</span>
+
+<span class="k">def</span> <span class="nf">_cs_abs</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">real</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">x</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="n">_expr_dict</span><span class="p">[</span><span class="s1">&#39;abs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_cs_abs</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

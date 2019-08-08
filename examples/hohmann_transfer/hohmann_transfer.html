@@ -1,0 +1,481 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Hohmann Transfer Example - Optimizing a Spacecraft Manuever &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Kepler’s Equation Example - Solving an Implicit Equaiton" href="../keplers_equation/keplers_equation.html" />
+    <link rel="prev" title="Optimizing an Actuator Disk Model to Find Betz Limit for Wind Turbines" href="../betz_limit/betz.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../keplers_equation/keplers_equation.html" title="Kepler’s Equation Example - Solving an Implicit Equaiton"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../betz_limit/betz.html" title="Optimizing an Actuator Disk Model to Find Betz Limit for Wind Turbines"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Examples</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../features/index.html">Features</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hohmann-transfer-example-optimizing-a-spacecraft-manuever">
+<span id="hohmann-tutorial"></span><h1>Hohmann Transfer Example - Optimizing a Spacecraft Manuever<a class="headerlink" href="#hohmann-transfer-example-optimizing-a-spacecraft-manuever" title="Permalink to this headline">¶</a></h1>
+<p>This example will demonstrate the use of OpenMDAO for optimizing
+a simple orbital mechanics problem.  We seek the minimum possible
+delta-V to transfer a spacecraft from Low Earth Orbit (LEO) to
+geostationary orbit (GEO) using a two-impulse <em>Hohmann Transfer</em>.</p>
+<p>The Hohmann Transfer is a maneuver which minimizes the delta-V for
+transferring a spacecraft from one circular orbit to another.  Hohmann
+transfers have a practical application in that they can be used
+to transfer satellites from LEO parking orbits to geostationary orbit.</p>
+<p>To do so, the vehicle first imparts a delta-V along the velocity vector
+while in LEO.  This boosts apogee radius to the radius of the geostationary
+orbit (42164 km).  In this model we will model this delta-V as an <em>impulsive</em>
+maneuver which changes the spacecraft’s velocity instantaneously.</p>
+<p>We will assume that the first impulse is performed at the
+ascending node in LEO.  Thus perigee of the transfer orbit is coincident
+with the ascending node of the transfer orbit.  Apogee of the transfer orbit
+is thus coincident with the descending node, where we will perform the
+second impulse.</p>
+<p>After the first impulse, the spacecraft coasts to apogee.  Once there
+it performs a second impulsive burn along the velocity vector to raise perigee radius
+to the radius of GEO, thus circularizing the orbit.</p>
+<p>Simple, right?  The issue is that, unless they launch from the equator,
+launch vehicles do not put satellites in a low Earth parking orbit
+with the same inclination as geostationary orbit.  For instance, a due-east launch
+from Kennedy Space Center will result in a parking orbit with an inclination of
+28.5 degrees.  We therefore need to change the inclination of our satellite during
+its two impulsive burn maneuvers.  The question is, <em>what change in inclination
+at each burn will result in the minimum possible delta-V?</em></p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="../../_images/hohmann_transfer.png"><img alt="An inclined Hohmann Transfer diagram" src="../../_images/hohmann_transfer.png" style="width: 500px;" /></a>
+<p class="caption"><span class="caption-text">An inclined Hohmann Transfer diagram</span></p>
+</div>
+<p>The trajectory optimization problem can thus be stated as:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}Minimize  J=\Delta V\\s.t.\\\Delta i_1 + \Delta i_2 = 28.5^o\end{aligned}\end{align} \]</div>
+<p>The total <span class="math notranslate nohighlight">\(\Delta V\)</span> is the sum of the two impulsive <span class="math notranslate nohighlight">\(\Delta Vs\)</span>.</p>
+<div class="figure align-center" id="id2">
+<a class="reference internal image-reference" href="../../_images/hohmann_dv1.png"><img alt="Vector diagram of the first impulsive :math:`\Delta V`" src="../../_images/hohmann_dv1.png" style="width: 500px;" /></a>
+<p class="caption"><span class="caption-text">Vector diagram of the first impulsive <span class="math notranslate nohighlight">\(\Delta V\)</span></span></p>
+</div>
+<p>The component of the <span class="math notranslate nohighlight">\(\Delta V\)</span> in the orbital plane is along the
+local horizontal plane.  The orbit-normal component is in the
+direction of the desired inclination change.  Knowing the
+velocity magnitude before (<span class="math notranslate nohighlight">\(v_c\)</span>) and after (<span class="math notranslate nohighlight">\(v_p\)</span>) the impulse, and the
+change in inclination due to the impulse (<span class="math notranslate nohighlight">\(\Delta i\)</span>), the <span class="math notranslate nohighlight">\(\Delta V\)</span>
+is then computed from the law of cosines:</p>
+<div class="math notranslate nohighlight">
+\[\Delta V_1 = v_c^2 + v_p^2 - 2 v_c v_p \cos{\Delta i}\]</div>
+<p>In the first impulse, <span class="math notranslate nohighlight">\(v_1\)</span> is the circular velocity in LEO.  In
+this case <span class="math notranslate nohighlight">\(v_c\)</span> refers to the circular velocity in geostationary
+orbit, and <span class="math notranslate nohighlight">\(v_a\)</span> is the velocity at apogee of the transfer
+orbit.</p>
+<p>We can compute the circular velocity in either orbit from
+the following equation:</p>
+<div class="math notranslate nohighlight">
+\[v_c = \sqrt{\mu/r}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mu\)</span> is the gravitational parameter of the Earth
+and <span class="math notranslate nohighlight">\(r\)</span> is the distance from the center of the Earth.</p>
+<p>The velocity after the first impulse is the periapsis velocity
+of the transfer orbit.  This can be solved for based on what we
+know about the orbit.</p>
+<p>The specific angular momentum of the transfer orbit is constant.
+At periapsis, it is simply the product of the velocity and radius.
+Therefore, rearranging we have:</p>
+<div class="math notranslate nohighlight">
+\[v_p = \frac{h}{r_p}\]</div>
+<p>The specific angular momentum can also be computed as:</p>
+<div class="math notranslate nohighlight">
+\[h = \sqrt{p \mu}\]</div>
+<p>Where <span class="math notranslate nohighlight">\(p\)</span> is the semilatus rectum of the orbit and <span class="math notranslate nohighlight">\(\mu\)</span> is
+the gravitational parameter of the central body.</p>
+<p>The semilatus rectum is computed as:</p>
+<div class="math notranslate nohighlight">
+\[p = a*(1.0-e^2)\]</div>
+<p>Where <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(e\)</span> are the semi-major axis and eccentricity of the transfer orbit, respectively.
+Since we know <span class="math notranslate nohighlight">\(r_a\)</span> and <span class="math notranslate nohighlight">\(r_p\)</span> of the transfer orbit, it’s semimajor axis is simply:</p>
+<div class="math notranslate nohighlight">
+\[e = (a-r_p)/a\]</div>
+<p>The eccentricity is known by the relationship of <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(e\)</span> to <span class="math notranslate nohighlight">\(r_p\)</span> (or <span class="math notranslate nohighlight">\(r_a\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[a = (r_a+r_p)/2.0\]</div>
+<p>Thus we can compute periapsis velocity based on the periapsis and apoapsis
+radii of the transfer orbit, and the gravitational parameter of the central body.</p>
+<p>For the second impulse, the final velocity is the circular velocity of the
+final orbit, which can be computed in the same way as the circular velocity
+of the initial orbit.  The initial velocity at the second impulse is the
+apoapsis velocity of the transfer orbit, which is:</p>
+<div class="figure align-center" id="id3">
+<a class="reference internal image-reference" href="../../_images/hohmann_dv2.png"><img alt="Vector diagram of the second impulsive :math:`\Delta V`" src="../../_images/hohmann_dv2.png" style="width: 500px;" /></a>
+<p class="caption"><span class="caption-text">Vector diagram of the second impulsive <span class="math notranslate nohighlight">\(\Delta V\)</span></span></p>
+</div>
+<div class="math notranslate nohighlight">
+\[\Delta V = \sqrt{ v_a^2 + v_c^2 - 2 v_a v_c \cos{\Delta i} }\]</div>
+<div class="math notranslate nohighlight">
+\[v_a = \frac{h}{r_a}\]</div>
+<p>Having already computed the specific angular momentum of the transfer orbit, this is
+easily computed.</p>
+<p>Finally we have the necessary calculations to compute the <span class="math notranslate nohighlight">\(\Delta V\)</span> of the Hohmann
+transfer with a plane change.</p>
+<div class="section" id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this headline">¶</a></h2>
+<p>The first component we define computes the circular velocity given the
+radius from the center of the central body and the gravitational parameter
+of the central body.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">VCircComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the circular orbit velocity given a radius and gravitational</span>
+<span class="sd">    parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;r&#39;</span><span class="p">,</span>
+                       <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Radius from central body&#39;</span><span class="p">,</span>
+                       <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span>
+                       <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Gravitational parameter of central body&#39;</span><span class="p">,</span>
+                       <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km**3/s**2&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;vcirc&#39;</span><span class="p">,</span>
+                        <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Circular orbit velocity at given radius &#39;</span>
+                             <span class="s1">&#39;and gravitational parameter&#39;</span><span class="p">,</span>
+                        <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km/s&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;vcirc&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;vcirc&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;mu&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;vcirc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mu</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+        <span class="n">vcirc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mu</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span>
+
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;vcirc&#39;</span><span class="p">,</span> <span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">vcirc</span><span class="p">)</span>
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;vcirc&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">/</span> <span class="p">(</span><span class="n">vcirc</span> <span class="o">*</span> <span class="n">r</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The transfer orbit component computes the velocity magnitude at periapsis
+and apoapsis of an orbit, given the radii of periapsis and apoapsis, and
+the gravitational parameter of the central body.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TransferOrbitComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span>
+                       <span class="n">val</span><span class="o">=</span><span class="mf">398600.4418</span><span class="p">,</span>
+                       <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Gravitational parameter of central body&#39;</span><span class="p">,</span>
+                       <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km**3/s**2&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;rp&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">7000.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;periapsis radius&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;ra&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">42164.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;apoapsis radius&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;vp&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;periapsis velocity&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km/s&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;va&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;apoapsis velocity&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km/s&#39;</span><span class="p">)</span>
+
+        <span class="c1"># We&#39;re going to be lazy and ask OpenMDAO to approximate our</span>
+        <span class="c1"># partials with finite differencing here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+        <span class="n">rp</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;rp&#39;</span><span class="p">]</span>
+        <span class="n">ra</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;ra&#39;</span><span class="p">]</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">ra</span> <span class="o">+</span> <span class="n">rp</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">rp</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">e</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mu</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;vp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">rp</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;va&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">ra</span>
+</pre></div>
+</div>
+<p>The delta-V component is used to compute the delta-V performed in changing
+the velocity vector, giving the magnitudes of the initial and final velocities
+and the angle between them.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DeltaVComp</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">ExplicitComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the delta-V performed given the magnitude of two velocities</span>
+<span class="sd">    and the angle between them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;v1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Initial velocity&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km/s&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;v2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Final velocity&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km/s&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input</span><span class="p">(</span><span class="s1">&#39;dinc&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Plane change&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Note:  We&#39;re going to use trigonometric functions on dinc.  The</span>
+        <span class="c1"># automatic unit conversion in OpenMDAO comes in handy here.</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Delta-V&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km/s&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;v1&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;v2&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_partials</span><span class="p">(</span><span class="n">of</span><span class="o">=</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;dinc&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">]</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;v2&#39;</span><span class="p">]</span>
+        <span class="n">dinc</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;dinc&#39;</span><span class="p">]</span>
+
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">v2</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">v1</span> <span class="o">*</span> <span class="n">v2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dinc</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">compute_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">partials</span><span class="p">):</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">]</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;v2&#39;</span><span class="p">]</span>
+        <span class="n">dinc</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;dinc&#39;</span><span class="p">]</span>
+
+        <span class="n">delta_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">v2</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">v1</span> <span class="o">*</span> <span class="n">v2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dinc</span><span class="p">))</span>
+
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="s1">&#39;v1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">delta_v</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">v1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">v2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dinc</span><span class="p">))</span>
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="s1">&#39;v2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">delta_v</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">v2</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">v1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dinc</span><span class="p">))</span>
+        <span class="n">partials</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="s1">&#39;dinc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">delta_v</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">v1</span> <span class="o">*</span> <span class="n">v2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dinc</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="putting-it-all-together">
+<h2>Putting it all together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h2>
+<p>Now we assemble the model for our problem.</p>
+<p>An IndepVarComp provides values for the gravitational parameter, the radii
+of the two circular orbits, and the delta-V to be performed at each of the
+two impulses.</p>
+<p>Next, two instances of VCircComp are used to compute the velocity of the
+spacecraft in the initial and final circular orbits.</p>
+<p>The TransferOrbitComp is used to compute the periapsis and apoapsis velocity
+of the spacecraft in the transfer orbit.</p>
+<p>Now we can use the DeltaVComp to provide the magnitude of the delta-V
+at each of the two impulses.</p>
+<p>Lastly, we use two ExecComps to provide some simple calculations.  One
+sums the delta-Vs of the two impulses to provide the total delta-V of the
+transfer.  We will use this as the objective for the optimization.</p>
+<p>The other ExecComp sums up the inclination change at each impulse.  We
+will provide this to the driver as a constraint to ensure that our total
+inclination change meets our requirements.</p>
+<p>We will use the initial and final radii of the orbits, and the inclination
+change at each of the two impulses as our design variables.</p>
+<p>To run the model, we provide values for the design variables and invoke <cite>run_model</cite>.</p>
+<p>To find the optimal solution for the model, we invoke <cite>run_driver</cite>, where we have
+defined the driver of the problem to be the <a class="reference internal" href="../../features/building_blocks/drivers/scipy_optimize_driver.html#scipy-optimize-driver"><span class="std std-ref">ScipyOptimizeDriver</span></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openmdao.api</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">from</span> <span class="nn">openmdao.test_suite.test_examples.test_hohmann_transfer</span> <span class="kn">import</span>  <span class="n">VCircComp</span><span class="p">,</span> <span class="n">TransferOrbitComp</span><span class="p">,</span> <span class="n">DeltaVComp</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Problem</span><span class="p">()</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">ivc</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;ivc&#39;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">IndepVarComp</span><span class="p">(),</span> <span class="n">promotes_outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">])</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km**3/s**2&#39;</span><span class="p">)</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;r1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km&#39;</span><span class="p">)</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;r2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;km&#39;</span><span class="p">)</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;dinc1&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+<span class="n">ivc</span><span class="o">.</span><span class="n">add_output</span><span class="p">(</span><span class="s1">&#39;dinc2&#39;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;leo&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">VCircComp</span><span class="p">())</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;geo&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">VCircComp</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;transfer&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">TransferOrbitComp</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;r1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;leo.r&#39;</span><span class="p">,</span> <span class="s1">&#39;transfer.rp&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;r2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;geo.r&#39;</span><span class="p">,</span> <span class="s1">&#39;transfer.ra&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;leo.mu&#39;</span><span class="p">,</span> <span class="s1">&#39;geo.mu&#39;</span><span class="p">,</span> <span class="s1">&#39;transfer.mu&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;dv1&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">DeltaVComp</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;leo.vcirc&#39;</span><span class="p">,</span> <span class="s1">&#39;dv1.v1&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;transfer.vp&#39;</span><span class="p">,</span> <span class="s1">&#39;dv1.v2&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dinc1&#39;</span><span class="p">,</span> <span class="s1">&#39;dv1.dinc&#39;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;dv2&#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="o">=</span><span class="n">DeltaVComp</span><span class="p">())</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;transfer.va&#39;</span><span class="p">,</span> <span class="s1">&#39;dv2.v1&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;geo.vcirc&#39;</span><span class="p">,</span> <span class="s1">&#39;dv2.v2&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dinc2&#39;</span><span class="p">,</span> <span class="s1">&#39;dv2.dinc&#39;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;dv_total&#39;</span><span class="p">,</span>
+                    <span class="n">subsys</span><span class="o">=</span><span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;delta_v=dv1+dv2&#39;</span><span class="p">,</span>
+                                       <span class="n">delta_v</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;km/s&#39;</span><span class="p">},</span>
+                                       <span class="n">dv1</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;km/s&#39;</span><span class="p">},</span>
+                                       <span class="n">dv2</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;km/s&#39;</span><span class="p">}),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv1.delta_v&#39;</span><span class="p">,</span> <span class="s1">&#39;dv_total.dv1&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dv2.delta_v&#39;</span><span class="p">,</span> <span class="s1">&#39;dv_total.dv2&#39;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_subsystem</span><span class="p">(</span><span class="s1">&#39;dinc_total&#39;</span><span class="p">,</span>
+                    <span class="n">subsys</span><span class="o">=</span><span class="n">om</span><span class="o">.</span><span class="n">ExecComp</span><span class="p">(</span><span class="s1">&#39;dinc=dinc1+dinc2&#39;</span><span class="p">,</span>
+                                       <span class="n">dinc</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;deg&#39;</span><span class="p">},</span>
+                                       <span class="n">dinc1</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;deg&#39;</span><span class="p">},</span>
+                                       <span class="n">dinc2</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;deg&#39;</span><span class="p">}),</span>
+                    <span class="n">promotes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;dinc&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dinc1&#39;</span><span class="p">,</span> <span class="s1">&#39;dinc_total.dinc1&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;dinc2&#39;</span><span class="p">,</span> <span class="s1">&#39;dinc_total.dinc2&#39;</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">ScipyOptimizeDriver</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;dinc1&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">28.5</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_design_var</span><span class="p">(</span><span class="s1">&#39;dinc2&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">28.5</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s1">&#39;dinc&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">28.5</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">28.5</span><span class="p">,</span> <span class="n">scaler</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_objective</span><span class="p">(</span><span class="s1">&#39;delta_v&#39;</span><span class="p">,</span> <span class="n">scaler</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># Setup the problem</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">398600.4418</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;r1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">6778.137</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;r2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">42164.0</span>
+
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dinc1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dinc2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">28.5</span>
+
+<span class="c1"># Execute the model with the given inputs</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Delta-V (km/s):&#39;</span><span class="p">,</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Delta-V (km/s): 4.221534736133669</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Inclination change split (deg):&#39;</span><span class="p">,</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dinc1&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dinc2&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Inclination change split (deg): 0.0 28.5</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Optimization terminated successfully.    (Exit mode 0)
+            Current function value: 4.1962966734846665
+            Iterations: 6
+            Function evaluations: 6
+            Gradient evaluations: 6
+Optimization Complete
+-----------------------------------</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Optimized Delta-V (km/s):&#39;</span><span class="p">,</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;delta_v&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Optimized Delta-V (km/s): 4.1962966734846665</pre></div></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Inclination change split (deg):&#39;</span><span class="p">,</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dinc1&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">prob</span><span class="p">[</span><span class="s1">&#39;dinc2&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="cell border-box-sizing code_cell rendered"><div class="output_area"><pre>Inclination change split (deg): 2.2221728489959487 26.27782715100405</pre></div></div></div>
+<div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
+<p>We built a model representing a Hohmann transfer with a plane change.  This model
+utilized components with both analytic partial derivatives and approximated partials
+using finite differencing.  We utilized ExecComps for some simple calculations
+to reduce the amount of code we needed to write.  Finally, we used this model
+to demonstrate that performing the necessary plane change entirely at apoapsis is
+somewhat less optimal, from a delta-V standpoint, than performing some of the plane
+change at the first impulse.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../keplers_equation/keplers_equation.html" title="Kepler’s Equation Example - Solving an Implicit Equaiton"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../betz_limit/betz.html" title="Optimizing an Actuator Disk Model to Find Betz Limit for Wind Turbines"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Examples</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

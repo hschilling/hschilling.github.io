@@ -1,0 +1,16 @@
+.. index:: approximation_scheme.py
+
+.. _openmdao.approximation_schemes.approximation_scheme.py:
+
+approximation_scheme.py
+-----------------------
+
+.. automodule:: openmdao.approximation_schemes.approximation_scheme
+   :members:
+   :undoc-members:
+   :special-members: __init__, __contains__, __iter__, __setitem__, __getitem__
+   :show-inheritance:
+   :inherited-members:
+
+.. toctree::
+   :maxdepth: 1

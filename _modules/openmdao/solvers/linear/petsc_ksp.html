@@ -1,0 +1,624 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.solvers.linear.petsc_ksp &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.solvers.linear.petsc_ksp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;LinearSolver that uses PetSC KSP to solve for a system&#39;s derivatives.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">petsc4py</span>
+    <span class="kn">from</span> <span class="nn">petsc4py</span> <span class="k">import</span> <span class="n">PETSc</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">PETSc</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.solvers.solver</span> <span class="k">import</span> <span class="n">LinearSolver</span>
+<span class="kn">from</span> <span class="nn">openmdao.utils.general_utils</span> <span class="k">import</span> <span class="n">warn_deprecation</span>
+
+<span class="n">KSP_TYPES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;richardson&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;chebyshev&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;groppcg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pipecg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pipecgrr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cgne&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stcg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gltr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fcg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pipefcg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gmres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pipefgmres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fgmres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lgmres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dgmres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pgmres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tcqmr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bcgs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ibcgs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fbcgs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fbcgsr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bcgsl&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cgs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tfqmr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pipecr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lsqr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;preonly&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;qcg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bicg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;minres&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;symmlq&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lcd&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;python&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gcr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pipegcr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tsirm&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cgls&quot;</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_get_petsc_vec_array_new</span><span class="p">(</span><span class="n">vec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the array of values for the given PETSc vector.</span>
+
+<span class="sd">    Helper function to handle a petsc backwards incompatibility.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    vec : petsc vector</span>
+<span class="sd">        Vector whose data is being requested.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">        A readonly copy of the array of values from vec.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">vec</span><span class="o">.</span><span class="n">getArray</span><span class="p">(</span><span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_petsc_vec_array_old</span><span class="p">(</span><span class="n">vec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the array of values for the given PETSc vector.</span>
+
+<span class="sd">    Helper function to handle a petsc backwards incompatibility.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    vec : petsc vector</span>
+<span class="sd">        Vector whose data is being requested.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">        An array of values from vec.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">vec</span><span class="o">.</span><span class="n">getArray</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="n">PETSc</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">petsc_version</span> <span class="o">=</span> <span class="n">petsc4py</span><span class="o">.</span><span class="n">__version__</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c1"># hack to fix doc-tests</span>
+        <span class="n">petsc_version</span> <span class="o">=</span> <span class="s2">&quot;3.5&quot;</span>
+
+
+<span class="k">if</span> <span class="n">PETSc</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">((</span><span class="n">petsc_version</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">6</span><span class="p">:</span>
+    <span class="n">_get_petsc_vec_array</span> <span class="o">=</span> <span class="n">_get_petsc_vec_array_new</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">_get_petsc_vec_array</span> <span class="o">=</span> <span class="n">_get_petsc_vec_array_old</span>
+
+
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints output from PETSc&#39;s KSP solvers.</span>
+
+<span class="sd">    Callable object given to KSP as a callback for printing the residual.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _solver : _solver</span>
+<span class="sd">        the openmdao solver.</span>
+<span class="sd">    _norm : float</span>
+<span class="sd">        the current norm.</span>
+<span class="sd">    _norm0 : float</span>
+<span class="sd">        the norm for the first iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Monitor.__init__"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.Monitor.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solver</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Store pointer to the openmdao solver and initialize norms.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        solver : object</span>
+<span class="sd">            the openmdao solver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_norm</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_norm0</span> <span class="o">=</span> <span class="mf">1.0</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksp</span><span class="p">,</span> <span class="n">counter</span><span class="p">,</span> <span class="n">norm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Store norm if first iteration, and print norm.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ksp : object</span>
+<span class="sd">            the KSP solver.</span>
+<span class="sd">        counter : int</span>
+<span class="sd">            the counter.</span>
+<span class="sd">        norm : float</span>
+<span class="sd">            the norm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">counter</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">norm</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_norm0</span> <span class="o">=</span> <span class="n">norm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_norm</span> <span class="o">=</span> <span class="n">norm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">_mpi_print</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">norm</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_norm0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="PETScKrylov"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PETScKrylov">[docs]</a><span class="k">class</span> <span class="nc">PETScKrylov</span><span class="p">(</span><span class="n">LinearSolver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    LinearSolver that uses PetSC KSP to solve for a system&#39;s derivatives.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    precon : Solver</span>
+<span class="sd">        Preconditioner for linear solve. Default is None for no preconditioner.</span>
+<span class="sd">    _ksp : dist</span>
+<span class="sd">        dictionary of KSP instances (keyed on vector name).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SOLVER</span> <span class="o">=</span> <span class="s1">&#39;LN: PETScKrylov&#39;</span>
+
+<div class="viewcode-block" id="PETScKrylov.__init__"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PETScKrylov.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare the solver options.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            dictionary of options set by the instantiating class/script.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PETScKrylov</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">PETSc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: PETSc is not available.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">))</span>
+
+        <span class="c1"># initialize dictionary of KSP instances (keyed on vector name)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ksp</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># initialize preconditioner to None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precon</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PETScKrylov</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_declare_options</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;ksp_type&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;fgmres&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">KSP_TYPES</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;KSP algorithm to use. Default is &#39;fgmres&#39;.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;restart&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of iterations between restarts. Larger values increase &#39;</span>
+                             <span class="s1">&#39;iteration cost, but may be necessary for convergence&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;precon_side&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">],</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Preconditioner side, default is right.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># changing the default maxiter from the base class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span>
+
+    <span class="k">def</span> <span class="nf">_assembled_jac_solver_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a generator of linear solvers using assembled jacs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;assemble_jac&#39;</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span><span class="o">.</span><span class="n">_assembled_jac_solver_iter</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">_setup_solvers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign system instance, set depth, and optionally perform setup.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : &lt;System&gt;</span>
+<span class="sd">            pointer to the owning system.</span>
+<span class="sd">        depth : int</span>
+<span class="sd">            depth of the current system (already incremented).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PETScKrylov</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup_solvers</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">precon</span><span class="o">.</span><span class="n">_setup_solvers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_solver_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Control printing for solvers and subsolvers in the model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        level : int</span>
+<span class="sd">            iprint level. Set to 2 to print residuals each iteration; set to 1</span>
+<span class="sd">            to print just the iteration totals; set to 0 to disable all printing</span>
+<span class="sd">            except for failures, and set to -1 to disable all printing including failures.</span>
+<span class="sd">        type_ : str</span>
+<span class="sd">            Type of solver to set: &#39;LN&#39; for linear, &#39;NL&#39; for nonlinear, or &#39;all&#39; for all.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PETScKrylov</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">!=</span> <span class="s1">&#39;NL&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">precon</span><span class="o">.</span><span class="n">_set_solver_print</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PETScKrylov.mult"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PETScKrylov.mult">[docs]</a>    <span class="k">def</span> <span class="nf">mult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">in_vec</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply Jacobian matrix (KSP Callback).</span>
+
+<span class="sd">        The following attributes must be defined when solve is called to</span>
+<span class="sd">        provide information used in this callback:</span>
+
+<span class="sd">        _system : System</span>
+<span class="sd">            pointer to the owning system.</span>
+<span class="sd">        _vec_name : str</span>
+<span class="sd">            the right-hand-side (RHS) vector name.</span>
+<span class="sd">        _mode : str</span>
+<span class="sd">            &#39;fwd&#39; or &#39;rev&#39;.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mat : PETSc.Mat</span>
+<span class="sd">            PETSc matrix object.</span>
+<span class="sd">        in_vec : PetSC Vector</span>
+<span class="sd">            Incoming vector.</span>
+<span class="sd">        result : PetSC Vector</span>
+<span class="sd">            Empty array into which we place the matrix-vector product.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># assign x and b vectors based on mode</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">vec_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vec_name</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+            <span class="n">x_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+            <span class="n">b_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+            <span class="n">x_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+            <span class="n">b_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+
+        <span class="c1"># set value of x vector to KSP provided value</span>
+        <span class="n">x_vec</span><span class="o">.</span><span class="n">_data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">_get_petsc_vec_array</span><span class="p">(</span><span class="n">in_vec</span><span class="p">)</span>
+
+        <span class="c1"># apply linear</span>
+        <span class="n">scope_out</span><span class="p">,</span> <span class="n">scope_in</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_get_scope</span><span class="p">()</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">_apply_linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_assembled_jac</span><span class="p">,</span> <span class="p">[</span><span class="n">vec_name</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rel_systems</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="p">,</span>
+                             <span class="n">scope_out</span><span class="p">,</span> <span class="n">scope_in</span><span class="p">)</span>
+
+        <span class="c1"># stuff resulting value of b vector into result for KSP</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">b_vec</span><span class="o">.</span><span class="n">_data</span></div>
+
+    <span class="k">def</span> <span class="nf">_linearize_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a flag that is True when we need to call linearize on our subsystems&#39; solvers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            Flag for indicating child linerization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">precon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">precon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">precon</span><span class="o">.</span><span class="n">_linearize_children</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_linearize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any required linearization operations such as matrix factorization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">precon</span><span class="o">.</span><span class="n">_linearize</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PETScKrylov.solve"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PETScKrylov.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec_names</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">rel_systems</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solve the linear system for the problem in self._system.</span>
+
+<span class="sd">        The full solution vector is returned.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vec_names : list</span>
+<span class="sd">            list of vector names.</span>
+<span class="sd">        mode : string</span>
+<span class="sd">            Derivative mode, can be &#39;fwd&#39; or &#39;rev&#39;.</span>
+<span class="sd">        rel_systems : set of str</span>
+<span class="sd">            Names of systems relevant to the current solve.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vec_names</span> <span class="o">=</span> <span class="n">vec_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rel_systems</span> <span class="o">=</span> <span class="n">rel_systems</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+        <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span><span class="o">.</span><span class="n">under_complex_step</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: PETScKrylov solver is not supported under &#39;</span>
+                               <span class="s1">&#39;complex step.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msginfo</span><span class="p">))</span>
+
+        <span class="n">maxiter</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;maxiter&#39;</span><span class="p">]</span>
+        <span class="n">atol</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;atol&#39;</span><span class="p">]</span>
+        <span class="n">rtol</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;rtol&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">vec_name</span> <span class="ow">in</span> <span class="n">vec_names</span><span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_vec_name</span> <span class="o">=</span> <span class="n">vec_name</span>
+
+            <span class="c1"># assign x and b vectors based on mode</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+                <span class="n">x_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+                <span class="n">b_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                <span class="n">x_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+                <span class="n">b_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+
+            <span class="c1"># create numpy arrays to interface with PETSc</span>
+            <span class="n">sol_array</span> <span class="o">=</span> <span class="n">x_vec</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">rhs_array</span> <span class="o">=</span> <span class="n">b_vec</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># create PETSc vectors from numpy arrays</span>
+            <span class="n">sol_petsc_vec</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">Vec</span><span class="p">()</span><span class="o">.</span><span class="n">createWithArray</span><span class="p">(</span><span class="n">sol_array</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+            <span class="n">rhs_petsc_vec</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">Vec</span><span class="p">()</span><span class="o">.</span><span class="n">createWithArray</span><span class="p">(</span><span class="n">rhs_array</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+
+            <span class="c1"># run PETSc solver</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">ksp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ksp_solver</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">vec_name</span><span class="p">)</span>
+            <span class="n">ksp</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span><span class="n">max_it</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">)</span>
+            <span class="n">ksp</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">rhs_petsc_vec</span><span class="p">,</span> <span class="n">sol_petsc_vec</span><span class="p">)</span>
+
+            <span class="c1"># stuff the result into the x vector</span>
+            <span class="n">x_vec</span><span class="o">.</span><span class="n">_data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sol_array</span>
+
+            <span class="n">sol_petsc_vec</span> <span class="o">=</span> <span class="n">rhs_petsc_vec</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="PETScKrylov.apply"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PETScKrylov.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">in_vec</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply preconditioner.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mat : PETSc.Mat</span>
+<span class="sd">            PETSc matrix object.</span>
+<span class="sd">        in_vec : PETSc.Vector</span>
+<span class="sd">            Incoming vector</span>
+<span class="sd">        result : PETSc.Vector</span>
+<span class="sd">            Empty vector in which the preconditioned in_vec is stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span><span class="p">:</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system</span>
+            <span class="n">vec_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vec_name</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span>
+
+            <span class="c1"># Need to clear out any junk from the inputs.</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_const</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+            <span class="c1"># assign x and b vectors based on mode</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span><span class="p">:</span>
+                <span class="n">x_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+                <span class="n">b_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                <span class="n">x_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;residual&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+                <span class="n">b_vec</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">_vectors</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">vec_name</span><span class="p">]</span>
+
+            <span class="c1"># set value of b vector to KSP provided value</span>
+            <span class="n">b_vec</span><span class="o">.</span><span class="n">_data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">_get_petsc_vec_array</span><span class="p">(</span><span class="n">in_vec</span><span class="p">)</span>
+
+            <span class="c1"># call the preconditioner</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">append_precon</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">precon</span><span class="o">.</span><span class="n">solve</span><span class="p">([</span><span class="n">vec_name</span><span class="p">],</span> <span class="n">mode</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_solver_info</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+            <span class="c1"># stuff resulting value of x vector into result for KSP</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">x_vec</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no preconditioner, just pass back the incoming vector</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">_get_petsc_vec_array</span><span class="p">(</span><span class="n">in_vec</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_ksp_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">vec_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get an instance of the KSP solver for `vec_name` in `system`.</span>
+
+<span class="sd">        Instances will be created on first request and cached for future use.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : `System`</span>
+<span class="sd">            Parent `System` object.</span>
+<span class="sd">        vec_name : string</span>
+<span class="sd">            name of vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        KSP</span>
+<span class="sd">            the KSP solver instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># use cached instance if available</span>
+        <span class="k">if</span> <span class="n">vec_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ksp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ksp</span><span class="p">[</span><span class="n">vec_name</span><span class="p">]</span>
+
+        <span class="n">iproc</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">lsize</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">iproc</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">_var_sizes</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+
+        <span class="n">jac_mat</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">Mat</span><span class="p">()</span><span class="o">.</span><span class="n">createPython</span><span class="p">([(</span><span class="n">lsize</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="p">(</span><span class="n">lsize</span><span class="p">,</span> <span class="n">size</span><span class="p">)],</span>
+                                           <span class="n">comm</span><span class="o">=</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+        <span class="n">jac_mat</span><span class="o">.</span><span class="n">setPythonContext</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">jac_mat</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+
+        <span class="n">ksp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ksp</span><span class="p">[</span><span class="n">vec_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">comm</span><span class="o">=</span><span class="n">system</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
+
+        <span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="n">jac_mat</span><span class="p">)</span>
+        <span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;ksp_type&#39;</span><span class="p">])</span>
+        <span class="n">ksp</span><span class="o">.</span><span class="n">setGMRESRestart</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;restart&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;precon_side&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span><span class="p">:</span>
+            <span class="n">ksp</span><span class="o">.</span><span class="n">setPCSide</span><span class="p">(</span><span class="n">PETSc</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">Side</span><span class="o">.</span><span class="n">LEFT</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ksp</span><span class="o">.</span><span class="n">setPCSide</span><span class="p">(</span><span class="n">PETSc</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">Side</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">)</span>
+        <span class="n">ksp</span><span class="o">.</span><span class="n">setMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="n">ksp</span><span class="o">.</span><span class="n">setInitialGuessNonzero</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">pc_mat</span> <span class="o">=</span> <span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span>
+        <span class="n">pc_mat</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">)</span>
+        <span class="n">pc_mat</span><span class="o">.</span><span class="n">setPythonContext</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ksp</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">preconditioner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provide &#39;preconditioner&#39; property for backwards compatibility.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        &lt;LinearSolver&gt;</span>
+<span class="sd">            reference to the &#39;precon&#39; property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;preconditioner&#39; property provides backwards compatibility &quot;</span>
+                         <span class="s2">&quot;with OpenMDAO &lt;= 1.x ; use &#39;precon&#39; instead.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">precon</span>
+
+    <span class="nd">@preconditioner</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">preconditioner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precon</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provide for setting the &#39;preconditioner&#39; property for backwards compatibility.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        precon : &lt;LinearSolver&gt;</span>
+<span class="sd">            reference to a &lt;LinearSolver&gt; to be assigned to the &#39;precon&#39; property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s2">&quot;The &#39;preconditioner&#39; property provides backwards compatibility &quot;</span>
+                         <span class="s2">&quot;with OpenMDAO &lt;= 1.x ; use &#39;precon&#39; instead.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precon</span> <span class="o">=</span> <span class="n">precon</span></div>
+
+
+<div class="viewcode-block" id="PetscKSP"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PetscKSP">[docs]</a><span class="k">class</span> <span class="nc">PetscKSP</span><span class="p">(</span><span class="n">PETScKrylov</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deprecated.  Use PETScKrylov.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PetscKSP.__init__"><a class="viewcode-back" href="../../../../_srcdocs/packages/solvers.linear/petsc_ksp.html#openmdao.solvers.linear.petsc_ksp.PetscKSP.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Named args.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PetscKSP</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">warn_deprecation</span><span class="p">(</span><span class="s1">&#39;PetscKSP is deprecated.  Use PETScKrylov instead.&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

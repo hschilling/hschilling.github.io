@@ -1,0 +1,434 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.drivers.doe_driver &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.drivers.doe_driver</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Design-of-Experiments Driver.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.core.driver</span> <span class="k">import</span> <span class="n">Driver</span><span class="p">,</span> <span class="n">RecordingDebugging</span>
+<span class="kn">from</span> <span class="nn">openmdao.core.analysis_error</span> <span class="k">import</span> <span class="n">AnalysisError</span>
+<span class="kn">from</span> <span class="nn">openmdao.drivers.doe_generators</span> <span class="k">import</span> <span class="n">DOEGenerator</span><span class="p">,</span> <span class="n">ListGenerator</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.utils.mpi</span> <span class="k">import</span> <span class="n">MPI</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.recorders.sqlite_recorder</span> <span class="k">import</span> <span class="n">SqliteRecorder</span>
+
+
+<div class="viewcode-block" id="DOEDriver"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_driver.html#openmdao.drivers.doe_driver.DOEDriver">[docs]</a><span class="k">class</span> <span class="nc">DOEDriver</span><span class="p">(</span><span class="n">Driver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Design-of-Experiments Driver.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _name : str</span>
+<span class="sd">        The name used to identify this driver in recorded cases.</span>
+<span class="sd">    _recorders : list</span>
+<span class="sd">        List of case recorders that have been added to this driver.</span>
+<span class="sd">    _comm : MPI.Comm or None</span>
+<span class="sd">        MPI communicator object.</span>
+<span class="sd">    _color : int or None</span>
+<span class="sd">        In MPI, the cached color is used to determine which cases to run on this proc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DOEDriver.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_driver.html#openmdao.drivers.doe_driver.DOEDriver.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        generator : DOEGenerator, list or None</span>
+<span class="sd">            The case generator or a list of DOE cases.</span>
+
+<span class="sd">        **kwargs : dict of keyword arguments</span>
+<span class="sd">            Keyword arguments that will be mapped into the Driver options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># if given a list, create a ListGenerator</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">generator</span> <span class="o">=</span> <span class="n">ListGenerator</span><span class="p">(</span><span class="n">generator</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">generator</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="n">DOEGenerator</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">generator</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;DOEDriver requires an instance of DOEGenerator, &quot;</span>
+                                <span class="s2">&quot;but a class object was found: </span><span class="si">%s</span><span class="s2">&quot;</span>
+                                <span class="o">%</span> <span class="n">generator</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;DOEDriver requires an instance of DOEGenerator, &quot;</span>
+                                <span class="s2">&quot;but an instance of </span><span class="si">%s</span><span class="s2"> was found.&quot;</span>
+                                <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">generator</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">DOEDriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;generator&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">generator</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_color</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_declare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Declare options before kwargs are processed in the init method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;generator&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="p">(</span><span class="n">DOEGenerator</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="n">DOEGenerator</span><span class="p">(),</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;The case generator. If default, no cases are generated.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;run_parallel&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set to True to execute cases in parallel.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s1">&#39;procs_per_model&#39;</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Number of processors to give each model under MPI.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_comm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform any driver-specific setup of communicators for the model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        comm : MPI.Comm or &lt;FakeComm&gt; or None</span>
+<span class="sd">            The communicator for the Problem.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        MPI.Comm or &lt;FakeComm&gt; or None</span>
+<span class="sd">            The communicator for the Problem model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">MPI</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;run_parallel&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span> <span class="o">=</span> <span class="n">comm</span>
+            <span class="n">procs_per_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;procs_per_model&#39;</span><span class="p">]</span>
+
+            <span class="n">full_size</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">full_size</span> <span class="o">//</span> <span class="n">procs_per_model</span>
+            <span class="k">if</span> <span class="n">full_size</span> <span class="o">!=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">procs_per_model</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The total number of processors is not evenly divisible by the &quot;</span>
+                                   <span class="s2">&quot;specified number of processors per model.</span><span class="se">\n</span><span class="s2"> Provide a &quot;</span>
+                                   <span class="s2">&quot;number of processors that is a multiple of </span><span class="si">%d</span><span class="s2">, or &quot;</span>
+                                   <span class="s2">&quot;specify a number of processors per model that divides &quot;</span>
+                                   <span class="s2">&quot;into </span><span class="si">%d</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">procs_per_model</span><span class="p">,</span> <span class="n">full_size</span><span class="p">))</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_color</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">%</span> <span class="n">size</span>
+
+            <span class="n">model_comm</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Split</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">model_comm</span> <span class="o">=</span> <span class="n">comm</span>
+
+        <span class="k">return</span> <span class="n">model_comm</span>
+
+    <span class="k">def</span> <span class="nf">_set_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the name of this DOE driver and its case generator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The name of this DOE driver and its case generator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;generator&#39;</span><span class="p">]</span>
+
+        <span class="n">gen_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">generator</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;Generator&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gen_type</span> <span class="o">==</span> <span class="s1">&#39;DOEGenerator&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;DOEDriver&#39;</span>  <span class="c1"># Empty generator</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;DOEDriver_&#39;</span> <span class="o">+</span> <span class="n">gen_type</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="k">def</span> <span class="nf">_get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the name of this DOE driver and its case generator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The name of this DOE driver and its case generator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+<div class="viewcode-block" id="DOEDriver.run"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_driver.html#openmdao.drivers.doe_driver.DOEDriver.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate cases and run the model for each set of generated input values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean</span>
+<span class="sd">            Failure flag; True if failed to converge, False is successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># set driver name with current generator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_name</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span><span class="p">:</span>
+            <span class="n">case_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parallel_generator</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">case_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;generator&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">case_gen</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_designvars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_case</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_run_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run case, save exception info and mark the metadata if the case fails.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case : list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">dv_name</span><span class="p">,</span> <span class="n">dv_val</span> <span class="ow">in</span> <span class="n">case</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_design_var</span><span class="p">(</span><span class="n">dv_name</span><span class="p">,</span> <span class="n">dv_val</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Error assigning </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">: &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dv_name</span><span class="p">,</span> <span class="n">dv_val</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
+                    <span class="k">raise</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">RecordingDebugging</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_name</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_count</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">rec</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">run_solve_nonlinear</span><span class="p">()</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">except</span> <span class="n">AnalysisError</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">])</span>
+
+            <span class="c1"># save reference to metadata for use in record_iteration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="k">def</span> <span class="nf">_parallel_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate case for this processor when running under MPI.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        design_vars : dict</span>
+<span class="sd">            Dictionary of design variables for which to generate values.</span>
+
+<span class="sd">        model : Group</span>
+<span class="sd">            The model containing the design variables (used by some generators).</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        list</span>
+<span class="sd">            list of name, value tuples for the design variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span><span class="o">.</span><span class="n">size</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;procs_per_model&#39;</span><span class="p">]</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_color</span>
+
+        <span class="n">generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;generator&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">case</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generator</span><span class="p">(</span><span class="n">design_vars</span><span class="p">,</span> <span class="n">model</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="n">size</span> <span class="o">==</span> <span class="n">color</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">case</span>
+
+<div class="viewcode-block" id="DOEDriver.add_recorder"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_driver.html#openmdao.drivers.doe_driver.DOEDriver.add_recorder">[docs]</a>    <span class="k">def</span> <span class="nf">add_recorder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recorder</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a recorder to the driver.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        recorder : CaseRecorder</span>
+<span class="sd">           A recorder instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># keep track of recorders so we can flag them as parallel</span>
+        <span class="c1"># if we end up running in parallel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">DOEDriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">add_recorder</span><span class="p">(</span><span class="n">recorder</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_setup_recording</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up case recording.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">MPI</span><span class="p">:</span>
+            <span class="n">procs_per_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;procs_per_model&#39;</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">recorder</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+                <span class="n">recorder</span><span class="o">.</span><span class="n">_parallel</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># if SqliteRecorder, write cases only on procs up to the number</span>
+                <span class="c1"># of parallel DOEs (i.e. on the root procs for the cases)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recorder</span><span class="p">,</span> <span class="n">SqliteRecorder</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">procs_per_model</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">recorder</span><span class="o">.</span><span class="n">_record_on_proc</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span><span class="o">.</span><span class="n">size</span> <span class="o">//</span> <span class="n">procs_per_model</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">:</span>
+                            <span class="n">recorder</span><span class="o">.</span><span class="n">_record_on_proc</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">recorder</span><span class="o">.</span><span class="n">_record_on_proc</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">DOEDriver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup_recording</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DOEDriver.record_iteration"><a class="viewcode-back" href="../../../_srcdocs/packages/drivers/doe_driver.html#openmdao.drivers.doe_driver.DOEDriver.record_iteration">[docs]</a>    <span class="k">def</span> <span class="nf">record_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record an iteration of the current Driver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">_recorders</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Get the data to record (collective calls that get across all ranks)</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span>
+        <span class="n">filt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered_vars_to_record</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_desvars&#39;</span><span class="p">]:</span>
+            <span class="n">des_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_design_var_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filt</span><span class="p">[</span><span class="s1">&#39;des&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">des_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_objectives&#39;</span><span class="p">]:</span>
+            <span class="n">obj_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objective_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filt</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_constraints&#39;</span><span class="p">]:</span>
+            <span class="n">con_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraint_values</span><span class="p">(</span><span class="n">driver_scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filt</span><span class="p">[</span><span class="s1">&#39;con&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">con_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="s1">&#39;record_responses&#39;</span><span class="p">]:</span>
+            <span class="c1"># res_vars = self.get_response_values(filter=filt[&#39;res&#39;])  # not really working yet</span>
+            <span class="n">res_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="n">names</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_names</span>
+        <span class="n">views</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_outputs</span><span class="o">.</span><span class="n">_views</span>
+        <span class="n">sys_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;sys&#39;</span><span class="p">]}</span>
+
+        <span class="n">out_vars</span> <span class="o">=</span> <span class="n">des_vars</span>
+        <span class="n">out_vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">res_vars</span><span class="p">)</span>
+        <span class="n">out_vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_vars</span><span class="p">)</span>
+        <span class="n">out_vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">con_vars</span><span class="p">)</span>
+        <span class="n">out_vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sys_vars</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording_options</span><span class="p">[</span><span class="s1">&#39;record_inputs&#39;</span><span class="p">]:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_inputs</span><span class="o">.</span><span class="n">_names</span>
+            <span class="n">views</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_inputs</span><span class="o">.</span><span class="n">_views</span>
+            <span class="n">in_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filt</span><span class="p">[</span><span class="s1">&#39;in&#39;</span><span class="p">]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">in_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;out&#39;</span><span class="p">:</span> <span class="n">out_vars</span><span class="p">,</span>
+            <span class="s1">&#39;in&#39;</span><span class="p">:</span> <span class="n">in_vars</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rec_mgr</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

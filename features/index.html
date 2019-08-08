@@ -1,0 +1,172 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Features &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Core Features" href="core_features/index.html" />
+    <link rel="prev" title="Computing Total Derivatives of Coupled Models" href="../advanced_guide/derivs/derivs_of_coupled_systems.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="core_features/index.html" title="Core Features"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../advanced_guide/derivs/derivs_of_coupled_systems.html" title="Computing Total Derivatives of Coupled Models"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="features">
+<span id="id1"></span><h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
+<p>OpenMDAO’s fully-supported features are documented here, each in a self-contained context.
+Any feature documented here, with the exception of those in the <em>Experimental Featuers</em> section,
+has been thoroughly tested, and should be considered fully functional.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="core_features/index.html">Core Features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core_features/defining_components/index.html">Working with Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_features/grouping_components/index.html">Working with Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_features/adding_desvars_objs_consts/index.html">Adding Design Variables, Constraints &amp; Objectives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_features/running/index.html">Running Your Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_features/controlling_solvers/index.html">Controlling Solver Behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_features/working_with_derivatives/index.html">Working with Derivatives</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="building_blocks/index.html">Building Blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="building_blocks/components/index.html">Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building_blocks/drivers/index.html">Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building_blocks/solvers/index.html">Solvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building_blocks/surrogates/index.html">SurrogateModels</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="recording/index.html">Recording Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="recording/saving_data.html">Case Recording</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recording/case_reader.html">Case Reader Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recording/reading_data.html">Accessing Recorded Data from Case Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recording/reading_metadata.html">Accessing Recorded Metadata</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="model_visualization/index.html">Model Visualization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="model_visualization/view_connections.html">View Connections of a Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model_visualization/n2_basics.html">Basics of Creating N2 Model Visualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model_visualization/n2_details.html">Details of the N2 Model Visualizations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="debugging/index.html">Debugging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="debugging/newton_solver_not_converging.html">The Newton Solver Isn’t Converging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging/listing_variables.html">Listing Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging/debugging_drivers.html">Driver Debug Printing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging/debugging_solvers.html">Solver Debug Printing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging/profiling/index.html">Profiling and Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging/controlling_mpi.html">Controlling MPI Detection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="units.html">Units Definitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experimental/index.html">Experimental Features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="experimental/discrete_vars.html">Discrete Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/xdsm_visualization.html">XDSM generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/simul_coloring_fd_cs.html">Simultaneous Coloring of Approximated Derivatives</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="core_features/index.html" title="Core Features"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../advanced_guide/derivs/derivs_of_coupled_systems.html" title="Computing Total Derivatives of Coupled Models"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

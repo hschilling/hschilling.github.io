@@ -1,0 +1,7 @@
+.. _DotProductComp: 
+
+=========================
+DotProductComp
+=========================
+  .. toctree::
+     ../features/building_blocks/components/dot_product_comp.rst

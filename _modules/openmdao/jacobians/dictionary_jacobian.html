@@ -1,0 +1,271 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openmdao.jacobians.dictionary_jacobian &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer_docs/index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for openmdao.jacobians.dictionary_jacobian</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Define the DictionaryJacobian class.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.jacobians.jacobian</span> <span class="k">import</span> <span class="n">Jacobian</span>
+
+
+<span class="n">_full_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DictionaryJacobian"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/dictionary_jacobian.html#openmdao.jacobians.dictionary_jacobian.DictionaryJacobian">[docs]</a><span class="k">class</span> <span class="nc">DictionaryJacobian</span><span class="p">(</span><span class="n">Jacobian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    No global &lt;Jacobian&gt;; use dictionary of user-supplied sub-Jacobians.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _iter_keys : list of (vname, vname) tuples</span>
+<span class="sd">        List of tuples of variable names that match subjacs in the this Jacobian.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DictionaryJacobian.__init__"><a class="viewcode-back" href="../../../_srcdocs/packages/jacobians/dictionary_jacobian.html#openmdao.jacobians.dictionary_jacobian.DictionaryJacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize all attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            Parent system to this jacobian.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            options dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DictionaryJacobian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iter_keys</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+    <span class="k">def</span> <span class="nf">_iter_abs_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">vec_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over subjacs keyed by absolute names.</span>
+
+<span class="sd">        This includes only subjacs that have been set and are part of the current system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System that is updating this jacobian.</span>
+<span class="sd">        vec_name : str</span>
+<span class="sd">            The name of the current RHS vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of keys matching this jacobian for the current system.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">pathname</span><span class="p">,</span> <span class="n">vec_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_keys</span><span class="p">:</span>
+            <span class="n">subjacs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">res_name</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_relevant_names</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">type_</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;output&#39;</span><span class="p">,</span> <span class="s1">&#39;input&#39;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">system</span><span class="o">.</span><span class="n">_var_relevant_names</span><span class="p">[</span><span class="n">vec_name</span><span class="p">][</span><span class="n">type_</span><span class="p">]:</span>
+                        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">res_name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subjacs</span><span class="p">:</span>
+                            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_iter_keys</span><span class="p">[</span><span class="n">entry</span><span class="p">]</span> <span class="o">=</span> <span class="n">keys</span>
+            <span class="k">return</span> <span class="n">keys</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_keys</span><span class="p">[</span><span class="n">entry</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">d_inputs</span><span class="p">,</span> <span class="n">d_outputs</span><span class="p">,</span> <span class="n">d_residuals</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute matrix-vector product.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system : System</span>
+<span class="sd">            System that is updating this jacobian.</span>
+<span class="sd">        d_inputs : Vector</span>
+<span class="sd">            inputs linear vector.</span>
+<span class="sd">        d_outputs : Vector</span>
+<span class="sd">            outputs linear vector.</span>
+<span class="sd">        d_residuals : Vector</span>
+<span class="sd">            residuals linear vector.</span>
+<span class="sd">        mode : str</span>
+<span class="sd">            &#39;fwd&#39; or &#39;rev&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># avoid circular import</span>
+        <span class="kn">from</span> <span class="nn">openmdao.core.explicitcomponent</span> <span class="k">import</span> <span class="n">ExplicitComponent</span>
+
+        <span class="n">fwd</span> <span class="o">=</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fwd&#39;</span>
+        <span class="n">d_res_names</span> <span class="o">=</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_names</span>
+        <span class="n">d_out_names</span> <span class="o">=</span> <span class="n">d_outputs</span><span class="o">.</span><span class="n">_names</span>
+        <span class="n">d_inp_names</span> <span class="o">=</span> <span class="n">d_inputs</span><span class="o">.</span><span class="n">_names</span>
+        <span class="n">rflat</span> <span class="o">=</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_views_flat</span>
+        <span class="n">oflat</span> <span class="o">=</span> <span class="n">d_outputs</span><span class="o">.</span><span class="n">_views_flat</span>
+        <span class="n">iflat</span> <span class="o">=</span> <span class="n">d_inputs</span><span class="o">.</span><span class="n">_views_flat</span>
+        <span class="n">np_add_at</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">at</span>
+        <span class="n">ncol</span> <span class="o">=</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_ncol</span>
+        <span class="n">subjacs_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subjacs_info</span>
+
+        <span class="k">with</span> <span class="n">system</span><span class="o">.</span><span class="n">_unscaled_context</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">d_outputs</span><span class="p">],</span> <span class="n">residuals</span><span class="o">=</span><span class="p">[</span><span class="n">d_residuals</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">abs_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_abs_keys</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">d_residuals</span><span class="o">.</span><span class="n">_name</span><span class="p">):</span>
+                <span class="n">subjac_info</span> <span class="o">=</span> <span class="n">subjacs_info</span><span class="p">[</span><span class="n">abs_key</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomize</span><span class="p">:</span>
+                    <span class="n">subjac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_randomize_subjac</span><span class="p">(</span><span class="n">subjac_info</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">abs_key</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">subjac</span> <span class="o">=</span> <span class="n">subjac_info</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+                <span class="n">res_name</span><span class="p">,</span> <span class="n">other_name</span> <span class="o">=</span> <span class="n">abs_key</span>
+                <span class="k">if</span> <span class="n">res_name</span> <span class="ow">in</span> <span class="n">d_res_names</span><span class="p">:</span>
+                    <span class="n">rows</span> <span class="o">=</span> <span class="n">subjac_info</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># sparse list format</span>
+                        <span class="n">cols</span> <span class="o">=</span> <span class="n">subjac_info</span><span class="p">[</span><span class="s1">&#39;cols&#39;</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">other_name</span> <span class="ow">in</span> <span class="n">d_out_names</span><span class="p">:</span>
+                            <span class="c1"># skip the matvec mult completely for identity subjacs</span>
+                            <span class="k">if</span> <span class="n">res_name</span> <span class="ow">is</span> <span class="n">other_name</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">ExplicitComponent</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+                                    <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">]</span> <span class="o">-=</span> <span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">]</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">]</span> <span class="o">-=</span> <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">]</span>
+                            <span class="k">elif</span> <span class="n">fwd</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">ncol</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncol</span><span class="p">):</span>
+                                        <span class="n">np_add_at</span><span class="p">(</span><span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">rows</span><span class="p">,</span>
+                                                  <span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">][</span><span class="n">cols</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">np_add_at</span><span class="p">(</span><span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">],</span> <span class="n">rows</span><span class="p">,</span>
+                                              <span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">][</span><span class="n">cols</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                                <span class="k">if</span> <span class="n">ncol</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncol</span><span class="p">):</span>
+                                        <span class="n">np_add_at</span><span class="p">(</span><span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">cols</span><span class="p">,</span>
+                                                  <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">][</span><span class="n">rows</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">np_add_at</span><span class="p">(</span><span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">],</span> <span class="n">cols</span><span class="p">,</span>
+                                              <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">][</span><span class="n">rows</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">other_name</span> <span class="ow">in</span> <span class="n">d_inp_names</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">ncol</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncol</span><span class="p">):</span>
+                                        <span class="n">np_add_at</span><span class="p">(</span><span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">rows</span><span class="p">,</span>
+                                                  <span class="n">iflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">][</span><span class="n">cols</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">np_add_at</span><span class="p">(</span><span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">],</span> <span class="n">rows</span><span class="p">,</span>
+                                              <span class="n">iflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">][</span><span class="n">cols</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                                <span class="k">if</span> <span class="n">ncol</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncol</span><span class="p">):</span>
+                                        <span class="n">np_add_at</span><span class="p">(</span><span class="n">iflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">cols</span><span class="p">,</span>
+                                                  <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">][:,</span> <span class="n">i</span><span class="p">][</span><span class="n">rows</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">np_add_at</span><span class="p">(</span><span class="n">iflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">],</span> <span class="n">cols</span><span class="p">,</span>
+                                              <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">][</span><span class="n">rows</span><span class="p">]</span> <span class="o">*</span> <span class="n">subjac</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>  <span class="c1"># ndarray or sparse</span>
+                        <span class="k">if</span> <span class="n">other_name</span> <span class="ow">in</span> <span class="n">d_out_names</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+                                <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">])</span>
+                            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                                <span class="n">oflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">])</span>
+                        <span class="k">elif</span> <span class="n">other_name</span> <span class="ow">in</span> <span class="n">d_inp_names</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+                                <span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">iflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">])</span>
+                            <span class="k">else</span><span class="p">:</span>  <span class="c1"># rev</span>
+                                <span class="n">iflat</span><span class="p">[</span><span class="n">other_name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">subjac</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">rflat</span><span class="p">[</span><span class="n">res_name</span><span class="p">])</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

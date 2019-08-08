@@ -1,0 +1,349 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Automating Doc Build and Custom Doc Deployment from Travis CI &#8212; OpenMDAO 2.8.0 Beta documentation</title>
+    <link rel="stylesheet" href="../_static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../_static/OpenMDAO_Favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Caching on Travis CI" href="travis_caching.html" />
+    <link rel="prev" title="Local Building of OpenMDAO Documentation" href="doc_build.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="travis_caching.html" title="Caching on Travis CI"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="doc_build.html" title="Local Building of OpenMDAO Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Developer Docs (if you’re going to contribute code)</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenMDAO_Logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic_guide/index.html">Basic User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced_guide/index.html">Advanced User Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory_manual/index.html">Theory Manual</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../other/om_command.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/citing.html">How to Cite OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/repo_guide/index.html">Building a Tool on Top of OpenMDAO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/api_translation.html">Upgrading from OpenMDAO 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../other/file_wrap.html">File Wrapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_srcdocs/index.html">Source Docs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Developer Docs (if you’re going to contribute code)</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Search OpenMDAO</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="checkbox" name="search_source" /> Include Source Docs
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="automating-doc-build-and-custom-doc-deployment-from-travis-ci">
+<span id="advanced-operations-automation"></span><h1>Automating Doc Build and Custom Doc Deployment from Travis CI<a class="headerlink" href="#automating-doc-build-and-custom-doc-deployment-from-travis-ci" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The current recommended procedure for new repos is to use github-pages as outlined <a class="reference internal" href="../other/repo_guide/github-pages.html#github-pages"><span class="std std-ref">here</span></a>.
+These instructions exist to explain how OpenMDAO’s docs work for now. If you are
+starting a new project, go follow the <a class="reference internal" href="../other/repo_guide/github-pages.html#github-pages"><span class="std std-ref">github-pages instructions</span></a> instructions, as they are much simpler.</p>
+</div>
+<p>The following process is a one-time setup for the owner of a project to complete.  Once it is finished, it will become
+transparent to other developers and users. The process outlined here is to get a project’s docs to build on Travis CI, and then
+transfer the built docs off to a web server. (This example illustrates OpenMDAO’s process.)
+The reason you’d use this method instead of just setting up readthedocs.org, is because on Travis, you can very specifically
+customize the installation of your project.  Certain advanced items in OpenMDAO 2.0 just can’t be installed on readthedocs, but can be on Travis.
+Having a full install means that the docs will be more complete, because embedded tests that rely on, for instance, MPI, will actually work on Travis CI,
+whereas they currently do not on readthedocs.org.</p>
+<div class="section" id="getting-started-and-general-concept">
+<h2>Getting Started and General Concept<a class="headerlink" href="#getting-started-and-general-concept" title="Permalink to this headline">¶</a></h2>
+<p>The very first thing to do is to comb through your Travis CI build logs to ensure that your installation is
+working the way that you expect, and that the docs are actually building successfully and
+without errors on Travis on any/all platforms and Python distributions. If you’re using Sphinx, the docs will build into
+your <cite>&lt;project&gt;/docs/_build/html</cite> directory. The concept is simply to copy the contents of that html directory over to a
+server directory that is serving up html.  For the purposes of OpenMDAO/blue, this happens on <cite>webXXX.webfaction.com:webapps/&lt;doc_serving_app&gt;</cite></p>
+<p>You need to make several changes to your <cite>.travis.yml</cite> file in order to make this happen.
+One of these steps, you will find out, is going to re-write your <cite>.travis.yml</cite> file and take out all the spacing,
+comments, and formatting. So if you like the way your <cite>.travis.yml</cite> file looks, I suggest backing up that file beforehand.
+You can then take the auto-generated lines that we’re about to generate, and stick them back in the pretty-looking <cite>.travis.yml</cite> file.</p>
+<p>To get this doc transfer automated, we need to be able to move built docs from Travis to our private server without any required input,
+because there is no human in the loop to type passwords or answer prompts.  This will require some ssh key wizardry.
+The overall concept is to have an encrypted key already on the Travis server, then to decrypt it, and use it to do a
+password-less transfer of the docs from Travis to our private server (in our case, Webfaction).  Here’s the outline:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#. Generate a dedicated SSH key for this job (it is easier to later isolate and to revoke it, if we ever must).</span>
+<span class="c1">#. Encrypt the private key to make it readable only by Travis CI .</span>
+<span class="c1">#. Copy the public key file into the remote SSH host’s allowed_hosts file.</span>
+<span class="c1">#. Modify the yaml further.</span>
+<span class="c1">#. Commit the modified .travis.yaml and encrypted key file into Git.</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="specific-commands">
+<h2>Specific Commands<a class="headerlink" href="#specific-commands" title="Permalink to this headline">¶</a></h2>
+<p>The commands to do the above look something like this:</p>
+<dl class="docutils">
+<dt><strong>1. Generate the Key</strong></dt>
+<dd><p class="first">Run this command from the top level of your project (in the example case, from the <cite>openmdao/</cite> level):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span><span class="o">-</span><span class="n">keygen</span> <span class="o">-</span><span class="n">t</span> <span class="n">rsa</span> <span class="o">-</span><span class="n">b</span> <span class="mi">4096</span> <span class="o">-</span><span class="n">f</span> <span class="o">./</span><span class="n">travis_deploy_rsa</span>
+
+<span class="o">-</span><span class="n">t</span> <span class="n">chooses</span> <span class="n">the</span> <span class="nb">type</span> <span class="n">of</span> <span class="n">key</span> <span class="n">to</span> <span class="n">generate</span><span class="p">,</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">case</span><span class="p">,</span> <span class="n">rsa</span>
+<span class="o">-</span><span class="n">b</span>  <span class="n">Specifies</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">bits</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">key</span> <span class="n">to</span> <span class="n">create</span><span class="o">.</span>  <span class="n">For</span> <span class="n">RSA</span> <span class="n">keys</span><span class="p">,</span> <span class="n">the</span> <span class="n">minimum</span>
+    <span class="n">size</span> <span class="ow">is</span> <span class="mi">768</span> <span class="n">bits</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">default</span> <span class="ow">is</span> <span class="mi">2048</span> <span class="n">bits</span><span class="o">.</span> <span class="n">I</span> <span class="n">used</span> <span class="mi">4096</span> <span class="n">because</span> <span class="n">it</span> <span class="n">was</span> <span class="n">recommended</span> <span class="n">by</span> <span class="n">Travis</span><span class="o">.</span>
+<span class="o">-</span><span class="n">f</span> <span class="n">output</span> <span class="n">into</span> <span class="n">this</span> <span class="n">keyfile</span><span class="p">,</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">case</span><span class="p">,</span> <span class="n">I</span> <span class="n">want</span> <span class="n">the</span> <span class="n">key</span> <span class="n">created</span> <span class="n">right</span> <span class="n">where</span> <span class="n">I</span> <span class="n">am</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">dir</span> <span class="n">structure</span><span class="o">.</span>
+</pre></div>
+</div>
+<p class="last">It will spit out both a private key file and a public key file: <cite>travis_deploy_rsa</cite> and <cite>travis_deploy_rsa.pub</cite>.</p>
+</dd>
+<dt><strong>2. Encrypt the Key</strong></dt>
+<dd><p class="first">Again from the same directory, execute the next command to encrypt the PRIVATE key file that we just generated.
+(NOTE: this is the aforementioned command that will change your .travis.yml file! ):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">travis</span> <span class="n">encrypt</span><span class="o">-</span><span class="n">file</span> <span class="n">travis_deploy_rsa</span> <span class="o">--</span><span class="n">add</span> <span class="o">--</span><span class="n">debug</span> <span class="o">--</span><span class="n">org</span>
+
+<span class="o">--</span><span class="n">add</span> <span class="n">adds</span> <span class="n">the</span> <span class="n">decryption</span> <span class="n">command</span> <span class="n">to</span> <span class="n">the</span> <span class="o">.</span><span class="n">travis</span><span class="o">.</span><span class="n">yml</span> <span class="n">file</span> <span class="n">automatically</span><span class="o">.</span>
+<span class="o">--</span><span class="n">debug</span> <span class="n">shows</span> <span class="nb">all</span> <span class="n">the</span> <span class="n">available</span> <span class="n">output</span> <span class="n">of</span> <span class="n">the</span> <span class="n">command</span><span class="o">.</span>
+<span class="o">--</span><span class="n">org</span> <span class="n">creates</span> <span class="n">a</span> <span class="n">key</span> <span class="k">for</span> <span class="n">the</span> <span class="n">org</span> <span class="n">side</span><span class="p">,</span> <span class="ow">not</span> <span class="n">the</span> <span class="n">paid</span> <span class="n">side</span>
+</pre></div>
+</div>
+<p>So, what does this command do?</p>
+<ol class="last upperalpha">
+<li><p class="first">Well, it creates a file <cite>travis_deploy_rsa.enc</cite>, that is an encrypted file. We want to add ONLY this encrypted file to the current repository.  <cite>git add travis_deploy_rsa.enc</cite>  The reason we want to add travis_deploy_rsa.enc to the repo is because the repo gets cloned from github onto the Travis machines, and we want to ensure this file is up there to decrypt.</p>
+</li>
+<li><p class="first">Next, the above command edits the  <cite>before install:</cite> section of your .travis.yml file with the instruction to decrypt the key at the appropriate time. This is the part that you might want to just copy back into your original .travis.yml file.</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>before_install:
+    openssl aes-256-cbc -K $encrypted_67e08862e114_key -iv $encrypted_67e08862e114_iv
+        -in travis deploy.rsa.enc -out /tmp/travis_deploy.rsa -d;
+</pre></div>
+</div>
+<p>That openssl command above command has several arguments:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">aes</span><span class="o">-</span><span class="mi">256</span><span class="o">-</span><span class="n">cbc</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">subcommand</span> <span class="n">that</span> <span class="n">just</span> <span class="n">calls</span> <span class="n">out</span> <span class="n">an</span> <span class="n">decryption</span> <span class="n">strategy</span>
+
+<span class="o">-</span><span class="n">d</span> <span class="n">decrypt</span>
+<span class="o">-</span><span class="n">K</span><span class="o">/-</span><span class="n">iv</span> <span class="n">key</span><span class="o">/</span><span class="n">iv</span> <span class="ow">in</span> <span class="nb">hex</span> <span class="ow">is</span> <span class="n">the</span> <span class="nb">next</span> <span class="n">argument</span>
+<span class="o">-</span><span class="ow">in</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">file</span> <span class="n">that</span> <span class="n">needs</span> <span class="n">encrypting</span>
+<span class="o">-</span><span class="n">out</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">decrypted</span> <span class="n">key</span> <span class="n">file</span> <span class="n">being</span> <span class="n">written</span> <span class="n">out</span>
+</pre></div>
+</div>
+<p>Note that you will need to manually edit the file to add checks against the event $TRAVIS_PULL_REQUEST, as seen in the block below.
+We do not want this whole process to happen during every pull request, but only after a merge has occurred.
+it’s also an added security benefit, that these decryption processes are only run by your own account, and not by any person who can fork your code.
+There are a couple of other spots in the file where this check needs to be added, as you’ll see below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>before_install:
+    - if [ &quot;$TRAVIS_PULL_REQUEST&quot; = &quot;false&quot; ]; then
+        openssl aes-256-cbc -K $encrypted_67e08862e114_key -iv $encrypted_67e08862e114_iv
+            -in travis deploy.rsa.enc -out /tmp/travis_deploy.rsa -d;
+      fi
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Finally, the command is supposed to create and assign two environment variables in the Travis CI settings for the repository in question.  This was a big stumbling block for me, and it is why I added the <cite>—debug</cite> arg to the <cite>travis encrypt-file</cite> command.
+I was executing the correct command, but the identity I was signed in as (me) and the identity of the repo (OpenMDAO) didn’t match and so those env vars were never created.  Going to the travis-ci.org webpage for OpenMDAO and going into Settings and using
+the web interface to add two new env vars is the way around this problem.  But what are the env vars called, and what will their values be?  That’s where —debug comes in (actual values redacted):</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(openmdao2)$ travis encrypt-file deploy.rsa --add --debug
+** Loading &quot;/Users/xxxxxxxx/.travis/config.yml&quot;
+** GET &quot;repos/OpenMDAO/openmdao&quot;
+**   took 0.2 seconds
+encrypting deploy.rsa for OpenMDAO/openmdao
+storing result as deploy.rsa.enc
+storing secure env variables for decryption
+** GET &quot;settings/env_vars/?repository_id=XXXXXXX&quot;
+**   took 0.051 seconds
+** POST &quot;settings/env_vars/?repository_id=XXXXXXX&quot; &quot;{\&quot;env_var\&quot;:{\&quot;public\&quot;:false,\&quot;name\&quot;:\&quot;encrypted_67eXXXXXXXXX_key\&quot;,\&quot;value\&quot;:\&quot;?????????????????????????????\&quot;}}&quot;
+**   took 0.064 seconds
+** GET &quot;settings/env_vars/?repository_id=XXXXXXX&quot;
+**   took 0.049 seconds
+** POST &quot;settings/env_vars/?repository_id=XXXXXXX&quot; &quot;{\&quot;env_var\&quot;:{\&quot;public\&quot;:false,\&quot;name\&quot;:\&quot;encrypted_67eXXXXXXXXX_iv\&quot;,\&quot;value\&quot;:\&quot;??????????????????????????????\&quot;}}&quot;
+**   took 0.057 seconds
+
+Make sure to add deploy.rsa.enc to the git repository.
+Make sure not to add deploy.rsa to the git repository.
+Commit all changes to your .travis.yml.
+** Deleting &quot;/Users/xxxxxxxx/.travis/error.log&quot;
+** Storing &quot;/Users/xxxxxxxx/.travis/config.yml&quot;
+</pre></div>
+</div>
+</div></blockquote>
+<p>The command is attempting to POST those env vars, but they don’t seem to make it to the OpenMDAO account.
+However, the name and value are right there in the debug output, so they can easily be copied and pasted into the Travis CI web
+interface (<a class="reference external" href="https://travis-ci.org">https://travis-ci.org</a>/&lt;user&gt;/&lt;project&gt;/settings ). Creating these env variables must be done, because the
+openssl decrypt command is going to refer to those env vars in the <cite>-K</cite> and <cite>-iv</cite> arguments.</p>
+</li>
+</ol>
+</dd>
+<dt><strong>3. Copy Key to Web Server</strong></dt>
+<dd><p class="first">To copy the key over to your web server.  In the specific case of OpenMDAO, let’s take a moment to explore what needs to be done on Webfaction.</p>
+<ol class="upperalpha simple">
+<li>Need to create a web server application on Webfaction (for local NASA users).</li>
+</ol>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Go to panel.webfaction.com,</li>
+<li>Click Domains/Websites,</li>
+<li>Choose the Applications tab.</li>
+<li>Click the Add New Application button.</li>
+<li>Give your new app an appropriate name, for our example, I chose “openmdaodocs.”</li>
+<li>Make the app as type “Static Only (no .htaccess).”</li>
+<li>Click on Websites, choose openmdao_org,</li>
+<li>Choose, “reuse an existing application” and then pick your newapp and give it a url.</li>
+<li>After a moment, a folder will appear on webXXX, under ~/webapps/&lt;name&gt;, that is accessible at openmdao.org/&lt;url&gt;. Keep in mind that webXXX.webfaction.com:webapps/&lt;name&gt; will be your path to copy your docs to.</li>
+</ol>
+</div></blockquote>
+<ol class="upperalpha simple" start="2">
+<li>Need to copy the public key generated above to our Webfaction server to allow passwordless entrance.</li>
+</ol>
+<blockquote class="last">
+<div><ol class="arabic simple">
+<li>On webXXX, in the ~/.ssh folder, there is a file called authorized_keys.</li>
+<li>Copy the contents of the travis_deploy_rsa.pub as an entry into the authorized_keys file.</li>
+</ol>
+</div></blockquote>
+</dd>
+</dl>
+<p><strong>4. Modify the YAML Further</strong></p>
+<blockquote>
+<div><ol class="upperalpha simple">
+<li><dl class="first docutils">
+<dt>Late in the <cite>before_install</cite> section add this line:</dt>
+<dd><code class="code docutils literal notranslate"><span class="pre">-</span> <span class="pre">echo</span> <span class="pre">-e</span> <span class="pre">&quot;Host</span> <span class="pre">&lt;server</span> <span class="pre">address&gt;\n\tStrictHostKeyChecking</span> <span class="pre">no\n&quot;</span> <span class="pre">&gt;&gt;</span> <span class="pre">~/.ssh/config</span></code>
+(This will turn off a human-prompt by Travis machine “are you willing to accept &lt;server address&gt; as a host (yes/no)”)</dd>
+</dl>
+</li>
+<li>Create a new subhead in your <cite>addons</cite>-&gt;`apt` called <cite>ssh_known_hosts</cite>, like this:</li>
+</ol>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">addons</span><span class="p">:</span>
+    <span class="n">apt</span><span class="p">:</span>
+        <span class="n">sources</span><span class="p">:</span>
+        <span class="o">-</span> <span class="n">ubuntu</span><span class="o">-</span><span class="n">toolchain</span><span class="o">-</span><span class="n">r</span><span class="o">-</span><span class="n">test</span>
+        <span class="n">packages</span><span class="p">:</span>
+        <span class="o">-</span> <span class="n">gfortran</span>
+        <span class="o">-</span> <span class="n">libblas</span><span class="o">-</span><span class="n">dev</span>
+        <span class="o">-</span> <span class="n">liblapack</span><span class="o">-</span><span class="n">dev</span>
+        <span class="o">-</span> <span class="n">libopenmpi</span><span class="o">-</span><span class="n">dev</span>
+        <span class="o">-</span> <span class="n">openmpi</span><span class="o">-</span><span class="nb">bin</span>
+        <span class="n">ssh_known_hosts</span><span class="p">:</span>
+        <span class="o">-</span> <span class="o">&lt;</span><span class="n">server</span> <span class="n">address</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="upperalpha simple" start="3">
+<li>Finally, add these sections to the end of your .travis.yml file, after your after_success section:</li>
+</ol>
+<blockquote>
+<div><p><cite>before_deploy</cite> : The <cite>before_deploy</cite> makes sure the newly-decrypted key is the right permissions and that the Travis system is aware of it.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">before_deploy</span><span class="p">:</span>
+<span class="o">-</span> <span class="k">if</span> <span class="p">[</span> <span class="s2">&quot;$TRAVIS_PULL_REQUEST&quot;</span> <span class="o">=</span> <span class="s2">&quot;false&quot;</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="nb">eval</span> <span class="s2">&quot;$(ssh-agent -s)&quot;</span><span class="p">;</span>
+    <span class="n">chmod</span> <span class="mi">600</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">deploy</span><span class="o">.</span><span class="n">rsa</span><span class="p">;</span>
+    <span class="n">ssh</span><span class="o">-</span><span class="n">add</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">deploy</span><span class="o">.</span><span class="n">rsa</span><span class="p">;</span>
+  <span class="n">fi</span>
+</pre></div>
+</div>
+<p><cite>deploy</cite> is focused on actually transferring the docs.  Note there is a logic check that makes sure the doc copy only happens on ONE machine (don’t want 4 machines racing to rsync docs!), and only on a certain branch, and only after success.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">deploy</span><span class="p">:</span>
+  <span class="n">provider</span><span class="p">:</span> <span class="n">script</span>
+  <span class="n">skip_cleanup</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">script</span><span class="p">:</span>
+    <span class="o">-</span> <span class="k">if</span> <span class="p">[</span> <span class="s2">&quot;$TRAVIS_PULL_REQUEST&quot;</span> <span class="o">=</span> <span class="s2">&quot;false&quot;</span> <span class="p">];</span> <span class="n">then</span>
+        <span class="o">-</span> <span class="k">if</span> <span class="p">[</span> <span class="s2">&quot;$MPI&quot;</span> <span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="p">[</span> <span class="s2">&quot;$PY&quot;</span> <span class="o">=</span> <span class="s2">&quot;3.4&quot;</span> <span class="p">];</span> <span class="n">then</span>
+            <span class="n">cd</span> <span class="n">openmdao</span><span class="o">/</span><span class="n">docs</span><span class="p">;</span>
+            <span class="n">rsync</span> <span class="o">-</span><span class="n">r</span> <span class="o">--</span><span class="n">delete</span><span class="o">-</span><span class="n">after</span> <span class="o">-</span><span class="n">v</span> <span class="n">_build</span><span class="o">/</span><span class="n">html</span><span class="o">/*</span> <span class="o">&lt;</span><span class="n">username</span><span class="o">&gt;@&lt;</span><span class="n">server</span> <span class="n">address</span><span class="o">&gt;</span><span class="p">:</span><span class="n">webapps</span><span class="o">/</span><span class="n">openmdaodocs</span><span class="p">;</span>
+          <span class="n">fi</span>
+      <span class="n">fi</span>
+  <span class="n">on</span><span class="p">:</span>
+    <span class="n">branch</span><span class="p">:</span> <span class="n">master</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div></blockquote>
+<p><strong>5. Commit the .travis.yml file and encrypted key file into Git</strong></p>
+<blockquote>
+<div>You have now heavily edited your .travis.yml, and created an encrypted key locally.  <cite>git add</cite> the encrypted key (.enc) file to your repository.
+Once you’re done with everything and it all works, you should move or discard the private and public key files to make sure they do not end up in your repository.
+A quick <cite>git commit</cite> should finish things up.  Your pull request to enable automation should be only those two files.
+The remainder of the work was done in the travis-ci.org settings and on your web server.  Once this pull request is accepted to your
+repository, you should be able to check the logs to make sure it’s working.  And of course, seeing new documentation transferred up on your web server is all the
+proof you need that things are working.</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="travis_caching.html" title="Caching on Travis CI"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="doc_build.html" title="Local Building of OpenMDAO Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenMDAO 2.8.0 Beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Developer Docs (if you’re going to contribute code)</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, openmdao.org.
+      Last updated on Aug 08, 2019.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

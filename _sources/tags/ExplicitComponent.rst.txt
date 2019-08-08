@@ -1,0 +1,7 @@
+.. _ExplicitComponent: 
+
+=========================
+ExplicitComponent
+=========================
+  .. toctree::
+     ../basic_guide/component_types.rst
